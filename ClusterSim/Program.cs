@@ -11,6 +11,7 @@ namespace ClusterSim
         static void Main(string[] args)
         {
             StarCluster test = new StarCluster(10);
+            test.calcForce();
         }
     }
 }

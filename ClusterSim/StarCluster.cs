@@ -15,7 +15,9 @@ namespace ClusterSim
 
         public StarCluster(int StarCount)
         {
-            this.StarCount = StarCount;    
+            this.StarCount = StarCount;
+            Stars = new List<Star>(StarCount);
+            initialize();  
         }
 
         private void initialize()
@@ -47,6 +49,7 @@ namespace ClusterSim
                     tempForce.add(tempDirection);
                 }
             }
+            Console.ReadLine();
         }
  
     }
