@@ -8,49 +8,82 @@ namespace ClusterSim
 {
     class StarCluster
     {
+        //fields
         private const double gravitation = 0.0000000000667384;
         private int StarCount;
         private List <Star> Stars;
+        private Vector range = new Vector(new double[] { 10000000000000000000, 10000000000000000000, 10000000000000000000 });
+        double mean = 0;
+        double stdDev = 100;
 
-
-        public StarCluster(int StarCount)
+        public StarCluster(int StarCount)   //constructor takes Starcount
         {
             this.StarCount = StarCount;
-            Stars = new List<Star>(StarCount);
-            initialize();  
+            Stars = new List<Star>(0);
+            randomize();                   //initialize
         }
 
-        private void initialize()
+
+
+        private void initialize()   //download newest Data
         {
-            double[] zero = { 0, 0, 0 };
+            Stars = new SQL().readStars("[Initial Stars]");            
+        }
+
+        public void randomize(Vector range = null)
+        {
+            if (range == null)
+                this.range = range;
+            SQL client = new SQL();
+
             for (int i = 0; i < StarCount; i++)
             {
-                Stars.Add(new Star(zero,zero,zero,1,1));
-            }
+
+                client.writeStar(i, new Star(new double[] {random(), random(), random()}, new double[] { random(), random(), random() }, new double[] { random(), random(), random()}, random(), 2), "[Initial Stars]");
+                initialize();
+            }    
         }
 
-        public void calcForce()
+
+        public void calcForce()     //calculete Force based on gravitation
+
         {
             Vector tempForce;
             Vector tempDirection;
 
-            foreach (Star s in Stars)
+            for (int i = 0; i < Stars.Capacity - 1; i++) //G between all stars
             {
                 tempForce = new Vector();
-
-                for (int i = 0; i < StarCount; i++)
+                           
+                for (int j = 0; j < Stars.Capacity-1; j++)
                 {
-                    tempDirection = s.getPos().direction(Stars[i].getPos());
+                    if (i != j)         //no self interaction
+                    {
 
-                    double force = gravitation * ((s.getMass() 
-                        * Stars[i].getMass()) / Math.Pow(tempDirection.distance(),2));
+                        tempDirection = Stars[i].getPos().direction(Stars[j].getPos()); //direction vector to the other star
 
-                    tempDirection.scale(force);
-                    tempForce.add(tempDirection);
+                        double force = gravitation * ((Stars[i].getMass()                  //calculate the force    
+                            * Stars[j].getMass()) / Math.Pow(tempDirection.distance(), 2));//
+
+                        tempDirection.scale(force);     //scale the Direction vector's magnitude to match the total force  
+                        tempForce.add(tempDirection);   //add forces
+                    }
                 }
-            }
-            Console.ReadLine();
+                Stars[i].calcAcc(tempForce);    //save Force to the star and calculate all values
+            }          
         }
- 
+
+        private double random()
+        {
+            Random rand = new Random(); //reuse this if you are generating many
+            double u1 = rand.NextDouble(); //these are uniform(0,1) random doubles
+            double u2 = rand.NextDouble();
+            double randStdNormal = Math.Sqrt(-2.0 * Math.Log(u1)) *
+                         Math.Sin(2.0 * Math.PI * u2); //random normal(0,1)
+            double randNormal =
+                         mean + stdDev * randStdNormal; //random normal(mean,stdDev^2)
+            return randNormal;
+        }
+
     }
 }
