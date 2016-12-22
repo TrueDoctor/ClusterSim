@@ -10,9 +10,9 @@ namespace ClusterSim
     {
         static void Main(string[] args)
         {
-            StarCluster test = new StarCluster(3);     //instatiate Starcluster
-            for (int i = 0; i < 42; i++)                //calculate 42 steps
-                test.calcForce();
+            StarCluster test = new StarCluster(200);     //instatiate Starcluster
+            for (int i = 0; i < 200; i++)                //calculate 42 steps
+                test.calcForce(i);
             
             Console.ReadLine();                         //wait for input
         }

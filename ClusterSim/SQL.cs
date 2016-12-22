@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data.SqlClient;
+using ClusterSim.ClustersimDataSetTableAdapters;
 
 namespace ClusterSim
 {
@@ -54,31 +55,8 @@ namespace ClusterSim
 
             public void writeStar(int id,Star s, string table, string Database = "ClusterSim")
             {
-                String conString = @"Data Source=tcp:TARDIS\CLUSTERSIM,49172;Initial Catalog=" + Database + ";User Id=Engine;Password=mynona; MultipleActiveResultSets=true;";//initialize connection
-                SqlConnection con = new SqlConnection(conString);                                   //connect(id,[pos x] ,[pos y],[pos z],[vel x],[vel y],[vel z],[acc x],[acc y],[acc z], mass)            @id, @[pos x], @[pos y], @[pos z], @[vel x], @[vel y], @[vel z], @[acc x], @[acc y], @[acc z], @mass)
-                String query ="INSERT INTO " + table+ " (id,[pos x] ,[pos y],[pos z],[vel x],[vel y],[vel z],[acc x],[acc y],[acc z], mass)  VALUES ("+id+","+s.getPos().vec[0]+","+s.getPos().vec[1] + "," +s.getPos().vec[2] + "," + s.getVel().vec[0] + ","+s.getVel().vec[1] + ","+s.getVel().vec[2]+ ","+s.getAcc().vec[0] + ","+ s.getAcc().vec[1] + "," + s.getAcc().vec[2] + "," + s.getMass()+")";//retrive all data
-                
-                //for (;;)//wait for connection
-                    //try
-                    //{
-                       /* cmd.Parameters.AddWithValue("id", id);
-                        cmd.Parameters.AddWithValue("@[pos x]", s.getPos().vec[0]);
-                        cmd.Parameters.AddWithValue("@[pos y]", s.getPos().vec[1]);
-                        cmd.Parameters.AddWithValue("@[pos z]", s.getPos().vec[2]);
-                        cmd.Parameters.AddWithValue("@[vel x]", s.getVel().vec[0]);
-                        cmd.Parameters.AddWithValue("@[vel y]", s.getVel().vec[1]);
-                        cmd.Parameters.AddWithValue("@[vel z]", s.getPos().vec[2]);
-                        cmd.Parameters.AddWithValue("@[acc x]", s.getAcc().vec[0]);
-                        cmd.Parameters.AddWithValue("@[acc y]", s.getAcc().vec[1]);
-                        cmd.Parameters.AddWithValue("@[acc z]", s.getAcc().vec[2]);
-                        cmd.Parameters.AddWithValue("@mass", s.getMass());
-                        */
-                        con.Open();
-                        cmd.ExecuteNonQuery();
-                
-                    //}
-                    //catch { }
-                
-            }
+            InitialAdapter test = new InitialAdapter();
+            test.Insert(id, s.getPos().vec[0], s.getPos().vec[1], s.getPos().vec[2], s.getVel().vec[0], s.getVel().vec[1], s.getVel().vec[2], s.getAcc().vec[0], s.getAcc().vec[1], s.getAcc().vec[2], s.getMass());
+        }
         }
     }

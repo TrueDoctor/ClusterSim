@@ -14,13 +14,14 @@ namespace ClusterSim
         private List <Star> Stars;
         private Vector range = new Vector(new double[] { 10000000000000000000, 10000000000000000000, 10000000000000000000 });
         double mean = 0;
-        double stdDev = 100;
+        Random rand = new Random();
 
         public StarCluster(int StarCount)   //constructor takes Starcount
         {
             this.StarCount = StarCount;
             Stars = new List<Star>(0);
-            randomize();                   //initialize
+            //randomize();
+            initialize();                   //initialize
         }
 
 
@@ -38,24 +39,23 @@ namespace ClusterSim
 
             for (int i = 0; i < StarCount; i++)
             {
-
-                client.writeStar(i, new Star(new double[] {random(), random(), random()}, new double[] { random(), random(), random() }, new double[] { random(), random(), random()}, random(), 2), "[Initial Stars]");
-                initialize();
+                client.writeStar(i, new Star(new double[] {random(10000000000), random(10000000000), random(10000000000) }, new double[] { random(), random(), random() },
+                    new double[] { random(), random(), random() }, Math.Abs(random(10000000)), 2), "[Initial Stars]");          
             }    
         }
 
 
-        public void calcForce()     //calculete Force based on gravitation
+        public void calcForce(int step)     //calculete Force based on gravitation
 
         {
             Vector tempForce;
             Vector tempDirection;
 
-            for (int i = 0; i < Stars.Capacity - 1; i++) //G between all stars
+            for (int i = 0; i < Stars.Count - 1; i++) //G between all stars
             {
                 tempForce = new Vector();
                            
-                for (int j = 0; j < Stars.Capacity-1; j++)
+                for (int j = 0; j < Stars.Count-1; j++)
                 {
                     if (i != j)         //no self interaction
                     {
@@ -70,12 +70,13 @@ namespace ClusterSim
                     }
                 }
                 Stars[i].calcAcc(tempForce);    //save Force to the star and calculate all values
+                Console.WriteLine("Step: " + step+", Star: " + i);
             }          
         }
 
-        private double random()
+        private double random(double stdDev=1)
         {
-            Random rand = new Random(); //reuse this if you are generating many
+             //reuse this if you are generating many
             double u1 = rand.NextDouble(); //these are uniform(0,1) random doubles
             double u2 = rand.NextDouble();
             double randStdNormal = Math.Sqrt(-2.0 * Math.Log(u1)) *
