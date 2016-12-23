@@ -9,7 +9,7 @@ namespace ClusterSim
     class StarCluster
     {
         //fields
-        private const double gravitation = 0.0000000000667384;
+        private const double gravitation = 0.0002959122083;  //0.0000000000667384;
         private int StarCount;
         private List <Star> Stars;
         private Vector range = new Vector(new double[] { 10000000000000000000, 10000000000000000000, 10000000000000000000 });
@@ -61,6 +61,8 @@ namespace ClusterSim
                     {
 
                         tempDirection = Stars[i].getPos().direction(Stars[j].getPos()); //direction vector to the other star
+
+                        double D = 1 / tempDirection.distance();
 
                         double force = gravitation * ((Stars[i].getMass()                  //calculate the force    
                             * Stars[j].getMass()) / Math.Pow(tempDirection.distance(), 2));//
