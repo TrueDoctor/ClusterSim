@@ -14,23 +14,34 @@ namespace ClusterLib
         //declare fields/members
         public Vector pos = new Vector();
         public Vector vel = new Vector();
-        private Vector acc = new Vector();
-        private double dt;
-        private double mass;
+        private decimal dt;
+        private decimal mass;
         public int id;
         private static int classId=0;
 
         public Star() { }
-        public Star(double[] pos, double[] vel, double[] acc,   //constructor
-            double mass,int id=-1, double dt = 2)
+
+        public Star(int id) { this.id = id; pos.init();vel.init(); mass = 0; }
+        public Star(decimal[] pos, decimal[] vel,   //constructor
+            decimal mass,int id=-1, decimal dt = 2)
         {
             this.pos.vec = pos;
-            this.vel.vec = vel;
-            this.acc.vec = acc;
+            this.vel.vec = vel;            
             this.dt = dt;
             this.mass = mass;
             if (id == -1)
                 this.id = classId++;
+            else this.id = id;
+        }
+
+        public Star(Vector pos, Vector vel,   //constructor
+            decimal mass, int id, decimal dt = 2)
+        {
+            this.pos = pos;
+            this.vel = vel;
+            this.dt = dt;
+            this.mass = mass;
+            this.id = id;
         }
 
         public Star(Star s)
@@ -41,44 +52,30 @@ namespace ClusterLib
             this.mass = s.mass;
         }
 
-        public Vector getAcc() //get acceleration
+        public Star(Vec6 vec,decimal mass,int id=-1)
         {
-            return acc;
+            this.pos = new Vector(vec,0);
+            this.vel = new Vector(vec,1);
+            this.id = id;
+            this.mass = mass;
         }
 
-        public double getMass() //get mass
+        
+        public decimal getMass() //get mass
         {
             return mass;
         }
 
-        public void calcAcc(Vector acc) //calc acceleration based on force and mass
-        {
-            this.acc = acc;
-            this.acc.div(mass);
-            calcVel();
-        }
+        
 
-        private void calcVel()  //calc velocety based on acceleration and dt
-        {
-            Vector tempVel = this.acc;
-            tempVel.mult(dt);
-            vel.add(tempVel);
-            calcPos();
-        }
-
-        private void calcPos()  //calc position based on Vel
-        {
-            Vector tempPos = this.vel;
-            tempPos.mult(dt);
-            pos.add(tempPos);
-            this.print();
-        }
+        
+        
 
         public void print() //print all fields of the star in the console
         {
+            Console.WriteLine(this.id);
             Console.WriteLine("pos: " + pos.toString());
             Console.WriteLine("vel: " + vel.toString());
-            Console.WriteLine("acc: " + acc.toString());
             Console.WriteLine("mass: " + mass);
         }
 

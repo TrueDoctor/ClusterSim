@@ -25,11 +25,23 @@ namespace ClusterLib.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
         [global::System.Configuration.DefaultSettingValueAttribute("Data Source=tcp:TARDIS\\CLUSTERSIM,49172;Initial Catalog=Clustersim;Persist Securi" +
             "ty Info=True;User ID=Engine;Password=mynona")]
-        public string ClusterlibConnectionString {
+        public string ClustersimConnectionString {
             get {
-                return ((string)(this["ClusterlibConnectionString"]));
+                return ((string)(this["ClustersimConnectionString"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=TARDIS\\CLUSTERSIM;Initial Catalog=Clustersim;Persist Security Info=Tr" +
+            "ue;User ID=Engine;Password=mynona")]
+        public string ClustersimConnectionString1 {
+            get {
+                return ((string)(this["ClustersimConnectionString1"]));
             }
         }
     }
