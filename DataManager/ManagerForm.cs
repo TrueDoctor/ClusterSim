@@ -78,7 +78,7 @@ namespace DataManager
 
         private void DataView_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process.Start(@"..\..\..\ClusterSim\Dataview\bin\Debug\DataView.exe", (string)ServerList.SelectedItem);
+            System.Diagnostics.Process.Start(@"..\..\..\Dataview\bin\Debug\DataView.exe", (string)ServerList.SelectedItem);
         }
 
         private void randomTable_Click(object sender, EventArgs e)

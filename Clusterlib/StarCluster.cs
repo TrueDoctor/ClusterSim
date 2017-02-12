@@ -57,6 +57,7 @@ namespace ClusterLib
 
         public void doStep(int step,Misc.Method m)    
         {
+            Thread.CurrentThread.Priority = ThreadPriority.Normal;
             int processors = Environment.ProcessorCount;
             int perCore = (int)starCount/ processors;
             int left = starCount - perCore * processors ;
@@ -99,10 +100,10 @@ namespace ClusterLib
 
             Steps.Add(new List<Star>(temp));
 
-            Thread.CurrentThread.Priority = ThreadPriority.Normal;
+            
 
             Thread save = new Thread(delegate () { export(new List<Star>(Steps.Last()), step,wtable); });
-            save.Priority = ThreadPriority.Normal;
+            save.Priority = ThreadPriority.Highest;
             save.Start();
 
             foreach (Star s in Stars)
@@ -210,8 +211,8 @@ namespace ClusterLib
         {
             foreach (Star s in data)
             {
-                SQL.addRow(s, step, table);
-                Console.WriteLine(s.id);
+                while (SQL.addRow(s, step, table) == false) ;
+                //Console.WriteLine(s.id);
             }
                 //System.IO.File.WriteAllText(@"C:\Users\Dennis\Documents\Clustersim1\file" + i + ".json", Newtonsoft.Json.JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented));
                 //Console.WriteLine(i + "\n" + Newtonsoft.Json.JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented));

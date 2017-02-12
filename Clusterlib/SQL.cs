@@ -19,17 +19,19 @@ namespace ClusterLib
     {
         
         const string conString = @"Data Source=tcp:TARDIS\CLUSTERSIM,49172;Initial Catalog=Clustersim;User Id=Engine;Password=mynona; MultipleActiveResultSets=true;";//initialize connection
-        static SqlConnection con = new SqlConnection(conString);//connect
+        
 
 
         public static List<Star> readStars(string table, int step)
         {
+            SqlConnection con = new SqlConnection(conString);//connect
             List<Star> Stars = new List<Star>();
             using (SqlCommand cmd = new SqlCommand("SELECT id,[pos x] AS posx,[pos y] AS posy,[pos z] AS posz,[vel x] AS velx,[vel y] AS vely,[vel z] AS velz, mass FROM [" + table + "] WHERE step = " + step+"", con))//retrive all data
             {
 
                 try
                 {
+                    con.Close();
                     con.Open();//open connection
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -54,20 +56,22 @@ namespace ClusterLib
                 {
                     Console.WriteLine("Abrufen von Daten fehlgeschlagen, vlt. Keine Verbindung zum Server möglich \n" + e.Message + "\n");
                     con.Close();
-                    con.Close();
                 }
             }
+            
             return null;
         }
-            
-        public static bool addRow(Star s,int step,string table)
+
+        public static bool addRow(Star s, int step, string table)
         {
+
+            SqlConnection con = new SqlConnection(conString);//connect
             //string values = "'"+step+"','"+s.id + "','" + s.pos.vec[0] + "','" + s.pos.vec[1] + "','" + s.pos.vec[2] + "','" + s.vel.vec[0] + "','" + s.vel.vec[1] + "','" + s.vel.vec[2] + "','" + s.getMass()+"'";
             string values = "@step,@id,@posx,@posy,@posz,@velx,@vely,@velz,@mass";
             //Console.WriteLine(values);
             using (SqlCommand cmd = new SqlCommand("INSERT INTO[dbo].[" + table + "] ([step] ,[id], [pos x], [pos y], [pos z], [vel x], [vel y], [vel z], [mass]) VALUES(" + values + ")", con))
             {
-                cmd.Parameters.Add(new SqlParameter("@step",step));
+                cmd.Parameters.Add(new SqlParameter("@step", step));
                 cmd.Parameters.Add(new SqlParameter("@id", s.id));
                 cmd.Parameters.Add(new SqlParameter("@posx", s.pos.vec[0]));
                 cmd.Parameters.Add(new SqlParameter("@posy", s.pos.vec[1]));
@@ -80,6 +84,7 @@ namespace ClusterLib
 
                 try
                 {
+                    con.Close();
                     con.Open();//open connection
                     cmd.ExecuteNonQuery();
                     con.Close();
@@ -87,20 +92,25 @@ namespace ClusterLib
 
                 catch (Exception e)
                 {
-                    Console.WriteLine("Hinzufügen von Spalte zu"+table+"fehlgeschlagen \n" + e.Message + "\n");
+                    Console.WriteLine("Hinzufügen von Spalte zu" + table + "fehlgeschlagen \n" + e.Message + "\n");
                     con.Close();
+                    return false;
                 }
 
             }
+
+            con.Close();
             return true;
         }
 
         public static void deleteStep(string table,int step)
         {
+            SqlConnection con = new SqlConnection(conString);//connect
             using (SqlCommand cmd = new SqlCommand("Delete FROM [dbo].[" + table + "] WHERE step = "+step, con))
             {
                 try
                 {
+                    con.Close();
                     con.Open();//open connection
                     cmd.ExecuteNonQuery();
                     con.Close();
@@ -117,6 +127,7 @@ namespace ClusterLib
 
         public static void addTable(string name)
         {
+            SqlConnection con = new SqlConnection(conString);//connect
             String[] ban = new string[] { "[", "]", "'", ".", "+", "*", "-", "/", "°", "!", "\0", "\b", "\'", "\"", "\n", "\r", "\t", @"\", "%" ,"DROP","Drop","drop","All","DELETE","Delete","delete",";",","};
             foreach(string s in ban)
                 name = name.Replace(s,"");
@@ -133,6 +144,7 @@ namespace ClusterLib
 
                 try
                 {
+                    con.Close();
                     con.Open();//open connection
                     cmd.ExecuteNonQuery();
                     con.Close();
@@ -150,10 +162,12 @@ namespace ClusterLib
 
         public static void dropTable(string table)
         {
+            SqlConnection con = new SqlConnection(conString);//connect
             using (SqlCommand cmd = new SqlCommand("DROP TABLE[dbo].[" + table + "]", con))
             {
                 try
                 {
+                    con.Close();
                     con.Open();//open connection
                     cmd.ExecuteNonQuery();
                     con.Close();
@@ -170,11 +184,13 @@ namespace ClusterLib
 
         public static List<String> readTables()
         {
+            SqlConnection con = new SqlConnection(conString);//connect
             List<String> List = new List<String>();
             using (SqlCommand cmd = new SqlCommand("SELECT * FROM   INFORMATION_SCHEMA.TABLES WHERE  TABLE_TYPE = 'BASE TABLE'", con))//retrive all data
             {
                 try
                 {
+                    con.Close();
                     con.Open();//open connection
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -195,18 +211,19 @@ namespace ClusterLib
                 {
                     Console.WriteLine("Abrufen von Tabellennahmen fehlgeschlagen, vlt. Keine Verbindung zum Server möglich \n" + e.Message + "\n");
                     con.Close();
-                    con.Close();
                 }
             }
             return null;
         }
         public static int lastStep(string table)
         {
+            SqlConnection con = new SqlConnection(conString);//connect
             int i = -1;
             using (SqlCommand cmd = new SqlCommand("SELECT MAX(step) AS step FROM[dbo].[" + table + "]" , con))
             {
                 try
                 {
+                    con.Close();
                     con.Open();//open connection
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -227,11 +244,13 @@ namespace ClusterLib
         }
         public static int starsCount(string table)
         {
+            SqlConnection con = new SqlConnection(conString);//connect
             int i = -1;
             using (SqlCommand cmd = new SqlCommand("SELECT MAX(id) AS id FROM[dbo].[" + table + "]", con))
             {
                 try
                 {
+                    con.Close();
                     con.Open();//open connection
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
