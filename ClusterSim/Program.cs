@@ -69,7 +69,7 @@ namespace ClusterSim
                 test.doStep(i,Misc.Method.RK5);
                 broadcaster.SendToChannel("steps", "i"+i);
             } 
-            //Console.ReadLine();                         //wait for input
+            Console.ReadLine();                         //wait for input
         }
     }
 }

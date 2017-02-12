@@ -46,7 +46,7 @@ namespace DataManager
 
             for (int i = 0; i < StarCount.Value; i++)
             {
-                SQL.addRow(Misc.randomize(Math.Pow(10,PosBar.Value), Math.Pow(10, VelBar.Value), Math.Pow(10, MassBar.Value), i), 0, table);
+                while (SQL.addRow(Misc.randomize(Math.Pow(10, PosBar.Value), Math.Pow(10, VelBar.Value), Math.Pow(10, MassBar.Value), i), 0, table) == false) ;
                 progressBar.Increment(1);
             }
             this.Close();

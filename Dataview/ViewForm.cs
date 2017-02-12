@@ -16,8 +16,8 @@ namespace Dataview
 {
     public partial class ViewForm : Form
     {
-        string table = "copy";
-        int step = 0;
+        string table = "Nachtc";
+        int step = 1;
         List<List<Star>> Steps = new List<List<Star>>();
         Bitmap Canvas;
         //bool three = false;
@@ -62,7 +62,7 @@ namespace Dataview
                         zoom/=2;
                         break;
                  case Keys.Enter:
-                        export(2500);
+                        export(1000);
                         break;
 
                     case Keys.T:
@@ -87,7 +87,7 @@ namespace Dataview
             return null;
         }
 
-        private void draw()
+        private bool draw()
         {
             Box.Cursor = Cursors.WaitCursor;
             if (trace == true)
@@ -100,9 +100,12 @@ namespace Dataview
                 {
                     Canvas.SetPixel(x, y, Color.Black);
                 }*/
-            List<Star> Stars = import(step);
-            if (Stars!=null)
-                foreach (Star s in Stars)
+            List<Star> Stars;
+            
+            Stars = import(step);
+            
+            if (Stars != null)
+                foreach (Star s in Stars) 
                 {
                     Point p;
                     /*if (three == true)
@@ -117,6 +120,12 @@ namespace Dataview
             Box.Refresh();
             Box.Cursor = Cursors.Cross;
             this.Text = "Schritt: "+step;
+
+            if (Stars != null)
+                return true;
+            else
+                return false;
+
             //Canvas.Save(@"C:\Users\Dennis\Documents\Clustersim\Pictures\file" + step + zoom+Canvas.Width+"x"+Canvas.Height + ".jpg",System.Drawing.Imaging.ImageFormat.Png);
         }
 
@@ -150,7 +159,7 @@ namespace Dataview
         {
             Bitmap bitmap = (Bitmap)new Bitmap(Canvas);
             AviManager aviManager =
-                new AviManager(@"..\..\testdata\new.avi", false);
+                new AviManager(@"C:\testdata\new.avi", false);
             VideoStream aviStream =
                 aviManager.AddVideoStream(true, 30, bitmap);
 
@@ -159,7 +168,7 @@ namespace Dataview
                 for (int i = 1; i < frames; i++)
                 {
                     step++;
-                    draw();
+                    while(draw()==false);
                     Bitmap frame = (Bitmap)new Bitmap(Canvas);
                     aviStream.AddFrame(frame);
                     frame.Dispose();
