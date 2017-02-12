@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace ClusterLib
 {
+    [Serializable()]
     public class Vector
     {
         public decimal[] vec = new decimal[3]; //Field

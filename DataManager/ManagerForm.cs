@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using ClusterLib;
 using XDMessaging;
+using System.Threading;
 
 
 namespace DataManager
@@ -77,18 +78,28 @@ namespace DataManager
 
         private void DataView_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process.Start(@"C:\Users\Dennis\Documents\Visual Studio 2015\Projects\ClusterSim\Dataview\bin\Debug\DataView.exe", (string)ServerList.SelectedItem);
+            System.Diagnostics.Process.Start(@"..\..\..\ClusterSim\Dataview\bin\Debug\DataView.exe", (string)ServerList.SelectedItem);
         }
 
         private void randomTable_Click(object sender, EventArgs e)
         {
-            Random form = new Random((string)ServerList.SelectedItem);
+            string name;
+            if (SQL.readTables().Contains(newTableName.Text))
+                name = ServerList.SelectedIndex.ToString();
+            else
+            {
+                name = newTableName.Text;
+                SQL.addTable(name);
+            }
+            Random form = new Random(name);
             form.Show();
         }
 
         private void ClusterSim_Click(object sender, EventArgs e)
         {
-            
+            progressBar.Visible = true;
+            progressBar.Value = 0;
+
             XDMessagingClient client = new XDMessagingClient();
             IXDListener listener = client.Listeners.GetListenerForMode(XDTransportMode.HighPerformanceUI);
             listener.RegisterChannel("steps");
@@ -97,23 +108,34 @@ namespace DataManager
             {
                 if (ep.DataGram.Channel == "steps")
                 {
-                    MessageBox.Show(ep.DataGram.Message);
-                    switch (ep.DataGram.Message.First())
+                    switch (ep.DataGram.Message.First().ToString())
                     {
-                        case 's':
+                        case "s":
                             int n = Convert.ToInt32(ep.DataGram.Message.Remove(0, 1));
+                            
                             progressBar.Maximum = n;
                             break;
-                        case 'i':
-                            MessageBox.Show(ep.DataGram.Message);
+                        case "i":
+                            
                             int m = Convert.ToInt32(ep.DataGram.Message.Remove(0, 1));
                             progressBar.Value = m;
 
                             break;
                     }
+                    Thread save = new Thread(delegate () { Bar((string)ServerList.SelectedItem); });
+                    
+                    //save.Start();
                 }
             };
-            System.Diagnostics.Process.Start(@"C:\Users\Dennis\Documents\Visual Studio 2015\Projects\ClusterSim\ClusterSim\bin\Debug\ClusterSim.exe", (string)ServerList.SelectedItem);
+            System.Diagnostics.Process.Start(@"..\..\..\ClusterSim\bin\Debug\ClusterSim.exe", (string)ServerList.SelectedItem);
+            if (!(progressBar.Value < progressBar.Maximum-1))
+                progressBar.Visible = false;
+        }
+
+        private void Bar(string table)
+        {
+            while (progressBar.Value!=progressBar.Maximum)
+                progressBar.Value = SQL.lastStep(table);
         }
     }
 }

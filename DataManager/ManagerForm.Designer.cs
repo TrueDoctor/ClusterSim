@@ -35,11 +35,11 @@
             this.SterneAns = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.newTableContainer = new System.Windows.Forms.GroupBox();
+            this.randomTable = new System.Windows.Forms.Button();
             this.newTableName = new System.Windows.Forms.TextBox();
             this.ListRefresh = new System.Windows.Forms.Timer(this.components);
             this.label1 = new System.Windows.Forms.Label();
             this.DataView = new System.Windows.Forms.Button();
-            this.randomTable = new System.Windows.Forms.Button();
             this.ClusterSim = new System.Windows.Forms.Button();
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.groupBox1.SuspendLayout();
@@ -111,6 +111,16 @@
             this.newTableContainer.TabStop = false;
             this.newTableContainer.Text = "Neue Tabelle";
             // 
+            // randomTable
+            // 
+            this.randomTable.Location = new System.Drawing.Point(65, 68);
+            this.randomTable.Name = "randomTable";
+            this.randomTable.Size = new System.Drawing.Size(50, 23);
+            this.randomTable.TabIndex = 12;
+            this.randomTable.Text = "Zufällig";
+            this.randomTable.UseVisualStyleBackColor = true;
+            this.randomTable.Click += new System.EventHandler(this.randomTable_Click);
+            // 
             // newTableName
             // 
             this.newTableName.Location = new System.Drawing.Point(6, 28);
@@ -145,16 +155,6 @@
             this.DataView.UseVisualStyleBackColor = true;
             this.DataView.Click += new System.EventHandler(this.DataView_Click);
             // 
-            // randomTable
-            // 
-            this.randomTable.Location = new System.Drawing.Point(65, 68);
-            this.randomTable.Name = "randomTable";
-            this.randomTable.Size = new System.Drawing.Size(50, 23);
-            this.randomTable.TabIndex = 12;
-            this.randomTable.Text = "Zufällig";
-            this.randomTable.UseVisualStyleBackColor = true;
-            this.randomTable.Click += new System.EventHandler(this.randomTable_Click);
-            // 
             // ClusterSim
             // 
             this.ClusterSim.Location = new System.Drawing.Point(262, 223);
@@ -171,6 +171,7 @@
             this.progressBar.Name = "progressBar";
             this.progressBar.Size = new System.Drawing.Size(100, 23);
             this.progressBar.TabIndex = 14;
+            this.progressBar.Visible = false;
             // 
             // DataManager
             // 

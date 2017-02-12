@@ -180,6 +180,8 @@ BundleArtifacts/
 !*.[Cc]ache/
 
 # Others
+*.avi
+*.mp4
 ClientBin/
 [Ss]tyle[Cc]op.*
 ~$*

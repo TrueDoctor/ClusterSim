@@ -35,5 +35,9 @@ namespace ClusterLib
                          mean + stdDev * randStdNormal; //random normal(mean,stdDev^2)
             return (decimal)randNormal;
         }
+        public enum Method{
+            RK4,
+            RK5
+        };
     }
 }

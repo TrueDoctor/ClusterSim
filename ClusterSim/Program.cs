@@ -13,30 +13,33 @@ namespace ClusterSim
         static void Main(string[] args)
         {
             string rtable="";
+            
 
-            if (args.Length > 1)
+            if (args.Length > 0)
             {
                 List<String> list = SQL.readTables();
                 if (list != null)
                 {
                     
-                    String[] parms = Environment.GetCommandLineArgs();
                     List<string> res = new List<string>();
-                    foreach (string s in parms)
+                    foreach (string s in args)
                     {
                         if (list.Contains(s))
                             rtable = s;
+                        
+
+                        Console.WriteLine(rtable);
                     }
 
                 }
                 
             }
 
-            /*if (rtable == "")
+            if (rtable == "")
             {
                 Console.WriteLine("Auswahltabelle: ");
                 rtable = Console.ReadLine();
-            }*/
+            }
             int last=0;
 
             Console.WriteLine("\nLeer lassen, für gleicheListe, oder Speichern nach: ");
@@ -57,16 +60,16 @@ namespace ClusterSim
 
             XDMessagingClient client = new XDMessagingClient();
             IXDBroadcaster broadcaster = client.Broadcasters.GetBroadcasterForMode(XDTransportMode.HighPerformanceUI);
-            //broadcaster.SendToChannel("steps", "s"+n);
+            broadcaster.SendToChannel("steps", "s"+n);
 
 
             StarCluster test = new StarCluster(rtable,wtable,last,dt);     //instatiate Starcluster
-            for (int i = 0; i < n; Console.WriteLine(i++))
+            for (int i = 1; i <= n; Console.WriteLine(i++))
             {
-                test.RK5(i);
-                //broadcaster.SendToChannel("steps", "i"+i);
+                test.doStep(i,Misc.Method.RK5);
+                broadcaster.SendToChannel("steps", "i"+i);
             } 
-            Console.ReadLine();                         //wait for input
+            //Console.ReadLine();                         //wait for input
         }
     }
 }

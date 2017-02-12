@@ -8,26 +8,26 @@ using System.Runtime.Serialization;
 
 namespace ClusterLib
 {
-    public class Star : ICloneable
+    [Serializable()]
+    public class Star 
     {
 
         //declare fields/members
         public Vector pos = new Vector();
         public Vector vel = new Vector();
-        private decimal dt;
         private decimal mass;
         public int id;
         private static int classId=0;
+        public bool computed = false;
 
         public Star() { }
 
         public Star(int id) { this.id = id; pos.init();vel.init(); mass = 0; }
         public Star(decimal[] pos, decimal[] vel,   //constructor
-            decimal mass,int id=-1, decimal dt = 2)
+            decimal mass,int id=-1)
         {
             this.pos.vec = pos;
             this.vel.vec = vel;            
-            this.dt = dt;
             this.mass = mass;
             if (id == -1)
                 this.id = classId++;
@@ -39,7 +39,6 @@ namespace ClusterLib
         {
             this.pos = pos;
             this.vel = vel;
-            this.dt = dt;
             this.mass = mass;
             this.id = id;
         }
@@ -73,16 +72,16 @@ namespace ClusterLib
 
         public void print() //print all fields of the star in the console
         {
-            Console.WriteLine(this.id);
+            Console.WriteLine(this.id+"\n");
             Console.WriteLine("pos: " + pos.toString());
             Console.WriteLine("vel: " + vel.toString());
             Console.WriteLine("mass: " + mass);
         }
 
-        public object Clone()
+        public Star Clone()
         {
-            //throw new NotImplementedException();
-            var clone = this.MemberwiseClone();
+
+            Star clone = new Star(this.pos, this.vel, this.mass, this.id);
             
             return clone;
         }
