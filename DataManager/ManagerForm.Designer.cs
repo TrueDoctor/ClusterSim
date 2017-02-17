@@ -42,6 +42,7 @@
             this.DataView = new System.Windows.Forms.Button();
             this.ClusterSim = new System.Windows.Forms.Button();
             this.progressBar = new System.Windows.Forms.ProgressBar();
+            this.Check = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.newTableContainer.SuspendLayout();
             this.SuspendLayout();
@@ -173,12 +174,23 @@
             this.progressBar.TabIndex = 14;
             this.progressBar.Visible = false;
             // 
+            // Check
+            // 
+            this.Check.Location = new System.Drawing.Point(3, 254);
+            this.Check.Name = "Check";
+            this.Check.Size = new System.Drawing.Size(50, 23);
+            this.Check.TabIndex = 13;
+            this.Check.Text = "Check";
+            this.Check.UseVisualStyleBackColor = true;
+            this.Check.Click += new System.EventHandler(this.Check_Click);
+            // 
             // DataManager
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.DimGray;
             this.ClientSize = new System.Drawing.Size(337, 289);
+            this.Controls.Add(this.Check);
             this.Controls.Add(this.progressBar);
             this.Controls.Add(this.ClusterSim);
             this.Controls.Add(this.DataView);
@@ -212,6 +224,7 @@
         private System.Windows.Forms.Button randomTable;
         private System.Windows.Forms.Button ClusterSim;
         private System.Windows.Forms.ProgressBar progressBar;
+        private System.Windows.Forms.Button Check;
     }
 }
 

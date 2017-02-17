@@ -19,6 +19,7 @@ namespace Dataview
         string table = "Nachtc";
         int step = 1;
         List<List<Star>> Steps = new List<List<Star>>();
+        List<Star> Stars = new List<ClusterLib.Star>();
         Bitmap Canvas;
         //bool three = false;
         bool trace = false;
@@ -48,11 +49,19 @@ namespace Dataview
             if (Box.Cursor!=Cursors.WaitCursor)
             switch(e.KeyCode)
             {
-                case Keys.Right: step++;
-                    break;
+                case Keys.Right: step++; import(step);
+                        break;
 
-                case Keys.Left: step--;
-                    break;
+                case Keys.Left: step--; import(step);
+                        break;
+
+                case Keys.End:
+                        step += 10; import(step);
+                        break;
+
+                case Keys.RControlKey:
+                        step -= 10; import(step);
+                        break;
 
                 case Keys.Up:
                         zoom*=2;
@@ -68,23 +77,24 @@ namespace Dataview
                     case Keys.T:
                         trace= !trace;
                         break;
+                    
                 }
             draw();
 
         }
 
-        private List<Star> import(int i)
+        private void import(int i)
         {
             try
             {
                 //if (Misc.CountFiles(@"C:\Users\Dennis\Documents\Clustersim\")<=i&&i>=0);
                 if (SQL.lastStep(table) <= i && i >= 0) ;
-                List<Star> temp = SQL.readStars(table,i);//JsonConvert.DeserializeObject<List<Star>>(System.IO.File.ReadAllText(@"C:\Users\Dennis\Documents\Clustersim\file" + i + ".json"));
-                return temp;
+                Stars = SQL.readStars(table,i);//JsonConvert.DeserializeObject<List<Star>>(System.IO.File.ReadAllText(@"C:\Users\Dennis\Documents\Clustersim\file" + i + ".json"));
+                
                 
             }
             catch { }
-            return null;
+            
         }
 
         private bool draw()
@@ -100,9 +110,9 @@ namespace Dataview
                 {
                     Canvas.SetPixel(x, y, Color.Black);
                 }*/
-            List<Star> Stars;
             
-            Stars = import(step);
+            
+            
             
             if (Stars != null)
                 foreach (Star s in Stars) 
@@ -119,7 +129,7 @@ namespace Dataview
             Box.Image = Canvas;
             Box.Refresh();
             Box.Cursor = Cursors.Cross;
-            this.Text = "Schritt: "+step;
+            this.Text = String.Format("Schritt: {0} von {1}",step, SQL.lastStep(table));
 
             if (Stars != null)
                 return true;

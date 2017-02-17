@@ -61,14 +61,16 @@ namespace ClusterSim
             XDMessagingClient client = new XDMessagingClient();
             IXDBroadcaster broadcaster = client.Broadcasters.GetBroadcasterForMode(XDTransportMode.HighPerformanceUI);
             broadcaster.SendToChannel("steps", "s"+n);
-
+            
 
             StarCluster test = new StarCluster(rtable,wtable,last,dt);     //instatiate Starcluster
             for (int i = 1; i <= n; Console.WriteLine(i++))
             {
                 test.doStep(i,Misc.Method.RK5);
                 broadcaster.SendToChannel("steps", "i"+i);
+                Console.WriteLine("\n" + i + "\n \n");
             } 
+
             Console.ReadLine();                         //wait for input
         }
     }

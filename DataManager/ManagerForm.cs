@@ -16,10 +16,12 @@ namespace DataManager
 {
     public partial class DataManager : Form
     {
+        string table;
         public DataManager()
         {
             InitializeComponent();
             ListRefresh_Tick(new object(), new EventArgs());
+            
         }
 
         private void ListRefresh_Tick(object sender, EventArgs e)
@@ -47,6 +49,7 @@ namespace DataManager
                 SterneAns.Text = "Liste ist leer";
             else
                 SterneAns.Text = "Sterne: "+Convert.ToString(i+1);
+            table = ServerList.SelectedItem.ToString();
         }
 
         private void ServerList_KeyDown(object sender, KeyEventArgs e)
@@ -59,8 +62,13 @@ namespace DataManager
                     MessageBoxButtons button = MessageBoxButtons.YesNo;
                     MessageBoxIcon icon = MessageBoxIcon.Warning;
                     MessageBox.Show(messageBoxText, caption, button, icon);
+                    
                     SQL.dropTable((string)ServerList.SelectedItem);
                     ListRefresh_Tick(new object(), new EventArgs());
+                    break;
+
+                case Keys.D:
+                    SQL.deleteStep(table,SQL.lastStep(table));
                     break;
             }
         }
@@ -85,7 +93,7 @@ namespace DataManager
         {
             string name;
             if (SQL.readTables().Contains(newTableName.Text))
-                name = ServerList.SelectedIndex.ToString();
+                name = ServerList.SelectedItem.ToString();
             else
             {
                 name = newTableName.Text;
@@ -136,6 +144,27 @@ namespace DataManager
         {
             while (progressBar.Value!=progressBar.Maximum)
                 progressBar.Value = SQL.lastStep(table);
+        }
+
+        private bool tableWorking(string name)
+        {
+            progressBar.Maximum = SQL.lastStep(name);
+            progressBar.Visible= true;
+            int count = SQL.starsCount(name);
+            for (int i = SQL.firstStep(name); i <= SQL.lastStep(name); i++)
+                if (count != SQL.starsCount(name, i))
+                    return false;
+                else
+                    progressBar.Value = i;
+            return true;
+        }
+
+        private void Check_Click(object sender, EventArgs e)
+        {
+            if (tableWorking(table))
+                MessageBox.Show("Fehlerfrei");
+            else
+                MessageBox.Show("Tabelle fehlerhaft");
         }
     }
 }

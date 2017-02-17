@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using System.Data.SqlClient;
 //using ClusterLib.ClustersimDataSetTableAdapters;
 using System.Data.Sql;
-using System.Data;
 
 namespace ClusterLib
 {
@@ -242,11 +241,45 @@ namespace ClusterLib
             }
             return i;
         }
-        public static int starsCount(string table)
+
+        public static int firstStep(string table)
         {
             SqlConnection con = new SqlConnection(conString);//connect
             int i = -1;
-            using (SqlCommand cmd = new SqlCommand("SELECT MAX(id) AS id FROM[dbo].[" + table + "]", con))
+            using (SqlCommand cmd = new SqlCommand("SELECT MIN(step) AS step FROM[dbo].[" + table + "]", con))
+            {
+                try
+                {
+                    con.Close();
+                    con.Open();//open connection
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                            i = reader.GetInt32(reader.GetOrdinal("step"));
+                    }
+                    con.Close();
+                }
+
+                catch (Exception e)
+                {
+                    Console.WriteLine("konnte letzten Schritt von +" + table + " nicht abfragen  \n" + e.Message + "\n");
+                    con.Close();
+                }
+
+            }
+            return i;
+        }
+
+        public static int starsCount(string table, int step = -1)
+        {
+            SqlConnection con = new SqlConnection(conString);//connect
+            int i = -1;
+            string com;
+            if (step == -1)
+                com = "SELECT MAX(id) AS id FROM[dbo].[" + table + "]";
+            else
+                com = "SELECT MAX(id) AS id FROM[dbo].[" + table + "] WHERE step = " + step;
+            using (SqlCommand cmd = new SqlCommand(com, con))
             {
                 try
                 {

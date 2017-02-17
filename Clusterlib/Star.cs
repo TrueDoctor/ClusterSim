@@ -72,10 +72,10 @@ namespace ClusterLib
 
         public void print() //print all fields of the star in the console
         {
-            Console.WriteLine(this.id+"\n");
-            Console.WriteLine("pos: " + pos.toString());
-            Console.WriteLine("vel: " + vel.toString());
-            Console.WriteLine("mass: " + mass);
+            Console.Write(this.id+", ");
+            //Console.WriteLine("pos: " + pos.toString());
+            //Console.WriteLine("vel: " + vel.toString());
+            //Console.WriteLine("mass: " + mass);
         }
 
         public Star Clone()

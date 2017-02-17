@@ -9,7 +9,6 @@ namespace ClusterLib
 {
     public static class Misc
     {
-        static double mean = 0;
         static Random rand = new Random();
 
         public static int CountFiles(string path)
@@ -18,13 +17,13 @@ namespace ClusterLib
             return di.GetFiles().Length;
         }
 
-        public static Star randomize(double pos,double vel,double mass,int id)
+        public static Star randomize(double pos,double vel,double massV,double massM,int id)
         {
-            return new Star(new Vector().random(pos), new Vector().random(vel), Math.Abs(Misc.random(mass)), id);
+            return new Star(new Vector().random(pos), new Vector().random(vel), Math.Abs(Misc.random(massV,massM)), id);
 
         }
 
-        public static decimal random(double stdDev = 1)
+        public static decimal random(double stdDev = 1,double mean = 0)
         {
             //reuse this if you are generating many
             double u1 = rand.NextDouble(); //these are uniform(0,1) random decimals

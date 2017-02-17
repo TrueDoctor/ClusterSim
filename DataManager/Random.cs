@@ -32,7 +32,7 @@ namespace DataManager
 
         private void MassChange(object sender, EventArgs e)
         {
-            MassAns.Text = "10^" + MassBar.Value + " SM";
+            MassVAns.Text = "10^" + MassVBar.Value + " SM Variance";
         }
 
         private void Start_Click(object sender, EventArgs e)
@@ -41,15 +41,36 @@ namespace DataManager
             StarCount.Enabled = false;
             PosBar.Enabled = false;
             VelBar.Enabled = false;
-            MassBar.Enabled = false;
+            MassVBar.Enabled = false;
             progressBar.Maximum = (int)StarCount.Value;
 
             for (int i = 0; i < StarCount.Value; i++)
             {
-                while (SQL.addRow(Misc.randomize(Math.Pow(10, PosBar.Value), Math.Pow(10, VelBar.Value), Math.Pow(10, MassBar.Value), i), 0, table) == false) ;
+                while (SQL.addRow(Misc.randomize(Math.Pow(10, PosBar.Value), Math.Pow(10, VelBar.Value),
+                    Math.Pow(10, MassVBar.Value), Math.Pow(10, MassMBar.Value), i), 0, table) == false) ;
                 progressBar.Increment(1);
             }
+
+            StarCluster rand = new StarCluster(table,table,0,1);
+
+            progressBar.Value =0;
+
+            for (int i = 0; i < StarCount.Value; i++)
+            {
+                rand.initialvel(i);
+                progressBar.Increment(1);
+            }
+            SQL.dropTable(table);
+            SQL.addTable(table);
+            foreach (Star s in rand.Stars)
+                SQL.addRow(s,0,table);
+            
             this.Close();
+        }
+
+        private void MassMBar_Scroll(object sender, EventArgs e)
+        {
+            MassMAns.Text = "10^" + MassMBar.Value + " SM Mean";
         }
     }
 }

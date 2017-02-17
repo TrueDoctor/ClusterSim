@@ -95,6 +95,14 @@ namespace ClusterLib
                 output += this.vec[i] * vec.vec[i];
             return output;
         }
+        public decimal distance2()  //magnitude squared
+        {
+            decimal hypo = 0;
+            for (int i = 0; i <= 2; i++)
+                hypo += this.vec[i] * this.vec[i];
+            return hypo;
+        }
+
         public decimal distance()            //magnitude of the vector
         {
             decimal hypo = 0;
@@ -107,11 +115,11 @@ namespace ClusterLib
             
             return vec2 - this;
         }
-        public void scale(decimal distance)   //scale magnitude to value
+        public Vector scale(decimal distance)   //scale magnitude to value
         {
-            decimal d = distance / this.distance();
-            for (int i = 0; i <= 2; i++)
-                this.vec[i] = (decimal)Math.Sqrt(Math.Pow((double)this.vec[i],2)*(double)d);
+            div(this.distance());
+            mult(distance);
+            return this;
         }
 
         public Vector random(double range=1)   //scale magnitude to value

@@ -23,7 +23,8 @@ namespace ClusterLib
         private string wtable = "copy";
         private int start;
         private int starCount;
-        private List <Star> Stars;
+        public List <Star> Stars;
+        private List<Star> OldStars;
         private List<List<Star>> Steps = new List<List<Star>>();
         
         
@@ -61,6 +62,11 @@ namespace ClusterLib
             int processors = Environment.ProcessorCount;
             int perCore = (int)starCount/ processors;
             int left = starCount - perCore * processors ;
+            
+
+            OldStars = new List<Star>();
+            foreach (Star s in Stars)
+                OldStars.Add(s);
 
             for (int i=0;i<processors;i++)
             {
@@ -102,7 +108,7 @@ namespace ClusterLib
 
             
 
-            Thread save = new Thread(delegate () { export(new List<Star>(Steps.Last()), step,wtable); });
+            Thread save = new Thread(delegate () { export(new List<Star>(Steps.Last()), step+start,wtable); });
             save.Priority = ThreadPriority.Highest;
             save.Start();
 
@@ -121,7 +127,7 @@ namespace ClusterLib
                     if (s.computed == false)
                     {
                         s.computed = true;
-                        Vec6 Star = new Vec6(s.pos, s.vel);
+                        Vec6 Star = new Vec6(OldStars[i].pos, OldStars[i].vel);
                         Vec6 KA = f(Star, s.id);
                         Vec6 KB = f(Star + ((dt / 2) * KA), s.id);
                         Vec6 KC = f(Star + ((dt / 2) * KB), s.id);
@@ -156,7 +162,7 @@ namespace ClusterLib
                     if (s.computed == false)
                     {
                         s.computed = true;
-                        Vec6 Star = new Vec6(s.pos, s.vel);
+                        Vec6 Star = new Vec6(OldStars[i].pos, OldStars[i].vel);
                         Vec6 KA = dt * f(Star, s.id);
                         Vec6 FF = dt * f(KA, s.id);
                         Vec6 KB = dt * f(Star + (1.0m / 3) * KA + 1.0m / 18 * FF, s.id);
@@ -185,7 +191,7 @@ namespace ClusterLib
         {
             Vector acc = new Vector();
             for (int j = 0; j < Stars.Count; j++)
-                if (id!=j)
+                if (id!=Stars[j].id)
                     acc.add(calcacc(Star.ToVector(0), Stars[j]));
 
             return new Vec6(Star.ToVector(1),acc);
@@ -207,37 +213,41 @@ namespace ClusterLib
 
         
 
+        public void initialvel(int id)
+        {
+            Random rand = new Random();
+            Vector acc = new Vector();
+            
+            foreach (Star s in Stars)
+                if (s.id != id)
+                    acc.add(calcacc(Stars[id].pos, s));
+                    
+
+            double Bacc = (double)acc.distance();
+            decimal V = (decimal)Math.Sqrt(Bacc*Math.Sqrt(((double)Gravitation*(double)Stars[id].getMass())/Bacc));//V=Wurzel((G*m)/|acc|)
+
+            decimal x1 = 2m * (decimal)rand.NextDouble() - 1m;//x1 = random -1,1
+            decimal x2 = 2m * (decimal)rand.NextDouble() - 1m;//x2 = random -1,1
+            decimal x3 = (x1 * acc.vec[0] + x2 * acc.vec[1]) / -( acc.vec[2]);// x3= (x1*acc1)/-acc3 + (x2*acc2)/acc3
+
+            Vector vel = new Vector(x1, x2, x3);
+            decimal skalar = vel.skalar(acc);
+            Stars[id].vel.add(vel.scale(V)); // hinzufügen von ergebnissen zu zufällig generierten werten. Skalieren auf V
+        }
+
         public void export(List<Star> data, int step, string table)
         {
             foreach (Star s in data)
             {
-                while (SQL.addRow(s, step, table) == false) ;
+                //while (SQL.addRow(s, step, table) == false) ;
                 //Console.WriteLine(s.id);
-            }
-                //System.IO.File.WriteAllText(@"C:\Users\Dennis\Documents\Clustersim1\file" + i + ".json", Newtonsoft.Json.JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented));
-                //Console.WriteLine(i + "\n" + Newtonsoft.Json.JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented));
-            
-            
-        }
-    }
 
-    public static class CloneClass
-    {
-        /// <summary>
-        /// Clones a object via shallow copy
-        /// </summary>
-        /// <typeparam name="T">Object Type to Clone</typeparam>
-        /// <param name="obj">Object to Clone</param>
-        /// <returns>New Object reference</returns>
-        public static T CloneObject<T>(this T obj) where T : class
-        {
-            if (obj == null) return null;
-            System.Reflection.MethodInfo inst = obj.GetType().GetMethod("MemberwiseClone",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            if (inst != null)
-                return (T)inst.Invoke(obj, null);
-            else
-                return null;
+                System.IO.File.WriteAllText(@"E:\Dennis\Clustersim\file" + step + ".json", Newtonsoft.Json.JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented));
+                //Console.WriteLine(i + "\n" + Newtonsoft.Json.JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented));
+            }
+            
         }
+
+
     }
 }
