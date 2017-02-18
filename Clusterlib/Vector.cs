@@ -30,13 +30,13 @@ namespace ClusterLib
             this.vec = vec3.vec;
         }
 
-        public Vector(Vec6 vec,int i)  //vector overload
+        public Vector(Vec6 vec,int i)  //vec6 overload split into a single vec3
         {
             for(int n = 0;n<3;n++)
                 this.vec[n] = vec.vec[n+i*3];
         }
 
-        public static Vector operator+ (Vector a, Vector b)
+        public static Vector operator+ (Vector a, Vector b)//+ operator overload
         {
             return new Vector(new decimal[] { a.vec[0] + b.vec[0], a.vec[1] + b.vec[1], a.vec[2] + b.vec[2] });
         }
@@ -62,10 +62,10 @@ namespace ClusterLib
         }
 
 
-        public void init()
+        public void init(decimal n = 0m)//initialize vector
         {
             for (int i = 0; i < 3; i++)
-                this.vec[i] = 0;
+                this.vec[i] = n;
         }
 
         public void add(Vector vec) //add to vector
@@ -78,31 +78,24 @@ namespace ClusterLib
             for (int i = 0; i < 3; i++)
                 this.vec[i] -= vec.vec[i];
         }
-        public void mult(decimal value) //mult this with
+        public void mult(decimal value) //mult this with value
         {
             for (int i = 0; i < 3; i++)
                 this.vec[i] *= value;
         }
-        public void div(decimal value)   //div this by
+        public void div(decimal value)   //div this by value
         {
             for (int i = 0; i < 3; i++)
                 this.vec[i] /= value;
         }
-        public decimal skalar(Vector vec)    // skalarprodukt
+        public decimal skalar(Vector vec)    // dot product(skalarprodukt)
         {
             decimal output = 0;
             for (int i = 0; i < 3; i++)
                 output += this.vec[i] * vec.vec[i];
             return output;
         }
-        public decimal distance2()  //magnitude squared
-        {
-            decimal hypo = 0;
-            for (int i = 0; i <= 2; i++)
-                hypo += this.vec[i] * this.vec[i];
-            return hypo;
-        }
-
+        
         public decimal distance()            //magnitude of the vector
         {
             decimal hypo = 0;
@@ -110,6 +103,15 @@ namespace ClusterLib
                 hypo += this.vec[i]* this.vec[i];
             return (decimal)Math.Sqrt((Double)hypo);
         }
+
+        public decimal distance2()            //magnitude of the vector squared
+        {
+            decimal hypo = 0;
+            for (int i = 0; i <= 2; i++)
+                hypo += this.vec[i] * this.vec[i];
+            return hypo;
+        }
+
         public Vector direction(Vector vec2) //calc directionvector to other vector
         {
             
@@ -122,14 +124,14 @@ namespace ClusterLib
             return this;
         }
 
-        public Vector random(double range=1)   //scale magnitude to value
+        public Vector random(double range=1)   //generate random vector
         { 
             for (int i = 0; i <= 2; i++)
                 this.vec[i] = Misc.random(range);
             return this;
         }
 
-        /*public Vector polar()
+        /*public Vector polar()//convert to polar coordinates
         {
             decimal r = this.distance();
             decimal g = 0;
@@ -156,7 +158,7 @@ namespace ClusterLib
 
 
     }
-    public class Vec6
+    public class Vec6//6 dimensional vector propertys according to Vector
     {
         public decimal[] vec = new decimal[6]; //Field
 
@@ -265,7 +267,7 @@ namespace ClusterLib
         }
        
 
-        public Vector ToVector(int i)
+        public Vector ToVector(int i)//split Vec6 into tow seperate vectors
         {
             if (i == 0)
                 return new Vector(new decimal[] { this.vec[0], this.vec[1], this.vec[2] });

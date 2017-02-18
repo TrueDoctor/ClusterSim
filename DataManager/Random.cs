@@ -35,6 +35,11 @@ namespace DataManager
             MassVAns.Text = "10^" + MassVBar.Value + " SM Variance";
         }
 
+        private void MassMBar_Scroll(object sender, EventArgs e)
+        {
+            MassMAns.Text = "10^" + MassMBar.Value + " SM Mean";
+        }
+
         private void Start_Click(object sender, EventArgs e)
         {
             Start.Enabled = false;
@@ -44,33 +49,36 @@ namespace DataManager
             MassVBar.Enabled = false;
             progressBar.Maximum = (int)StarCount.Value;
 
+            BarAns.Text = "Generiere Zufallsparameter";
+
             for (int i = 0; i < StarCount.Value; i++)
             {
-                while (SQL.addRow(Misc.randomize(Math.Pow(10, PosBar.Value), Math.Pow(10, VelBar.Value),
-                    Math.Pow(10, MassVBar.Value), Math.Pow(10, MassMBar.Value), i), 0, table) == false) ;
+                //while (SQL.addRow(Misc.randomize(Math.Pow(10, PosBar.Value), Math.Pow(10, VelBar.Value),
+                    //Math.Pow(10, MassVBar.Value), Math.Pow(10, MassMBar.Value), i), 0, table) == false) ;//add new row of stars
+                while (SQL.addRow(Misc.randomize(Convert.ToInt32(textBox1), Convert.ToInt32(textBox2),
+                    Convert.ToInt32(textBox3), Convert.ToInt32(textBox2), i), 0, table) == false) ;//add new row of stars
+
                 progressBar.Increment(1);
             }
 
             StarCluster rand = new StarCluster(table,table,0,1);
 
-            progressBar.Value =0;
+            progressBar.Value = 0;
+            BarAns.Text = "Berechne Initialgeschwindigkeiten";
 
             for (int i = 0; i < StarCount.Value; i++)
             {
-                rand.initialvel(i);
+                rand.initialvel(i);//initial velocity for each star
                 progressBar.Increment(1);
             }
             SQL.dropTable(table);
-            SQL.addTable(table);
+            SQL.addTable(table);//clear table 
             foreach (Star s in rand.Stars)
-                SQL.addRow(s,0,table);
+                SQL.addRow(s,0,table);//export data
             
-            this.Close();
+            this.Close();//close form
         }
 
-        private void MassMBar_Scroll(object sender, EventArgs e)
-        {
-            MassMAns.Text = "10^" + MassMBar.Value + " SM Mean";
-        }
+        
     }
 }

@@ -10,6 +10,7 @@ namespace ClusterLib
     public static class Misc
     {
         static Random rand = new Random();
+        public const decimal c = 0.005m;
 
         public static int CountFiles(string path)
         {
@@ -25,8 +26,7 @@ namespace ClusterLib
 
         public static decimal random(double stdDev = 1,double mean = 0)
         {
-            //reuse this if you are generating many
-            double u1 = rand.NextDouble(); //these are uniform(0,1) random decimals
+            double u1 = rand.NextDouble(); //uniform(0,1) random decimals
             double u2 = rand.NextDouble();
             double randStdNormal = Math.Sqrt(-2.0 * Math.Log(u1)) *
                          Math.Sin(2.0 * Math.PI * u2); //random normal(0,1)
@@ -34,7 +34,9 @@ namespace ClusterLib
                          mean + stdDev * randStdNormal; //random normal(mean,stdDev^2)
             return (decimal)randNormal;
         }
-        public enum Method{
+
+
+        public enum Method{     //enumerator of different Methods
             RK4,
             RK5
         };

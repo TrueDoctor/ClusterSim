@@ -41,6 +41,11 @@
             this.normalVariance = new System.Windows.Forms.Label();
             this.MassMBar = new System.Windows.Forms.TrackBar();
             this.MassMAns = new System.Windows.Forms.Label();
+            this.BarAns = new System.Windows.Forms.Label();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.textBox3 = new System.Windows.Forms.TextBox();
+            this.textBox4 = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.VelBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.PosBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.StarCount)).BeginInit();
@@ -50,13 +55,14 @@
             // 
             // progressBar
             // 
-            this.progressBar.Location = new System.Drawing.Point(12, 129);
+            this.progressBar.Location = new System.Drawing.Point(12, 163);
             this.progressBar.Name = "progressBar";
             this.progressBar.Size = new System.Drawing.Size(120, 23);
             this.progressBar.TabIndex = 0;
             // 
             // VelBar
             // 
+            this.VelBar.LargeChange = 1;
             this.VelBar.Location = new System.Drawing.Point(163, 80);
             this.VelBar.Maximum = 3;
             this.VelBar.Minimum = -8;
@@ -69,7 +75,7 @@
             // 
             // PosBar
             // 
-            this.PosBar.LargeChange = 100;
+            this.PosBar.LargeChange = 1;
             this.PosBar.Location = new System.Drawing.Point(163, 29);
             this.PosBar.Minimum = 1;
             this.PosBar.Name = "PosBar";
@@ -103,6 +109,7 @@
             // 
             // MassVBar
             // 
+            this.MassVBar.LargeChange = 1;
             this.MassVBar.Location = new System.Drawing.Point(163, 131);
             this.MassVBar.Maximum = 13;
             this.MassVBar.Minimum = -1;
@@ -117,32 +124,32 @@
             this.PosAns.AutoSize = true;
             this.PosAns.Location = new System.Drawing.Point(274, 39);
             this.PosAns.Name = "PosAns";
-            this.PosAns.Size = new System.Drawing.Size(48, 13);
+            this.PosAns.Size = new System.Drawing.Size(21, 13);
             this.PosAns.TabIndex = 6;
-            this.PosAns.Text = "10^5 AE";
+            this.PosAns.Text = "Ort";
             // 
             // VelAns
             // 
             this.VelAns.AutoSize = true;
             this.VelAns.Location = new System.Drawing.Point(273, 89);
             this.VelAns.Name = "VelAns";
-            this.VelAns.Size = new System.Drawing.Size(62, 13);
+            this.VelAns.Size = new System.Drawing.Size(85, 13);
             this.VelAns.TabIndex = 7;
-            this.VelAns.Text = "10^-4 AE/d";
+            this.VelAns.Text = "Geschwindigkeit";
             // 
             // MassVAns
             // 
             this.MassVAns.AutoSize = true;
             this.MassVAns.Location = new System.Drawing.Point(273, 141);
             this.MassVAns.Name = "MassVAns";
-            this.MassVAns.Size = new System.Drawing.Size(49, 13);
+            this.MassVAns.Size = new System.Drawing.Size(100, 13);
             this.MassVAns.TabIndex = 8;
-            this.MassVAns.Text = "10^3 Sm";
+            this.MassVAns.Text = "Masse Abweichung";
             // 
             // Start
             // 
             this.Start.Font = new System.Drawing.Font("Microsoft Sans Serif", 12.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Start.Location = new System.Drawing.Point(12, 78);
+            this.Start.Location = new System.Drawing.Point(12, 89);
             this.Start.Name = "Start";
             this.Start.Size = new System.Drawing.Size(120, 36);
             this.Start.TabIndex = 9;
@@ -170,6 +177,7 @@
             // 
             // MassMBar
             // 
+            this.MassMBar.LargeChange = 1;
             this.MassMBar.Location = new System.Drawing.Point(163, 162);
             this.MassMBar.Maximum = 13;
             this.MassMBar.Minimum = -1;
@@ -184,15 +192,56 @@
             this.MassMAns.AutoSize = true;
             this.MassMAns.Location = new System.Drawing.Point(273, 163);
             this.MassMAns.Name = "MassMAns";
-            this.MassMAns.Size = new System.Drawing.Size(49, 13);
+            this.MassMAns.Size = new System.Drawing.Size(66, 13);
             this.MassMAns.TabIndex = 34;
-            this.MassMAns.Text = "10^3 Sm";
+            this.MassMAns.Text = "Masse Mittel";
+            // 
+            // BarAns
+            // 
+            this.BarAns.AutoSize = true;
+            this.BarAns.Location = new System.Drawing.Point(13, 144);
+            this.BarAns.Name = "BarAns";
+            this.BarAns.Size = new System.Drawing.Size(0, 13);
+            this.BarAns.TabIndex = 35;
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(138, 36);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(35, 20);
+            this.textBox1.TabIndex = 36;
+            // 
+            // textBox2
+            // 
+            this.textBox2.Location = new System.Drawing.Point(138, 89);
+            this.textBox2.Name = "textBox2";
+            this.textBox2.Size = new System.Drawing.Size(35, 20);
+            this.textBox2.TabIndex = 37;
+            // 
+            // textBox3
+            // 
+            this.textBox3.Location = new System.Drawing.Point(138, 131);
+            this.textBox3.Name = "textBox3";
+            this.textBox3.Size = new System.Drawing.Size(35, 20);
+            this.textBox3.TabIndex = 38;
+            // 
+            // textBox4
+            // 
+            this.textBox4.Location = new System.Drawing.Point(138, 156);
+            this.textBox4.Name = "textBox4";
+            this.textBox4.Size = new System.Drawing.Size(35, 20);
+            this.textBox4.TabIndex = 39;
             // 
             // Random
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(351, 219);
+            this.ClientSize = new System.Drawing.Size(388, 198);
+            this.Controls.Add(this.textBox4);
+            this.Controls.Add(this.textBox3);
+            this.Controls.Add(this.textBox2);
+            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.BarAns);
             this.Controls.Add(this.MassMAns);
             this.Controls.Add(this.MassMBar);
             this.Controls.Add(this.normalVariance);
@@ -233,5 +282,10 @@
         private System.Windows.Forms.Label normalVariance;
         private System.Windows.Forms.TrackBar MassMBar;
         private System.Windows.Forms.Label MassMAns;
+        private System.Windows.Forms.Label BarAns;
+        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox textBox2;
+        private System.Windows.Forms.TextBox textBox3;
+        private System.Windows.Forms.TextBox textBox4;
     }
 }

@@ -43,8 +43,11 @@
             this.ClusterSim = new System.Windows.Forms.Button();
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.Check = new System.Windows.Forms.Button();
+            this.Download = new System.Windows.Forms.Button();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.groupBox1.SuspendLayout();
             this.newTableContainer.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // ServerList
@@ -53,19 +56,21 @@
             this.ServerList.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.ServerList.FormattingEnabled = true;
             this.ServerList.Items.AddRange(new object[] {
-            "Lade Liste..."});
+            "Lade Liste...",
+            "Warscheinlich ",
+            "Verbindungsproblem"});
             this.ServerList.Location = new System.Drawing.Point(33, 12);
             this.ServerList.Name = "ServerList";
-            this.ServerList.Size = new System.Drawing.Size(120, 234);
-            this.ServerList.TabIndex = 0;
+            this.ServerList.Size = new System.Drawing.Size(125, 169);
+            this.ServerList.TabIndex = 1;
             this.ServerList.SelectedIndexChanged += new System.EventHandler(this.ListIndexChange);
             this.ServerList.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ServerList_KeyDown);
             // 
             // AddTable
             // 
-            this.AddTable.Location = new System.Drawing.Point(9, 68);
+            this.AddTable.Location = new System.Drawing.Point(6, 54);
             this.AddTable.Name = "AddTable";
-            this.AddTable.Size = new System.Drawing.Size(50, 23);
+            this.AddTable.Size = new System.Drawing.Size(62, 23);
             this.AddTable.TabIndex = 4;
             this.AddTable.Text = "Leer";
             this.AddTable.UseVisualStyleBackColor = true;
@@ -95,7 +100,7 @@
             this.groupBox1.Controls.Add(this.SterneAns);
             this.groupBox1.Location = new System.Drawing.Point(188, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(142, 60);
+            this.groupBox1.Size = new System.Drawing.Size(146, 60);
             this.groupBox1.TabIndex = 7;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Details";
@@ -107,16 +112,16 @@
             this.newTableContainer.Controls.Add(this.AddTable);
             this.newTableContainer.Location = new System.Drawing.Point(188, 96);
             this.newTableContainer.Name = "newTableContainer";
-            this.newTableContainer.Size = new System.Drawing.Size(142, 97);
+            this.newTableContainer.Size = new System.Drawing.Size(146, 85);
             this.newTableContainer.TabIndex = 10;
             this.newTableContainer.TabStop = false;
             this.newTableContainer.Text = "Neue Tabelle";
             // 
             // randomTable
             // 
-            this.randomTable.Location = new System.Drawing.Point(65, 68);
+            this.randomTable.Location = new System.Drawing.Point(74, 54);
             this.randomTable.Name = "randomTable";
-            this.randomTable.Size = new System.Drawing.Size(50, 23);
+            this.randomTable.Size = new System.Drawing.Size(66, 23);
             this.randomTable.TabIndex = 12;
             this.randomTable.Text = "Zufällig";
             this.randomTable.UseVisualStyleBackColor = true;
@@ -126,7 +131,7 @@
             // 
             this.newTableName.Location = new System.Drawing.Point(6, 28);
             this.newTableName.Name = "newTableName";
-            this.newTableName.Size = new System.Drawing.Size(100, 20);
+            this.newTableName.Size = new System.Drawing.Size(134, 20);
             this.newTableName.TabIndex = 11;
             this.newTableName.Text = "Name";
             // 
@@ -148,9 +153,9 @@
             // 
             // DataView
             // 
-            this.DataView.Location = new System.Drawing.Point(188, 223);
+            this.DataView.Location = new System.Drawing.Point(6, 14);
             this.DataView.Name = "DataView";
-            this.DataView.Size = new System.Drawing.Size(68, 23);
+            this.DataView.Size = new System.Drawing.Size(62, 23);
             this.DataView.TabIndex = 12;
             this.DataView.Text = "DataView";
             this.DataView.UseVisualStyleBackColor = true;
@@ -158,9 +163,10 @@
             // 
             // ClusterSim
             // 
-            this.ClusterSim.Location = new System.Drawing.Point(262, 223);
+            this.ClusterSim.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ClusterSim.Location = new System.Drawing.Point(74, 14);
             this.ClusterSim.Name = "ClusterSim";
-            this.ClusterSim.Size = new System.Drawing.Size(68, 23);
+            this.ClusterSim.Size = new System.Drawing.Size(66, 23);
             this.ClusterSim.TabIndex = 13;
             this.ClusterSim.Text = "ClusterSim";
             this.ClusterSim.UseVisualStyleBackColor = true;
@@ -168,42 +174,64 @@
             // 
             // progressBar
             // 
-            this.progressBar.Location = new System.Drawing.Point(59, 253);
+            this.progressBar.Location = new System.Drawing.Point(12, 237);
             this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(100, 23);
+            this.progressBar.Size = new System.Drawing.Size(322, 23);
             this.progressBar.TabIndex = 14;
             this.progressBar.Visible = false;
             // 
             // Check
             // 
-            this.Check.Location = new System.Drawing.Point(3, 254);
+            this.Check.Location = new System.Drawing.Point(12, 208);
             this.Check.Name = "Check";
-            this.Check.Size = new System.Drawing.Size(50, 23);
+            this.Check.Size = new System.Drawing.Size(70, 23);
             this.Check.TabIndex = 13;
-            this.Check.Text = "Check";
+            this.Check.Text = "Überprüfen";
             this.Check.UseVisualStyleBackColor = true;
             this.Check.Click += new System.EventHandler(this.Check_Click);
+            // 
+            // Download
+            // 
+            this.Download.Location = new System.Drawing.Point(88, 208);
+            this.Download.Name = "Download";
+            this.Download.Size = new System.Drawing.Size(70, 23);
+            this.Download.TabIndex = 15;
+            this.Download.Text = "Download";
+            this.Download.UseVisualStyleBackColor = true;
+            this.Download.Click += new System.EventHandler(this.Download_Click);
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.ClusterSim);
+            this.groupBox2.Controls.Add(this.DataView);
+            this.groupBox2.Location = new System.Drawing.Point(188, 187);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(146, 43);
+            this.groupBox2.TabIndex = 16;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Export";
             // 
             // DataManager
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.DimGray;
-            this.ClientSize = new System.Drawing.Size(337, 289);
+            this.ClientSize = new System.Drawing.Size(342, 266);
+            this.Controls.Add(this.Download);
             this.Controls.Add(this.Check);
             this.Controls.Add(this.progressBar);
-            this.Controls.Add(this.ClusterSim);
-            this.Controls.Add(this.DataView);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.newTableContainer);
             this.Controls.Add(this.ServerList);
             this.Controls.Add(this.groupBox1);
+            this.Controls.Add(this.groupBox2);
             this.Name = "DataManager";
             this.Text = "DataManager";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.newTableContainer.ResumeLayout(false);
             this.newTableContainer.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -225,6 +253,8 @@
         private System.Windows.Forms.Button ClusterSim;
         private System.Windows.Forms.ProgressBar progressBar;
         private System.Windows.Forms.Button Check;
+        private System.Windows.Forms.Button Download;
+        private System.Windows.Forms.GroupBox groupBox2;
     }
 }
 
