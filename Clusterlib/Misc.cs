@@ -10,7 +10,7 @@ namespace ClusterLib
     public static class Misc
     {
         static Random rand = new Random();
-        public const decimal c = 0.005m;
+        public const decimal c = 178m;
 
         public static int CountFiles(string path)
         {

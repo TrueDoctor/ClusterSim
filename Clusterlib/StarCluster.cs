@@ -127,7 +127,7 @@ namespace ClusterLib
             bool ready;
             do
             {
-                for (int i = cstart; i <= starCount; i++)//for seqence of Stars[]
+                for (int i = cstart; i < starCount; i++)//for seqence of Stars[]
                 {
                     Star s = Stars[i];
                     if (s.computed == false)
@@ -162,7 +162,7 @@ namespace ClusterLib
             bool ready;
             do
             {
-                for (int i = cstart; i <= starCount; i++)
+                for (int i = cstart; i < starCount; i++)
                 {
                     Star s = Stars[i];
                     if (s.computed == false)
