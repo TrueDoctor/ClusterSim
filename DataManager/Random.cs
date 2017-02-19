@@ -49,14 +49,16 @@ namespace DataManager
             MassVBar.Enabled = false;
             progressBar.Maximum = (int)StarCount.Value;
 
+            BarAns.Visible = true;
             BarAns.Text = "Generiere Zufallsparameter";
 
             for (int i = 0; i < StarCount.Value; i++)
             {
+                Application.DoEvents();
                 //while (SQL.addRow(Misc.randomize(Math.Pow(10, PosBar.Value), Math.Pow(10, VelBar.Value),
                     //Math.Pow(10, MassVBar.Value), Math.Pow(10, MassMBar.Value), i), 0, table) == false) ;//add new row of stars
-                while (SQL.addRow(Misc.randomize(Convert.ToInt32(textBox1), Convert.ToInt32(textBox2),
-                    Convert.ToInt32(textBox3), Convert.ToInt32(textBox2), i), 0, table) == false) ;//add new row of stars
+                while (SQL.addRow(Misc.randomize(Convert.ToDouble(textBox1.Text), Convert.ToDouble(textBox2.Text),
+                    Convert.ToDouble(textBox3.Text), Convert.ToDouble(textBox4.Text), i), 0, table) == false) ;//add new row of stars
 
                 progressBar.Increment(1);
             }
@@ -68,6 +70,7 @@ namespace DataManager
 
             for (int i = 0; i < StarCount.Value; i++)
             {
+                Application.DoEvents();
                 rand.initialvel(i);//initial velocity for each star
                 progressBar.Increment(1);
             }

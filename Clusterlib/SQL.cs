@@ -122,9 +122,10 @@ namespace ClusterLib
         public static void addTable(string name)
         {
             SqlConnection con = new SqlConnection(conString);//connect
-            String[] ban = new string[] { "[", "]", "'", ".", "+", "*", "-", "/", "°", "!", "\0", "\b", "\'", "\"", "\n", "\r", "\t", @"\", "%" ,"DROP","Drop","drop","All","DELETE","Delete","delete",";",","};//a table name cant be a Parameter, so all string exiting chars get replaced with ""
+            String[] ban = new string[] { "[", "]", "'", ".", "+", "*", "-", "/", "°", "!", "\0", "\b", "\'", "\"", "\n", "\r", "\t", @"\", "%" ,"DROP","Drop","drop","All","DELETE","Delete","delete",";",","," ","-",":"};//a table name cant be a Parameter, so all string exiting chars get replaced with ""
             foreach(string s in ban)
                 name = name.Replace(s,"");//replace
+            
             using (SqlCommand cmd = new SqlCommand("CREATE" +
                 " TABLE[dbo]. ["+name+"] ([step][int] NULL,[id][int] NOT NULL,[pos x][varchar](32) NOT NULL," +
                 "[pos y][varchar](32) NOT NULL,[pos z][varchar](32) NOT NULL,[vel x][varchar](32) NOT NULL," +
@@ -288,6 +289,31 @@ namespace ClusterLib
 
             }
             return i+1;
+        }
+
+        public static bool order(string table)//order the rows 
+        {
+            SqlConnection con = new SqlConnection(conString);
+            string com = "SELECT * FROM [dbo].[" + table + "] ORDER BY step,id";
+            using (SqlCommand cmd = new SqlCommand(com, con))
+            {
+                try
+                {
+                    con.Open();//open connection
+                    cmd.ExecuteNonQuery();
+                    
+                    con.Close();
+                }
+
+                catch (Exception e)
+                {
+                    Console.WriteLine("Tabelle " + table + " Konnte nicht sortiert werden  \n" + e.Message + "\n");
+                    con.Close();
+                    return false;
+                }
+                
+            }
+            return true;
         }
     }
 }

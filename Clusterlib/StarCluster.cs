@@ -113,84 +113,105 @@ namespace ClusterLib
 
 
 
-            /*Thread save = new Thread(delegate () { export(new List<Star>(Steps.Last()), step+start,wtable); });
+            Thread save = new Thread(delegate () { export(new List<Star>(Steps.Last()), step+start,wtable); });
             save.Priority = ThreadPriority.Highest;
-            save.Start();*/
+            save.Start();
             //export(new List<Star>(Steps.Last()), step + start, wtable);//currently disabled create new save Thread;
 
             foreach (Star s in Stars)//reset computation status
                 s.computed = false;     
         }
 
-        private void RK4(int step,int cstart)
+        private void RK4(int step, int cstart)
         {
-            bool ready;
-            do
+            int i=0;
+            try
             {
-                for (int i = cstart; i < starCount; i++)//for seqence of Stars[]
+                bool ready;
+                do
                 {
-                    Star s = Stars[i];
-                    if (s.computed == false)
+                    if (cstart<Stars.Count&& cstart < OldStars.Count)//Debug
+                    for (i = cstart; i < Stars.Count; i++)//for seqence of Stars[]
                     {
-                        s.computed = true;
-                        Vec6 Star = new Vec6(OldStars[i].pos, OldStars[i].vel);//convert star to vec6
-                        Vec6 KA = f(Star, s.id);//calculate help values
-                        Vec6 KB = f(Star + ((dt / 2) * KA), s.id);
-                        Vec6 KC = f(Star + ((dt / 2) * KB), s.id);
-                        Vec6 KD = f(Star + KC, s.id);
-                        Vec6 F = ((dt / 6) * (KA + (2 * KB) + (2 * KC) + KD));//calculate resulting Vector
-                        s.pos = s.pos + F.ToVector(0);
-                        s.vel = s.vel + F.ToVector(1);
-                        s.print();
+                        Star s = Stars[i];
+                        if (s.computed == false)
+                        {
+                            s.computed = true;
+                            Vec6 Star = new Vec6(OldStars[i].pos, OldStars[i].vel);//convert star to vec6
+                            Vec6 KA = f(Star, s.id);//calculate help values
+                            Vec6 KB = f(Star + ((dt / 2) * KA), s.id);
+                            Vec6 KC = f(Star + ((dt / 2) * KB), s.id);
+                            Vec6 KD = f(Star + KC, s.id);
+                            Vec6 F = ((dt / 6) * (KA + (2 * KB) + (2 * KC) + KD));//calculate resulting Vector
+                            s.pos = s.pos + F.ToVector(0);
+                            s.vel = s.vel + F.ToVector(1);
+                            s.print();
+                        }
+
                     }
+                    ready = false;//initialize bool
 
-                }
-                ready = false;//initialize bool
-
-                foreach (Star s in Stars)//check for not yet computed stars
-                    if (s.computed == false)
-                        break;//abort if not computed
-                    else if (s == Stars.Last())
-                        ready = true;//sucessfully finished
-                if (ready == false)
-                    cstart = 0;//start form 0
-            } while (ready == false);//repete until everythig is computed
+                    foreach (Star s in Stars)//check for not yet computed stars
+                        if (s.computed == false)
+                            break;//abort if not computed
+                        else if (s == Stars.Last())
+                            ready = true;//sucessfully finished
+                    if (ready == false)
+                        cstart = 0;//start form 0
+                } while (ready == false);//repete until everythig is computed
+            }
+            catch
+            {
+                Console.WriteLine("Thread Fehler bei: "+i);
+            }
         }
         
         public void RK5(int step, int cstart)//as RK4
         {
-            bool ready;
-            do
+            int i = 0;
+            try
             {
-                for (int i = cstart; i < starCount; i++)
+                bool ready;
+                do
                 {
-                    Star s = Stars[i];
-                    if (s.computed == false)
-                    {
-                        s.computed = true;
-                        Vec6 Star = new Vec6(OldStars[i].pos, OldStars[i].vel);
-                        Vec6 KA = dt * f(Star, s.id);
-                        Vec6 FF = dt * f(KA, s.id);
-                        Vec6 KB = dt * f(Star + (1.0m / 3) * KA + 1.0m / 18 * FF, s.id);
-                        Vec6 KC = dt * f(Star - 1.216m * KA + (252.0m / 125) * KB - (44.0m / 125) * FF, s.id);
-                        Vec6 KD = dt * f(Star + 9.5m * KA - (72.0m / 7) * KB + (25.0m / 14) * KC + (44.0m / 125) * FF, s.id);
-                        Vec6 F = ((5.0m / 48 * KA) + (27.0m / 56 * KB) + (125.0m / 336 * KC) + (1.0m / 24 * KD));
-                        s.pos = s.pos + F.ToVector(0);
-                        s.vel = s.vel + F.ToVector(1);
-                        s.print();
-                    }
-                }
+                    if (cstart < Stars.Count && cstart < OldStars.Count)
+                        for (i = cstart; i < Stars.Count; i++)
+                        {
+                            Star s = Stars[i];
+                            if (s.computed == false)
+                            {
+                                s.computed = true;
+                                Vec6 Star = new Vec6(OldStars[i].pos, OldStars[i].vel);
+                                Vec6 KA = dt * f(Star, s.id);
+                                Vec6 FF = dt * f(KA, s.id);
+                                Vec6 KB = dt * f(Star + (1.0m / 3) * KA + 1.0m / 18 * FF, s.id);
+                                Vec6 KC = dt * f(Star - 1.216m * KA + (252.0m / 125) * KB - (44.0m / 125) * FF, s.id);
+                                Vec6 KD = dt * f(Star + 9.5m * KA - (72.0m / 7) * KB + (25.0m / 14) * KC + (44.0m / 125) * FF, s.id);
+                                Vec6 F = ((5.0m / 48 * KA) + (27.0m / 56 * KB) + (125.0m / 336 * KC) + (1.0m / 24 * KD));
+                                s.pos = s.pos + F.ToVector(0);
+                                s.vel = s.vel + F.ToVector(1);
+                                s.print();
+                            }
+                        }
+                    else
+                        cstart = 0;
 
-                ready = false;
-                
-                foreach (Star s in Stars)
-                    if (s.computed == false)
-                        break;
-                    else if (s == Stars.Last())
-                        ready = true;
-                if (ready == false)
-                    cstart = 0;
-            } while (ready == false);
+                    ready = false;
+
+                    foreach (Star s in Stars)
+                        if (s.computed == false)
+                            break;
+                        else if (s == Stars.Last())
+                            ready = true;
+                    if (ready == false)
+                        cstart = 0;
+                } while (ready == false);
+            }
+            catch
+            {
+                Console.WriteLine("Thread Fehler bei: " + i);
+
+            }
         }
 
         private Vec6 f(Vec6 Star,int id)
@@ -205,17 +226,19 @@ namespace ClusterLib
 
         private Vector calcacc(Vector a,Star b, int id = -1)
         {
-            Vector tempDirection;
+            
+                Vector tempDirection;
 
-            tempDirection = a - b.pos; //direction vector to the other star
+                tempDirection = a - b.pos; //direction vector to the other star
 
-            decimal D = 1 / tempDirection.distance();//Sterne und Weltraum Grundlagen der Himmelsmechanik S.91
+                decimal D = 1 / tempDirection.distance();//Sterne und Weltraum Grundlagen der Himmelsmechanik S.91
 
-            decimal acceleration = b.getMass() * Gravitation * (decimal)Math.Pow((double)D, 3);
-            acceleration = (b.getMass() / Stars[id].getRelativMass()) * acceleration ;
-            Vector AccVec = b.pos-a;
-            AccVec.mult(acceleration);
-            return AccVec;
+                decimal acceleration = b.getMass() * Gravitation * (decimal)Math.Pow((double)D, 3);
+                acceleration = (b.getMass() / Stars[id].getRelativMass()) * acceleration;
+                Vector AccVec = b.pos - a;
+                AccVec.mult(acceleration);
+                return AccVec;
+            
         }
 
         
@@ -226,8 +249,8 @@ namespace ClusterLib
             Vector acc = new Vector();
             
             foreach (Star s in Stars)
-                if (s.id != id)
-                    acc.add(calcacc(Stars[id].pos, s));//add all acceleration vectors
+                if (s.id != Stars[id].id)
+                    acc.add(calcacc(Stars[id].pos, s,id));//add all acceleration vectors
                     
 
             double Bacc = (double)acc.distance();//magnitude|x| of the vector
@@ -244,20 +267,20 @@ namespace ClusterLib
 
         public void export(List<Star> data, int step, string table)
         {
-            XDMessagingClient client = new XDMessagingClient(); //https://github.com/TheCodeKing/XDMessaging.Net
-            IXDBroadcaster broadcaster = client.Broadcasters.GetBroadcasterForMode(XDTransportMode.HighPerformanceUI);
-
+            //XDMessagingClient client = new XDMessagingClient(); //https://github.com/TheCodeKing/XDMessaging.Net
+            //IXDBroadcaster broadcaster = client.Broadcasters.GetBroadcasterForMode(XDTransportMode.HighPerformanceUI);
+            int i = step;
             //System.IO.File.WriteAllText(@"A:\Dennis\Clustersim\file" + step + ".json", Newtonsoft.Json.JsonConvert.SerializeObject(Steps.ToArray(), Newtonsoft.Json.Formatting.Indented));//export as json file
             Console.WriteLine("SQL speichern ");
-            for (int i = 0; i < Steps.Count; i++)
-            {
-                foreach (Star s in Steps[i])
+            //for (int i = 0; i < Steps.Count; i++)
+            //{
+                foreach (Star s in data)
                 {
                     while (SQL.addRow(s, i, table) == false) ;//do until succesfull
                     Console.WriteLine("Step: "+i+" id: "+s.id);
-                    broadcaster.SendToChannel("steps", "i"+i);
+                    //broadcaster.SendToChannel("steps", "i"+i);
                 }
-            }
+            //}
         }
     }
 }

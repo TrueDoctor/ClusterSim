@@ -69,7 +69,9 @@ namespace ClusterSim
                 broadcaster.SendToChannel("steps", "i"+i);//send "i"+step in channel steps
                 Console.WriteLine("\n" + i + "\n \n");
             }
-            cluster.export(new List<Star>(), 0, wtable);   //save data
+            //cluster.export(new List<Star>(), 0, wtable);   //save data
+            SQL.order(wtable);
+
             Console.WriteLine("Direkt in Dataview öffnen? (y/n)");
             string view = Console.ReadLine();                         //wait for input
             if (view=="y"||view=="Y")

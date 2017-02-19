@@ -201,8 +201,10 @@
             this.BarAns.AutoSize = true;
             this.BarAns.Location = new System.Drawing.Point(13, 144);
             this.BarAns.Name = "BarAns";
-            this.BarAns.Size = new System.Drawing.Size(0, 13);
+            this.BarAns.Size = new System.Drawing.Size(24, 13);
             this.BarAns.TabIndex = 35;
+            this.BarAns.Text = "test";
+            this.BarAns.Visible = false;
             // 
             // textBox1
             // 

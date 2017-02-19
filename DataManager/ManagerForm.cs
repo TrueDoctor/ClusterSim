@@ -23,6 +23,7 @@ namespace DataManager
             InitializeComponent();
             ListRefresh_Tick(new object(), new EventArgs());
             
+            
         }
 
         private void ListRefresh_Tick(object sender, EventArgs e)//show tables
@@ -34,6 +35,7 @@ namespace DataManager
                 foreach (string s in list)
                     ServerList.Items.Add(s);
             }
+            ServerList.SetSelected(0, true);
         }
 
         private void ListIndexChange(object sender, EventArgs e)//display detailed information on selection
@@ -50,7 +52,7 @@ namespace DataManager
             if (i == -1)
                 SterneAns.Text = "Liste ist leer";
             else
-                SterneAns.Text = "Sterne: "+Convert.ToString(i+1);
+                SterneAns.Text = "Sterne: "+Convert.ToString(i);
             newTableName.Text = table;
             
         }
@@ -81,6 +83,24 @@ namespace DataManager
 
         private void AddTable_Click(object sender, EventArgs e)
         {
+            string name = newTableName.Text;
+            
+            if (SQL.readTables().Contains(name))
+            {
+                string messageBoxText = String.Format("Sie sind im Begriff die Tabelle {0} zu überschreiben", name);
+                string caption = "Tabelle Überschreiben";
+                MessageBoxButtons button = MessageBoxButtons.YesNo;
+                MessageBoxIcon icon = MessageBoxIcon.Warning;
+                DialogResult res = MessageBox.Show(messageBoxText, caption, button, icon);
+
+                if (res == DialogResult.Yes)
+                {
+                    SQL.dropTable(name);
+                    SQL.addTable(name);
+                    
+                    ListRefresh_Tick(new object(), new EventArgs());
+                }
+            }
             SQL.addTable(newTableName.Text);
             ListRefresh_Tick(new object(), new EventArgs());
         }
@@ -97,20 +117,37 @@ namespace DataManager
 
         private void randomTable_Click(object sender, EventArgs e)
         {
-            string name;
-            if (ServerList.Items.Contains(newTableName.Text))//check if input name already existes
-                name = ServerList.SelectedItem.ToString();
-            else if (!SQL.readTables().Contains(newTableName.Text))
+            string name=newTableName.Text;
+            //if (ServerList.Items.Contains(newTableName.Text))//check if input name already existes
+            //name = ServerList.SelectedItem.ToString();
+            /*else */
+            if (SQL.readTables().Contains(name))
+            {
+                string messageBoxText = String.Format("Sie sind im Begriff die Tabelle {0} zu überschreiben", name);
+                string caption = "Tabelle Überschreiben";
+                MessageBoxButtons button = MessageBoxButtons.YesNo;
+                MessageBoxIcon icon = MessageBoxIcon.Warning;
+                DialogResult res = MessageBox.Show(messageBoxText, caption, button, icon);
+
+                if (res == DialogResult.Yes)
+                {
+                    SQL.dropTable(name);
+                    SQL.addTable(name);
+
+                    Random form = new Random(name);
+                    form.Show();//start random Form and pass name as argument
+                    ListRefresh_Tick(new object(), new EventArgs());
+                }
+            }
+            else 
             {
                 name = newTableName.Text;//else crate new table
                 SQL.addTable(name);
-            }
-            else
-                name = newTableName.Text;
 
-            Random form = new Random(name);
-            form.Show();//start random Form and pass name as argument
-            ListRefresh_Tick(new object(), new EventArgs());
+                Random form = new Random(name);
+                form.Show();//start random Form and pass name as argument
+                ListRefresh_Tick(new object(), new EventArgs());
+            }
         }
 
         private void ClusterSim_Click(object sender, EventArgs e)
@@ -177,10 +214,11 @@ namespace DataManager
             {
                 SaveFileDialog saveFileDialog1 = new SaveFileDialog();//savefile dialouge
                 saveFileDialog1.InitialDirectory = @"C:\";
+                saveFileDialog1.FileName = table;
                 saveFileDialog1.Title = "Save table as File";
                 saveFileDialog1.CheckPathExists = true;
                 saveFileDialog1.DefaultExt = "tsv";
-                saveFileDialog1.Filter = "Tsv files (*.tsv)|*.avi|All files (*.*)|*.*";
+                saveFileDialog1.Filter = "Tsv files (*.tsv)|*.tsv|All files (*.*)|*.*";
                 saveFileDialog1.FilterIndex = 2;
                 saveFileDialog1.RestoreDirectory = true;
 
@@ -195,13 +233,19 @@ namespace DataManager
                     {
                         list.AddRange(SQL.readStars(table, i));
                         progressBar.Value = i;
+                        Application.DoEvents();
                     }
                     progressBar.Value = 0;
                     progressBar.Maximum = list.Count;
                     List<string> lines = new List<string>();
+                    List<int> colors = new List<int>();
+                    System.Random int255 = new System.Random();
+                    for (int i = 0; i<list.Count;i++)
+                        colors.Add(65536 * int255.Next(255)+ 256 * int255.Next(255)+ int255.Next(255));
+
                     foreach (Star s in list)
                     {
-                        lines.Add(s.toTsv().Replace(',', '.'));
+                        lines.Add(s.toTsv().Replace(',', '.')+ "    "+colors[s.id]);
                         progressBar.Increment(1);
                     }
                     System.IO.File.WriteAllLines(path,lines);

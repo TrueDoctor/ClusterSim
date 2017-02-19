@@ -64,20 +64,22 @@ namespace Dataview
                 case Keys.Left: step--; import(step);
                         break;
 
-                case Keys.End:
+                case Keys.U:
                         step += 10; import(step);
                         break;
 
-                case Keys.RControlKey:
+                case Keys.Z:
                         step -= 10; import(step);
                         break;
 
                 case Keys.Up:
                         zoom*=2;
+                        Canvas = new Bitmap(Box.Width, Box.Height);
                         break;
 
                  case Keys.Down:
-                        zoom/=2;
+                        Canvas = new Bitmap(Box.Width, Box.Height);
+                        zoom /=2;
                         break;
                  case Keys.Enter:
                         string frames = "frames";
@@ -90,11 +92,59 @@ namespace Dataview
                     case Keys.T:
                         trace= !trace;//switch trace state
                         break;
-                    
-                    
+
+                    case Keys.G:
+                        string inputstep = "step";
+                        if (ShowInputDialog(ref inputstep) == DialogResult.OK)
+                            step = Convert.ToInt32(inputstep);
+                        import(step);
+                        break;
+
+                    case Keys.S://speicherung eines Frames
+                        SaveFileDialog saveFileDialog1 = new SaveFileDialog();//savefile dialouge
+                        saveFileDialog1.InitialDirectory = @"C:\";
+                        saveFileDialog1.Title = "Save Screenshot";
+                        saveFileDialog1.FileName = table +"s"+ step +"z"+ zoom +"x"+ Canvas.Width + "y" + Canvas.Height + ".jpg";
+                        saveFileDialog1.CheckPathExists = true;
+                        saveFileDialog1.DefaultExt = "jpg";
+                        saveFileDialog1.Filter = "Jpeg files (*.jpg)|*.jpg|Png files (*.png)|*.png|Bitmap files (*.bmp)|*.bmp|All files alle Bildformate unterstüzt (*.*)|*.*";
+                        saveFileDialog1.FilterIndex = 2;
+                        saveFileDialog1.RestoreDirectory = true;
+
+                        string path = null;
+                        if (saveFileDialog1.ShowDialog() == DialogResult.OK && GetImageFormat(System.IO.Path.GetExtension(saveFileDialog1.FileName))!=null)
+                        {
+                            string filepath = saveFileDialog1.FileName;
+
+                            System.Drawing.Imaging.ImageFormat format = GetImageFormat(System.IO.Path.GetExtension(filepath).Replace(".",""));
+                            if (format!=null) 
+                                Canvas.Save(filepath, format);
+                        }
+                            break;
+
+
                 }
             draw();
 
+        }
+
+        private static System.Drawing.Imaging.ImageFormat GetImageFormat(string format)
+        {
+            System.Drawing.Imaging.ImageFormat imageFormat = null;
+
+            try
+            {
+                format.Replace(".", "");
+                var imageFormatConverter = new ImageFormatConverter();
+                imageFormat = (System.Drawing.Imaging.ImageFormat)imageFormatConverter.ConvertFromString(format.Replace(".", ""));
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Bildformat"+ format.Replace(".", "")+" nicht unterstützt");
+                //throw;
+            }
+
+            return imageFormat;
         }
 
         private void import(int i)
@@ -113,6 +163,7 @@ namespace Dataview
 
         private bool draw()
         {
+            Application.DoEvents();
 
             Box.Cursor = Cursors.WaitCursor;
             //import(step);
@@ -137,7 +188,7 @@ namespace Dataview
             Box.Image = Canvas;
             Box.Refresh();
             Box.Cursor = Cursors.Cross;
-            this.Text = String.Format("Schritt: {0} von {1}",step, SQL.lastStep(table));//change caption
+            this.Text = String.Format("{0}   Schritt: {1} von {2}",table,step, SQL.lastStep(table));//change caption
 
             if (Stars != null)
                 return true;
