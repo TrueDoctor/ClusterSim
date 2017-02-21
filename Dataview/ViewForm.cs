@@ -20,6 +20,7 @@ namespace Dataview
         //List<List<Star>> Steps = new List<List<Star>>();
         List<Star> Stars = new List<ClusterLib.Star>();
         Bitmap Canvas;
+        int c=0;
         //bool three = false;
         bool trace = false;//trace the star position
         decimal zoom = 10;
@@ -188,7 +189,10 @@ namespace Dataview
             Box.Image = Canvas;
             Box.Refresh();
             Box.Cursor = Cursors.Cross;
-            this.Text = String.Format("{0}   Schritt: {1} von {2}",table,step, SQL.lastStep(table));//change caption
+
+            if (Stars.Count < 1000)
+                c = SQL.lastStep(table);
+            this.Text = String.Format("{0}   Schritt: {1} von {2}",table,step, c);//change caption
 
             if (Stars != null)
                 return true;
@@ -271,6 +275,7 @@ namespace Dataview
         {
             import(0);
             draw();
+            c = SQL.lastStep(table);
             
         }
 

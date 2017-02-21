@@ -143,7 +143,7 @@ namespace ClusterLib
 
                 catch (Exception e)
                 {
-                    Console.WriteLine("Hinzufügen von +" + name + " fehlgeschlagen \n" + e.Message + "\n");
+                    Console.WriteLine("Hinzufügen von " + name + " fehlgeschlagen \n" + e.Message + "\n");
                     
                     con.Close();
                 }
@@ -223,7 +223,7 @@ namespace ClusterLib
 
                 catch (Exception e)
                 {
-                    Console.WriteLine("konnte letzten Schritt von +"+table+" nicht abfragen  \n" + e.Message + "\n");
+                    Console.WriteLine("konnte letzten Schritt von "+table+" nicht abfragen  \n" + e.Message + "\n");
                     con.Close();
                 }
 
@@ -250,7 +250,7 @@ namespace ClusterLib
 
                 catch (Exception e)
                 {
-                    Console.WriteLine("konnte letzten Schritt von +" + table + " nicht abfragen  \n" + e.Message + "\n");
+                    Console.WriteLine("konnte ersten Schritt von " + table + " nicht abfragen  \n" + e.Message + "\n");
                     con.Close();
                 }
 
@@ -282,7 +282,7 @@ namespace ClusterLib
 
                 catch (Exception e)
                 {
-                    Console.WriteLine("Konnte anzahl der Sterne von +" + table + " nicht abfragen, ist diese leer?  \n" + e.Message + "\n");
+                    Console.WriteLine("Konnte anzahl der Sterne von " + table + " nicht abfragen, ist diese leer?  \n" + e.Message + "\n");
                     con.Close();
                 }
                 

@@ -24,6 +24,7 @@ namespace ClusterLib
         private string wtable;//table to write at
         private int start;//starting step
         private int starCount;
+        public List<Thread> savethreads = new List<Thread>();
         public List <Star> Stars;//Array of Stars
         private List<Star> OldStars;//While calculating a step the same values have to be used
         private List<List<Star>> Steps = new List<List<Star>>();//list of Clusters stored in ram
@@ -48,33 +49,39 @@ namespace ClusterLib
 
         public void doStep(int step,Misc.Method m)    
         {
+            if (Stars == null)
+                return;
             int processors = Environment.ProcessorCount;//get number of processors
             int perCore = (int)starCount/ processors;//divide the cluster in equal parts
             int left = starCount - perCore * processors ;//calc remainder
-            
+            List<Thread> threads = new List<Thread>();
 
             OldStars = new List<Star>();//save the current values
             foreach (Star s in Stars)//clone each to prevent shallow copys
                 OldStars.Add(s.Clone());
-            int n = 0;
+            //int n = 0;
             for (int i=0;i<processors;i++)
             {
-                n++;
+                int start = i * perCore;
+                //n++;
                 if (i == processors - 1)
-                    perCore += left;
-                try
-                {
+                    start = (int)Math.Round((decimal)left/processors);
+                
+
+                //try
+                //{
                     switch (m)//case(Method) of...
                     {
 
                         case Misc.Method.RK4:
-                            new Thread(delegate () { RK4(step, perCore * i); }).Start();//new Thread(start step,steps to process)
+                            threads.Add(new Thread(delegate () { RK4(step, start); }));//new Thread(start step,steps to process)
                             break;
                         case Misc.Method.RK5:
-                            new Thread(delegate () { RK5(step, perCore * i); }).Start();//new Thread(start step,steps to process)
+                            threads.Add(new Thread(delegate () { RK5(step, start); }));//new Thread(start step,steps to process)
                             break;
                     }
-                }
+                    threads.Last().Start();
+                /*}
                 catch//fehlerabfang
                 {
                     Console.WriteLine("Thread Fehler");
@@ -86,14 +93,14 @@ namespace ClusterLib
                         Thread.CurrentThread.Abort();
                     }
                     perCore -= left;
-                }
+                }*/
 
             }
 
-            Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;//idle this thread
+            //Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;//idle this thread
 
             bool ready;
-            do
+            /*do
             {           //wait until all threads have finished
                 ready = false;
                 Thread.Sleep(10);
@@ -103,7 +110,9 @@ namespace ClusterLib
                     else if (s == Stars.Last())
                         ready = true;
                         
-            } while (ready == false);
+            } while (ready == false);*/
+            while (threads.Exists(x => x.IsAlive))
+                Thread.Sleep(10);
 
             List<Star> temp = new List<Star>();
             foreach (Star s in Stars)//prevent shallow copys
@@ -116,6 +125,8 @@ namespace ClusterLib
             Thread save = new Thread(delegate () { export(new List<Star>(Steps.Last()), step+start,wtable); });
             save.Priority = ThreadPriority.Highest;
             save.Start();
+            save.Name = "save"+step.ToString();
+            savethreads.Add(save);
             //export(new List<Star>(Steps.Last()), step + start, wtable);//currently disabled create new save Thread;
 
             foreach (Star s in Stars)//reset computation status
@@ -125,12 +136,13 @@ namespace ClusterLib
         private void RK4(int step, int cstart)
         {
             int i=0;
-            try
-            {
-                bool ready;
-                do
-                {
-                    if (cstart<Stars.Count&& cstart < OldStars.Count)//Debug
+            //try
+            //{
+                //bool ready;
+                //do
+                //{
+                    while (!(cstart < Stars.Count && cstart < OldStars.Count))
+                        cstart = 0;
                     for (i = cstart; i < Stars.Count; i++)//for seqence of Stars[]
                     {
                         Star s = Stars[i];
@@ -149,7 +161,7 @@ namespace ClusterLib
                         }
 
                     }
-                    ready = false;//initialize bool
+                    /*ready = false;//initialize bool
 
                     foreach (Star s in Stars)//check for not yet computed stars
                         if (s.computed == false)
@@ -157,25 +169,26 @@ namespace ClusterLib
                         else if (s == Stars.Last())
                             ready = true;//sucessfully finished
                     if (ready == false)
-                        cstart = 0;//start form 0
-                } while (ready == false);//repete until everythig is computed
+                        cstart = 0;//start form 0/*
+                //} while (ready == false);//repete until everythig is computed
             }
             catch
             {
                 Console.WriteLine("Thread Fehler bei: "+i);
-            }
+            }*/
         }
         
         public void RK5(int step, int cstart)//as RK4
         {
-            int i = 0;
+            /*int i = 0;
             try
             {
                 bool ready;
-                do
-                {
-                    if (cstart < Stars.Count && cstart < OldStars.Count)
-                        for (i = cstart; i < Stars.Count; i++)
+                //do
+                //{*/
+                    while (!(cstart < Stars.Count && cstart < OldStars.Count))
+                        cstart = 0;
+                    for (int i = cstart; i < Stars.Count; i++)
                         {
                             Star s = Stars[i];
                             if (s.computed == false)
@@ -193,25 +206,24 @@ namespace ClusterLib
                                 s.print();
                             }
                         }
-                    else
-                        cstart = 0;
+                    
 
-                    ready = false;
+                    //ready = false;
 
-                    foreach (Star s in Stars)
+                    /*foreach (Star s in Stars)
                         if (s.computed == false)
                             break;
                         else if (s == Stars.Last())
                             ready = true;
                     if (ready == false)
                         cstart = 0;
-                } while (ready == false);
-            }
+                } while (ready == false);*/
+            /*}
             catch
             {
                 Console.WriteLine("Thread Fehler bei: " + i);
 
-            }
+            }*/
         }
 
         private Vec6 f(Vec6 Star,int id)
@@ -271,13 +283,13 @@ namespace ClusterLib
             //IXDBroadcaster broadcaster = client.Broadcasters.GetBroadcasterForMode(XDTransportMode.HighPerformanceUI);
             int i = step;
             //System.IO.File.WriteAllText(@"A:\Dennis\Clustersim\file" + step + ".json", Newtonsoft.Json.JsonConvert.SerializeObject(Steps.ToArray(), Newtonsoft.Json.Formatting.Indented));//export as json file
-            Console.WriteLine("SQL speichern ");
+            //Console.WriteLine("SQL speichern ");
             //for (int i = 0; i < Steps.Count; i++)
             //{
                 foreach (Star s in data)
                 {
                     while (SQL.addRow(s, i, table) == false) ;//do until succesfull
-                    Console.WriteLine("Step: "+i+" id: "+s.id);
+                    //Console.WriteLine("Step: "+i+" id: "+s.id);
                     //broadcaster.SendToChannel("steps", "i"+i);
                 }
             //}

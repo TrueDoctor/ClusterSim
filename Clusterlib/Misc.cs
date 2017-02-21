@@ -24,6 +24,8 @@ namespace ClusterLib
 
         }
 
+        
+
         public static decimal random(double stdDev = 1,double mean = 0)
         {
             double u1 = rand.NextDouble(); //uniform(0,1) random decimals

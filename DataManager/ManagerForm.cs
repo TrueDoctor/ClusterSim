@@ -18,6 +18,7 @@ namespace DataManager
     public partial class DataManager : Form
     {
         string table;//current selected table
+        int index=0;
         public DataManager()
         {
             InitializeComponent();
@@ -35,11 +36,12 @@ namespace DataManager
                 foreach (string s in list)
                     ServerList.Items.Add(s);
             }
-            ServerList.SetSelected(0, true);
+            ServerList.SetSelected(index, true);
         }
 
         private void ListIndexChange(object sender, EventArgs e)//display detailed information on selection
         {
+            index = ServerList.SelectedIndex;
             table = ServerList.SelectedItem.ToString();
             int s = SQL.lastStep(table);
             if (s == -1)
@@ -103,6 +105,7 @@ namespace DataManager
             }
             SQL.addTable(newTableName.Text);
             ListRefresh_Tick(new object(), new EventArgs());
+            ServerList.SelectedItem = newTableName.Text;
         }
 
         private void Refresh_Click(object sender, EventArgs e)//refresh icon
@@ -148,6 +151,7 @@ namespace DataManager
                 form.Show();//start random Form and pass name as argument
                 ListRefresh_Tick(new object(), new EventArgs());
             }
+            ServerList.SelectedItem = name;
         }
 
         private void ClusterSim_Click(object sender, EventArgs e)
@@ -212,6 +216,16 @@ namespace DataManager
         {
             if (table!=null)
             {
+                int von=0, bis=0;
+                string inputvon = "Von";
+                if (ShowInputDialog(ref inputvon) == DialogResult.OK)
+                    von = Convert.ToInt32(inputvon);
+                string inputbis = "Bis";
+                if (ShowInputDialog(ref inputbis) == DialogResult.OK)
+                    bis = Convert.ToInt32(inputbis);
+
+
+
                 SaveFileDialog saveFileDialog1 = new SaveFileDialog();//savefile dialouge
                 saveFileDialog1.InitialDirectory = @"C:\";
                 saveFileDialog1.FileName = table;
@@ -229,7 +243,7 @@ namespace DataManager
                     List<Star> list = new List<Star>();
                     progressBar.Visible = true;
                     progressBar.Maximum = SQL.lastStep(table);
-                    for (int i = SQL.firstStep(table); i <= SQL.lastStep(table); i++)
+                    for (int i = von; i <= bis; i++)
                     {
                         list.AddRange(SQL.readStars(table, i));
                         progressBar.Value = i;
@@ -253,6 +267,44 @@ namespace DataManager
                     progressBar.Visible = false;
                 }
             }
+        }
+        private static DialogResult ShowInputDialog(ref string input)//http://stackoverflow.com/questions/97097/what-is-the-c-sharp-version-of-vb-nets-inputdialog
+        {
+            System.Drawing.Size size = new System.Drawing.Size(200, 70);
+            Form inputBox = new Form();
+
+            inputBox.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            inputBox.ClientSize = size;
+            inputBox.Text = "Name";
+
+            System.Windows.Forms.TextBox textBox = new TextBox();
+            textBox.Size = new System.Drawing.Size(size.Width - 10, 23);
+            textBox.Location = new System.Drawing.Point(5, 5);
+            textBox.Text = input;
+            inputBox.Controls.Add(textBox);
+
+            Button okButton = new Button();
+            okButton.DialogResult = System.Windows.Forms.DialogResult.OK;
+            okButton.Name = "okButton";
+            okButton.Size = new System.Drawing.Size(75, 23);
+            okButton.Text = "&OK";
+            okButton.Location = new System.Drawing.Point(size.Width - 80 - 80, 39);
+            inputBox.Controls.Add(okButton);
+
+            Button cancelButton = new Button();
+            cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            cancelButton.Name = "cancelButton";
+            cancelButton.Size = new System.Drawing.Size(75, 23);
+            cancelButton.Text = "&Cancel";
+            cancelButton.Location = new System.Drawing.Point(size.Width - 80, 39);
+            inputBox.Controls.Add(cancelButton);
+
+            inputBox.AcceptButton = okButton;
+            inputBox.CancelButton = cancelButton;
+
+            DialogResult result = inputBox.ShowDialog();
+            input = textBox.Text;
+            return result;
         }
     }
 }

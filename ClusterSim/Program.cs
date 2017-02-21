@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using ClusterLib;
 using XDMessaging;
@@ -10,6 +11,7 @@ namespace ClusterSim
 {
     class Program
     {
+        private static bool abort = false;
         static void Main(string[] args)
         {
             string rtable="";
@@ -60,22 +62,50 @@ namespace ClusterSim
             XDMessagingClient client = new XDMessagingClient(); //https://github.com/TheCodeKing/XDMessaging.Net
             IXDBroadcaster broadcaster = client.Broadcasters.GetBroadcasterForMode(XDTransportMode.HighPerformanceUI);
             broadcaster.SendToChannel("steps", "s"+n);// send max step to steps channel
-            
 
+
+            Thread Key = new Thread(listen);
+            Key.Start();
             StarCluster cluster = new StarCluster(rtable,wtable,last,dt);     //instatiate Starcluster
             for (int i = 1; i <= n; Console.WriteLine(i++))//for steps
             {
                 cluster.doStep(i,Misc.Method.RK5);
                 broadcaster.SendToChannel("steps", "i"+i);//send "i"+step in channel steps
                 Console.WriteLine("\n" + i + "\n \n");
+                
+                if (abort == true)
+                    break;
             }
-            //cluster.export(new List<Star>(), 0, wtable);   //save data
+            
+            while (cluster.savethreads.FindAll(x => x.IsAlive).Count>1)
+                Console.WriteLine("Warte auf die Beendigung von {0} Speicher Threads", cluster.savethreads.FindAll(x => x.IsAlive).Count);
+            Thread t = cluster.savethreads.Find(x => x.IsAlive);
+            try {
+                Console.WriteLine(t.ThreadState.ToString());
+                Console.WriteLine(t.Name);
+                while (t.IsAlive);
+                Thread.Sleep(10);
+            } catch { }
             SQL.order(wtable);
 
+            
             Console.WriteLine("Direkt in Dataview öffnen? (y/n)");
             string view = Console.ReadLine();                         //wait for input
             if (view=="y"||view=="Y")
                 System.Diagnostics.Process.Start(@"..\..\..\Dataview\bin\Debug\DataView.exe", wtable);
+        }
+
+        private static void listen()
+        {
+            ConsoleKeyInfo keyinfo;
+            do
+            {
+                keyinfo = Console.ReadKey();
+                
+            }
+            while (keyinfo.Key != ConsoleKey.X);
+            Console.WriteLine(" Beenden Eingeleitet");
+            abort = true;
         }
     }
 }
