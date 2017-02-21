@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.VelBar = new System.Windows.Forms.TrackBar();
             this.PosBar = new System.Windows.Forms.TrackBar();
@@ -43,6 +44,8 @@
             this.MassMAns = new System.Windows.Forms.Label();
             this.BarAns = new System.Windows.Forms.Label();
             this.Kroupa = new System.Windows.Forms.CheckBox();
+            this.Relaxation = new System.Windows.Forms.Label();
+            this.calc = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.VelBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.PosBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.StarCount)).BeginInit();
@@ -60,7 +63,7 @@
             // VelBar
             // 
             this.VelBar.LargeChange = 1;
-            this.VelBar.Location = new System.Drawing.Point(163, 80);
+            this.VelBar.Location = new System.Drawing.Point(163, 71);
             this.VelBar.Maximum = 2;
             this.VelBar.Minimum = -10;
             this.VelBar.Name = "VelBar";
@@ -73,7 +76,7 @@
             // PosBar
             // 
             this.PosBar.LargeChange = 1;
-            this.PosBar.Location = new System.Drawing.Point(163, 29);
+            this.PosBar.Location = new System.Drawing.Point(163, 32);
             this.PosBar.Minimum = -2;
             this.PosBar.Name = "PosBar";
             this.PosBar.Size = new System.Drawing.Size(104, 45);
@@ -84,7 +87,7 @@
             // 
             // StarCount
             // 
-            this.StarCount.Location = new System.Drawing.Point(12, 37);
+            this.StarCount.Location = new System.Drawing.Point(12, 32);
             this.StarCount.Maximum = new decimal(new int[] {
             1000000,
             0,
@@ -128,7 +131,7 @@
             // VelAns
             // 
             this.VelAns.AutoSize = true;
-            this.VelAns.Location = new System.Drawing.Point(273, 89);
+            this.VelAns.Location = new System.Drawing.Point(273, 80);
             this.VelAns.Name = "VelAns";
             this.VelAns.Size = new System.Drawing.Size(85, 13);
             this.VelAns.TabIndex = 7;
@@ -137,7 +140,7 @@
             // MassVAns
             // 
             this.MassVAns.AutoSize = true;
-            this.MassVAns.Location = new System.Drawing.Point(273, 132);
+            this.MassVAns.Location = new System.Drawing.Point(273, 126);
             this.MassVAns.Name = "MassVAns";
             this.MassVAns.Size = new System.Drawing.Size(100, 13);
             this.MassVAns.TabIndex = 8;
@@ -166,7 +169,7 @@
             // normalVariance
             // 
             this.normalVariance.AutoSize = true;
-            this.normalVariance.Location = new System.Drawing.Point(169, 9);
+            this.normalVariance.Location = new System.Drawing.Point(160, 9);
             this.normalVariance.Name = "normalVariance";
             this.normalVariance.Size = new System.Drawing.Size(115, 13);
             this.normalVariance.TabIndex = 32;
@@ -175,7 +178,7 @@
             // MassMBar
             // 
             this.MassMBar.LargeChange = 1;
-            this.MassMBar.Location = new System.Drawing.Point(163, 153);
+            this.MassMBar.Location = new System.Drawing.Point(163, 163);
             this.MassMBar.Maximum = 8;
             this.MassMBar.Minimum = -2;
             this.MassMBar.Name = "MassMBar";
@@ -187,7 +190,7 @@
             // MassMAns
             // 
             this.MassMAns.AutoSize = true;
-            this.MassMAns.Location = new System.Drawing.Point(273, 154);
+            this.MassMAns.Location = new System.Drawing.Point(273, 171);
             this.MassMAns.Name = "MassMAns";
             this.MassMAns.Size = new System.Drawing.Size(66, 13);
             this.MassMAns.TabIndex = 34;
@@ -214,11 +217,26 @@
             this.Kroupa.UseVisualStyleBackColor = true;
             this.Kroupa.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
+            // Relaxation
+            // 
+            this.Relaxation.AutoSize = true;
+            this.Relaxation.Location = new System.Drawing.Point(9, 64);
+            this.Relaxation.Name = "Relaxation";
+            this.Relaxation.Size = new System.Drawing.Size(57, 13);
+            this.Relaxation.TabIndex = 37;
+            this.Relaxation.Text = "Relaxation";
+            // 
+            // calc
+            // 
+            this.calc.Enabled = true;
+            this.calc.Tick += new System.EventHandler(this.calc_Tick);
+            // 
             // Random
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(380, 200);
+            this.ClientSize = new System.Drawing.Size(373, 193);
+            this.Controls.Add(this.Relaxation);
             this.Controls.Add(this.Kroupa);
             this.Controls.Add(this.BarAns);
             this.Controls.Add(this.MassMAns);
@@ -263,5 +281,7 @@
         private System.Windows.Forms.Label MassMAns;
         private System.Windows.Forms.Label BarAns;
         private System.Windows.Forms.CheckBox Kroupa;
+        private System.Windows.Forms.Label Relaxation;
+        private System.Windows.Forms.Timer calc;
     }
 }

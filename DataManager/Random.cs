@@ -80,7 +80,7 @@ namespace DataManager
             for (int i = 0; i < (int)StarCount.Value; i++)
             {
                 Application.DoEvents();
-
+                
                 if(Kroupa.Checked)
                 while (SQL.addRow(new Star(new Vector().random(Math.Pow(10, PosBar.Value)), new Vector().random(Math.Pow(10, VelBar.Value)),
                     masses[i], i), 0, table) == false) ;
@@ -128,6 +128,19 @@ namespace DataManager
                 MassVBar.Enabled = true;
                 MassVAns.Enabled = true;
             }
+        }
+
+        private void calc_Tick(object sender, EventArgs e)
+        {
+            double mass;
+            double n = (int)StarCount.Value;
+            double r3 = Math.Pow(10, PosBar.Value*3);
+            if(Kroupa.Checked)
+                mass = (double)StarCount.Value * 0.36;
+            else
+                mass = (double)StarCount.Value * Math.Pow(10, MassMBar.Value * 3);
+            double relax = 800000 * Math.Sqrt((n * r3) / mass) * (1 / (Math.Log(n)-1));
+            Relaxation.Text=String.Format("Relaxationszeit: {0} Jahre",Math.Round(relax,1));
         }
     }
 }

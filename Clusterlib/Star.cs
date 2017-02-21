@@ -64,7 +64,15 @@ namespace ClusterLib
 
         public decimal getRelativMass() //return mass
         {
-            return (decimal)Math.Sqrt(Convert.ToDouble(mass)/(1.0-Math.Pow((double)(this.vel.distance()/Misc.c),2)));
+            try
+            {
+                return (decimal)Math.Sqrt(Convert.ToDouble(mass) / (1.0 - Math.Pow((double)(this.vel.distance() / Misc.c), 2)));
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("\n\n\n\n\n\nGeschwingkeit von Stern {0} größer als Lichtgeschwindigkeit.\n kleinere Zeitschritte wählen!\n\n\n\n\n\n\n{1}\n\n",this.id,e.Message);
+                return 7922816251426433;
+            }
         }
 
         public string toCsv() //print all fields of the star in the console

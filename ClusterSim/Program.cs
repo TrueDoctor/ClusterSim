@@ -14,6 +14,8 @@ namespace ClusterSim
         private static bool abort = false;
         static void Main(string[] args)
         {
+            XDMessagingClient client = new XDMessagingClient(); //https://github.com/TheCodeKing/XDMessaging.Net
+            IXDBroadcaster broadcaster = client.Broadcasters.GetBroadcasterForMode(XDTransportMode.HighPerformanceUI);
             string rtable="";
             
             if (args.Length > 0)//if the program gets called with arguments
@@ -51,7 +53,7 @@ namespace ClusterSim
                 last = SQL.lastStep(rtable);//get last step of given table
             }
 
-            Console.WriteLine("\nDelta t: ");
+            Console.WriteLine("\nDelta t in Tagen: ");
 
             decimal dt = Convert.ToDecimal(Console.ReadLine());
 
@@ -59,22 +61,20 @@ namespace ClusterSim
 
             int n = Convert.ToInt32(Console.ReadLine());
 
-            XDMessagingClient client = new XDMessagingClient(); //https://github.com/TheCodeKing/XDMessaging.Net
-            IXDBroadcaster broadcaster = client.Broadcasters.GetBroadcasterForMode(XDTransportMode.HighPerformanceUI);
+
+            Console.WriteLine("Der simulierte Zeitraum entspricht einem Äquivalent von {0} Jahren.\n 'X' jederzeit zum abbrechen drücken",(dt*n)/365);
+            Thread.Sleep(2000);
             broadcaster.SendToChannel("steps", "s"+n);// send max step to steps channel
 
 
             Thread Key = new Thread(listen);
             Key.Start();
             StarCluster cluster = new StarCluster(rtable,wtable,last,dt);     //instatiate Starcluster
-            for (int i = 1; i <= n; Console.WriteLine(i++))//for steps
+            for (int i = 1; i <= n&&!abort; Console.WriteLine(i++))//for steps
             {
-                cluster.doStep(i,Misc.Method.RK5);
-                broadcaster.SendToChannel("steps", "i"+i);//send "i"+step in channel steps
+                cluster.doStep(i, Misc.Method.RK5);
+                broadcaster.SendToChannel("steps", "i" + i);//send "i"+step in channel steps
                 Console.WriteLine("\n" + i + "\n \n");
-                
-                if (abort == true)
-                    break;
             }
             
             while (cluster.savethreads.FindAll(x => x.IsAlive).Count>1)
@@ -87,8 +87,8 @@ namespace ClusterSim
                 Thread.Sleep(10);
             } catch { }
             SQL.order(wtable);
+            broadcaster.SendToChannel("steps", "abort");
 
-            
             Console.WriteLine("Direkt in Dataview öffnen? (y/n)");
             string view = Console.ReadLine();                         //wait for input
             if (view=="y"||view=="Y")
@@ -97,6 +97,9 @@ namespace ClusterSim
 
         private static void listen()
         {
+            XDMessagingClient client = new XDMessagingClient(); //https://github.com/TheCodeKing/XDMessaging.Net
+            IXDBroadcaster broadcaster = client.Broadcasters.GetBroadcasterForMode(XDTransportMode.HighPerformanceUI);
+
             ConsoleKeyInfo keyinfo;
             do
             {
@@ -104,8 +107,9 @@ namespace ClusterSim
                 
             }
             while (keyinfo.Key != ConsoleKey.X);
-            Console.WriteLine(" Beenden Eingeleitet");
+            Console.WriteLine("\n\n\n\n Beenden Eingeleitet\n\n\n\n");
             abort = true;
+            broadcaster.SendToChannel("steps", "abort");
         }
     }
 }

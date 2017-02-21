@@ -180,6 +180,11 @@ namespace DataManager
                             progressBar.Value = m;
 
                             break;
+                        case "a":
+                            if (ep.DataGram.Message == "abort")
+                                progressBar.Visible = false;
+                            break;
+                            
                     }
                 }
                 if (!(progressBar.Value < progressBar.Maximum - 1))
