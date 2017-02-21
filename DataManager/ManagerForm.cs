@@ -115,7 +115,7 @@ namespace DataManager
 
         private void DataView_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process.Start(@"..\..\..\Dataview\bin\Debug\DataView.exe", table);//start Dataview with table as parameter
+            System.Diagnostics.Process.Start(@"DataView.exe", table);//start Dataview with table as parameter
         }
 
         private void randomTable_Click(object sender, EventArgs e)
@@ -190,7 +190,7 @@ namespace DataManager
                 if (!(progressBar.Value < progressBar.Maximum - 1))
                     progressBar.Visible = false;//make invisible after execution 
             };
-            System.Diagnostics.Process.Start(@"..\..\..\ClusterSim\bin\Debug\ClusterSim.exe", (string)ServerList.SelectedItem);
+            System.Diagnostics.Process.Start(@"ClusterSim.exe", (string)ServerList.SelectedItem);
             
         }
 

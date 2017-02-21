@@ -112,7 +112,7 @@ namespace Dataview
                         saveFileDialog1.FilterIndex = 2;
                         saveFileDialog1.RestoreDirectory = true;
 
-                        string path = null;
+                        
                         if (saveFileDialog1.ShowDialog() == DialogResult.OK && GetImageFormat(System.IO.Path.GetExtension(saveFileDialog1.FileName))!=null)
                         {
                             string filepath = saveFileDialog1.FileName;

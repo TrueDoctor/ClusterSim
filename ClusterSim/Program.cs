@@ -92,7 +92,7 @@ namespace ClusterSim
             Console.WriteLine("Direkt in Dataview öffnen? (y/n)");
             string view = Console.ReadLine();                         //wait for input
             if (view=="y"||view=="Y")
-                System.Diagnostics.Process.Start(@"..\..\..\Dataview\bin\Debug\DataView.exe", wtable);
+                System.Diagnostics.Process.Start(@"DataView.exe", wtable);
         }
 
         private static void listen()
