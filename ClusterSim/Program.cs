@@ -62,7 +62,7 @@ namespace ClusterSim
             int n = Convert.ToInt32(Console.ReadLine());
 
 
-            Console.WriteLine("Der simulierte Zeitraum entspricht einem Äquivalent von {0} Jahren.\n 'X' jederzeit zum abbrechen drücken",(dt*n)/365);
+            Console.WriteLine("Der simulierte Zeitraum entspricht einem Äquivalent von {0} Jahren.\n 'X' jederzeit zum abbrechen drücken",Math.Round((dt*n)/365),2);
             Thread.Sleep(2000);
             broadcaster.SendToChannel("steps", "s"+n);// send max step to steps channel
 
@@ -76,7 +76,9 @@ namespace ClusterSim
                 broadcaster.SendToChannel("steps", "i" + i);//send "i"+step in channel steps
                 Console.WriteLine("\n" + i + "\n \n");
             }
-            
+
+            Key.Abort();
+
             while (cluster.savethreads.FindAll(x => x.IsAlive).Count>1)
                 Console.WriteLine("Warte auf die Beendigung von {0} Speicher Threads", cluster.savethreads.FindAll(x => x.IsAlive).Count);
             Thread t = cluster.savethreads.Find(x => x.IsAlive);

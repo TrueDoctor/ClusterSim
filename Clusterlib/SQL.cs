@@ -14,8 +14,8 @@ namespace ClusterLib
 {
     public class SQL
     {
-        
-        const string conString = @"Data Source=tcp:TARDIS\CLUSTERSIM,49172;Initial Catalog=Clustersim;User Id=Engine;Password=mynona; MultipleActiveResultSets=true;";//initialize connection
+        //const string conString = @"Data Source=tcp:TARDIS\CLUSTERSIM,49172;Initial Catalog=Clustersim;User Id=Engine;Password=mynona; MultipleActiveResultSets=true;";//initialize connection
+        const string conString = @"Data Source=mssql1.gear.host;Initial Catalog=clustersim;User Id=clustersim;Password=Vq73wF?zo75?; MultipleActiveResultSets=true;";//initialize connection
         
 
 

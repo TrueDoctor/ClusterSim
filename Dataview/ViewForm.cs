@@ -189,9 +189,9 @@ namespace Dataview
             Box.Image = Canvas;
             Box.Refresh();
             Box.Cursor = Cursors.Cross;
-
-            if (Stars.Count < 1000)
-                c = SQL.lastStep(table);
+            if (Stars!=null)
+                if (Stars.Count < 1000)
+                    c = SQL.lastStep(table);
             this.Text = String.Format("{0}   Schritt: {1} von {2}",table,step, c);//change caption
 
             if (Stars != null)

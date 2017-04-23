@@ -80,6 +80,7 @@ namespace ClusterLib
                             threads.Add(new Thread(delegate () { RK5(step, start); }));//new Thread(start step,steps to process)
                             break;
                     }
+                    threads.Last().Priority = ThreadPriority.AboveNormal;
                     threads.Last().Start();
                 /*}
                 catch//fehlerabfang

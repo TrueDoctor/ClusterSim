@@ -41,21 +41,25 @@ namespace DataManager
 
         private void ListIndexChange(object sender, EventArgs e)//display detailed information on selection
         {
-            index = ServerList.SelectedIndex;
-            table = ServerList.SelectedItem.ToString();
-            int s = SQL.lastStep(table);
-            if (s == -1)
-                SchritteAns.Text = "Liste ist leer";
-            else
-                SchritteAns.Text = "Schritte: "+Convert.ToString(s+1);
-            
-            
-            int i = SQL.starsCount(table);
-            if (i == -1)
-                SterneAns.Text = "Liste ist leer";
-            else
-                SterneAns.Text = "Sterne: "+Convert.ToString(i);
-            newTableName.Text = table;
+            try
+            {
+                index = ServerList.SelectedIndex;
+                table = ServerList.SelectedItem.ToString();
+                int s = SQL.lastStep(table);
+                if (s == -1)
+                    SchritteAns.Text = "Liste ist leer";
+                else
+                    SchritteAns.Text = "Schritte: " + Convert.ToString(s + 1);
+
+
+                int i = SQL.starsCount(table);
+                if (i == -1)
+                    SterneAns.Text = "Liste ist leer";
+                else
+                    SterneAns.Text = "Sterne: " + Convert.ToString(i);
+                newTableName.Text = table;
+            }
+            catch (System.Exception ex) { }
             
         }
 
@@ -72,7 +76,8 @@ namespace DataManager
 
                     if (res == DialogResult.Yes)
                         SQL.dropTable(table);
-                    
+                    if(ServerList.SelectedIndex>0)
+                        ServerList.SelectedIndex--;
                     ListRefresh_Tick(new object(), new EventArgs());
                     break;
 
@@ -190,7 +195,7 @@ namespace DataManager
                 if (!(progressBar.Value < progressBar.Maximum - 1))
                     progressBar.Visible = false;//make invisible after execution 
             };
-            System.Diagnostics.Process.Start(@"ClusterSim.exe", (string)ServerList.SelectedItem);
+            System.Diagnostics.Process.Start(@"ClusterSim.exe", table);
             
         }
 
