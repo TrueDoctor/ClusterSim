@@ -8,34 +8,31 @@ using System.Runtime.Serialization;
 
 namespace ClusterLib
 {
-    [Serializable()]
     public class Star 
     {
 
         //declare fields/members
         public Vector pos = new Vector();
         public Vector vel = new Vector();
-        private double mass;
+        private decimal mass;
         public int id;
-        private static int classId=0;
         public bool computed = false;
 
-        public Star() { }
+        public Star() { }//empty constructor
 
-        public Star(int id) { this.id = id; pos.init();vel.init(); mass = 0; }
-        public Star(double[] pos, double[] vel,   //constructor
-            double mass,int id=-1)
+        public Star(int id) { this.id = id; pos.init();vel.init(); mass = 0; } //constructor Create a initialized star from id
+
+        public Star(decimal[] pos, decimal[] vel,   //constructor 
+            decimal mass,int id=-1)
         {
             this.pos.vec = pos;
             this.vel.vec = vel;            
             this.mass = mass;
-            if (id == -1)
-                this.id = classId++;
-            else this.id = id;
+            this.id = id;
         }
 
         public Star(Vector pos, Vector vel,   //constructor
-            double mass, int id, double dt = 2)
+            decimal mass, int id, decimal dt = 2)
         {
             this.pos = pos;
             this.vel = vel;
@@ -43,7 +40,7 @@ namespace ClusterLib
             this.id = id;
         }
 
-        public Star(Star s)
+        public Star(Star s)//constructor from given Star
         {
             this.pos = s.pos;
             this.vel = s.vel;
@@ -51,7 +48,7 @@ namespace ClusterLib
             this.mass = s.mass;
         }
 
-        public Star(Vec6 vec,double mass,int id=-1)
+        public Star(Vec6 vec,decimal mass,int id=-1)//create Star from Vec6
         {
             this.pos = new Vector(vec,0);
             this.vel = new Vector(vec,1);
@@ -60,25 +57,43 @@ namespace ClusterLib
         }
 
         
-        public double getMass() //get mass
+        public decimal getMass() //return mass
         {
             return mass;
         }
 
-        
+        public decimal getRelativMass() //return mass
+        {
+            try
+            {
+                return (decimal)Math.Sqrt(Convert.ToDouble(mass) / (1.0 - Math.Pow((double)(this.vel.distance() / Misc.c), 2)));
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("\n\n\n\n\n\nGeschwingkeit von Stern {0} größer als Lichtgeschwindigkeit.\n kleinere Zeitschritte wählen!\n\n\n\n\n\n\n{1}\n\n",this.id,e.Message);
+                return 7922816251426433;
+            }
+        }
 
-        
-        
+        public string toCsv() //print all fields of the star in the console
+        {
+            return pos.vec[0] + ";" + pos.vec[1] + ";" + pos.vec[2];
+        }
+
+        public string toTsv() //print all fields of the star in the console
+        {
+            return pos.vec[0] + "   " + pos.vec[1] + "  " + pos.vec[2];
+        }
 
         public void print() //print all fields of the star in the console
         {
-            Console.WriteLine(this.id+"\n");
+            Console.Write(this.id+", ");
             //Console.WriteLine("pos: " + pos.toString());
-            ///Console.WriteLine("vel: " + vel.toString());
+            //Console.WriteLine("vel: " + vel.toString());
             //Console.WriteLine("mass: " + mass);
         }
 
-        public Star Clone()
+        public Star Clone()//clone method to prevent shallow copys
         {
 
             Star clone = new Star(this.pos, this.vel, this.mass, this.id);

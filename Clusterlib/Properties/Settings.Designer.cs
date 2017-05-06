@@ -44,5 +44,16 @@ namespace ClusterLib.Properties {
                 return ((string)(this["ClustersimConnectionString1"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=mssql1.gear.host;Initial Catalog=clustersim;Persist Security Info=Tru" +
+            "e;User ID=clustersim;Password=Vq73wF?zo75?")]
+        public string Online {
+            get {
+                return ((string)(this["Online"]));
+            }
+        }
     }
 }
