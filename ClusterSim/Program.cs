@@ -52,7 +52,7 @@ namespace ClusterSim
 
             Console.WriteLine("\nDelta t: ");
 
-            decimal dt = Convert.ToDecimal(Console.ReadLine());
+            double dt = Convert.ToDouble(Console.ReadLine());
 
             Console.WriteLine("\nSchritte: ");
 
@@ -68,6 +68,7 @@ namespace ClusterSim
             {
                 test.doStep(i,Misc.Method.RK5);
                 broadcaster.SendToChannel("steps", "i"+i);
+                Console.WriteLine("\n"+i+"\n");
             } 
             //Console.ReadLine();                         //wait for input
         }

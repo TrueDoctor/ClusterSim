@@ -24,16 +24,16 @@ namespace ClusterLib
 
         }
 
-        public static decimal random(double stdDev = 1)
+        public static double random(double stdDev = 1)
         {
             //reuse this if you are generating many
-            double u1 = rand.NextDouble(); //these are uniform(0,1) random decimals
+            double u1 = rand.NextDouble(); //these are uniform(0,1) random doubles
             double u2 = rand.NextDouble();
             double randStdNormal = Math.Sqrt(-2.0 * Math.Log(u1)) *
                          Math.Sin(2.0 * Math.PI * u2); //random normal(0,1)
             double randNormal =
                          mean + stdDev * randStdNormal; //random normal(mean,stdDev^2)
-            return (decimal)randNormal;
+            return randNormal;
         }
         public enum Method{
             RK4,

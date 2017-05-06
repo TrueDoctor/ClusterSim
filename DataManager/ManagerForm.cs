@@ -16,6 +16,7 @@ namespace DataManager
 {
     public partial class DataManager : Form
     {
+        public string table;
         public DataManager()
         {
             InitializeComponent();
@@ -47,6 +48,7 @@ namespace DataManager
                 SterneAns.Text = "Liste ist leer";
             else
                 SterneAns.Text = "Sterne: "+Convert.ToString(i+1);
+            table = (string)ServerList.SelectedIndex.ToString();
         }
 
         private void ServerList_KeyDown(object sender, KeyEventArgs e)
@@ -114,6 +116,10 @@ namespace DataManager
                             int n = Convert.ToInt32(ep.DataGram.Message.Remove(0, 1));
                             
                             progressBar.Maximum = n;
+
+                            //Thread save = new Thread(delegate () { Bar(table); });
+                            //save.Priority = ThreadPriority.BelowNormal;
+                            //save.Start();
                             break;
                         case "i":
                             
@@ -122,9 +128,7 @@ namespace DataManager
 
                             break;
                     }
-                    Thread save = new Thread(delegate () { Bar((string)ServerList.SelectedItem); });
                     
-                    //save.Start();
                 }
             };
             System.Diagnostics.Process.Start(@"..\..\..\ClusterSim\bin\Debug\ClusterSim.exe", (string)ServerList.SelectedItem);

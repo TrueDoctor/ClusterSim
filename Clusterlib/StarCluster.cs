@@ -18,7 +18,7 @@ namespace ClusterLib
         
         SQL client = new SQL();
         //fields
-        private const decimal Gravitation = 0.0002959122083m;  //0.0000000000667384;
+        private const double Gravitation = 0.0002959122083;  //0.0000000000667384;
         private string rtable;
         private string wtable = "copy";
         private int start;
@@ -27,9 +27,9 @@ namespace ClusterLib
         private List<List<Star>> Steps = new List<List<Star>>();
         
         
-        decimal dt=1m;
+        double dt=1;
 
-        public StarCluster(string rtable,string wtable,int start,decimal dt)   //constructor takes Starcount
+        public StarCluster(string rtable,string wtable,int start,double dt)   //constructor takes Starcount
         {
             this.starCount = SQL.starsCount(rtable);
             this.rtable = rtable;
@@ -40,7 +40,7 @@ namespace ClusterLib
             Steps = new List<List<Star>>();
             //randomize();
             initialize();                   //initialize
-            //Console.WriteLine(calcacc(new Vector(new decimal[3] { 1, 2, 3 }), new Star(new decimal[] { 3, 2, 1 },new decimal[3],new decimal[3],10)).toString());
+            //Console.WriteLine(calcacc(new Vector(new double[3] { 1, 2, 3 }), new Star(new double[] { 3, 2, 1 },new double[3],new double[3],10)).toString());
         }
 
 
@@ -159,10 +159,10 @@ namespace ClusterLib
                         Vec6 Star = new Vec6(s.pos, s.vel);
                         Vec6 KA = dt * f(Star, s.id);
                         Vec6 FF = dt * f(KA, s.id);
-                        Vec6 KB = dt * f(Star + (1.0m / 3) * KA + 1.0m / 18 * FF, s.id);
-                        Vec6 KC = dt * f(Star - 1.216m * KA + (252.0m / 125) * KB - (44.0m / 125) * FF, s.id);
-                        Vec6 KD = dt * f(Star + 9.5m * KA - (72.0m / 7) * KB + (25.0m / 14) * KC + (44.0m / 125) * FF, s.id);
-                        Vec6 F = ((5.0m / 48 * KA) + (27.0m / 56 * KB) + (125.0m / 336 * KC) + (1.0m / 24 * KD));
+                        Vec6 KB = dt * f(Star + (1.0 / 3.0) * KA + 1.0 / 18.0 * FF, s.id);
+                        Vec6 KC = dt * f(Star - 1.216 * KA + (252.0 / 125.0) * KB - (44.0 / 125.0) * FF, s.id);
+                        Vec6 KD = dt * f(Star + 9.5 * KA - (72.0 / 7.0) * KB + (25.0 / 14.0) * KC + (44.0 / 125.0) * FF, s.id);
+                        Vec6 F = ((5.0 / 48.0 * KA) + (27.0 / 56.0 * KB) + (125.0 / 336.0 * KC) + (1.0 / 24.0 * KD));
                         s.pos = s.pos + F.ToVector(0);
                         s.vel = s.vel + F.ToVector(1);
                         s.print();
@@ -197,9 +197,9 @@ namespace ClusterLib
 
             tempDirection = a - b.pos; //direction vector to the other star
 
-            decimal D = 1 / tempDirection.distance();
+            double D = 1 / tempDirection.distance();
 
-            decimal temp = b.getMass() * Gravitation * (decimal)Math.Pow((double)D, 3);
+            double temp = b.getMass() * Gravitation * (double)Math.Pow((double)D, 3);
             Vector Acc = b.pos-a;
             Acc.mult(temp);
             return Acc;

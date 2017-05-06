@@ -41,10 +41,10 @@ namespace ClusterLib
 
                             while (reader.Read())
                             {
-                                Vector pos = new Vector(new decimal[] { Convert.ToDecimal(reader.GetString(reader.GetOrdinal("posx")).Replace(".", ",")), Convert.ToDecimal(reader.GetString(reader.GetOrdinal("posy")).Replace(".", ",")), Convert.ToDecimal(reader.GetString(reader.GetOrdinal("posz")).Replace(".", ",")) });
-                                Vector vel = new Vector(new decimal[] { Convert.ToDecimal(reader.GetString(reader.GetOrdinal("velx")).Replace(".", ",")), Convert.ToDecimal(reader.GetString(reader.GetOrdinal("vely")).Replace(".", ",")), Convert.ToDecimal(reader.GetString(reader.GetOrdinal("velz")).Replace(".", ",")) });
+                                Vector pos = new Vector(new double[] { Convert.ToDouble(reader.GetString(reader.GetOrdinal("posx")).Replace(".", ",")), Convert.ToDouble(reader.GetString(reader.GetOrdinal("posy")).Replace(".", ",")), Convert.ToDouble(reader.GetString(reader.GetOrdinal("posz")).Replace(".", ",")) });
+                                Vector vel = new Vector(new double[] { Convert.ToDouble(reader.GetString(reader.GetOrdinal("velx")).Replace(".", ",")), Convert.ToDouble(reader.GetString(reader.GetOrdinal("vely")).Replace(".", ",")), Convert.ToDouble(reader.GetString(reader.GetOrdinal("velz")).Replace(".", ",")) });
 
-                                Stars.Add(new Star(pos.vec, vel.vec, Convert.ToDecimal(reader.GetString(reader.GetOrdinal("mass")).Replace(".", ",")), reader.GetInt32(reader.GetOrdinal("id"))));
+                                Stars.Add(new Star(pos.vec, vel.vec, Convert.ToDouble(reader.GetString(reader.GetOrdinal("mass")).Replace(".", ",")), reader.GetInt32(reader.GetOrdinal("id"))));
                             }
                             con.Close();
                             return Stars;

@@ -52,8 +52,9 @@
             // 
             // VelBar
             // 
+            this.VelBar.LargeChange = 1;
             this.VelBar.Location = new System.Drawing.Point(172, 63);
-            this.VelBar.Maximum = 3;
+            this.VelBar.Maximum = 4;
             this.VelBar.Minimum = -8;
             this.VelBar.Name = "VelBar";
             this.VelBar.Size = new System.Drawing.Size(104, 45);
@@ -64,7 +65,7 @@
             // 
             // PosBar
             // 
-            this.PosBar.LargeChange = 100;
+            this.PosBar.LargeChange = 1;
             this.PosBar.Location = new System.Drawing.Point(172, 12);
             this.PosBar.Minimum = 1;
             this.PosBar.Name = "PosBar";
@@ -98,6 +99,7 @@
             // 
             // MassBar
             // 
+            this.MassBar.LargeChange = 1;
             this.MassBar.Location = new System.Drawing.Point(172, 114);
             this.MassBar.Maximum = 13;
             this.MassBar.Minimum = -1;

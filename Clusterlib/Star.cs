@@ -15,7 +15,7 @@ namespace ClusterLib
         //declare fields/members
         public Vector pos = new Vector();
         public Vector vel = new Vector();
-        private decimal mass;
+        private double mass;
         public int id;
         private static int classId=0;
         public bool computed = false;
@@ -23,8 +23,8 @@ namespace ClusterLib
         public Star() { }
 
         public Star(int id) { this.id = id; pos.init();vel.init(); mass = 0; }
-        public Star(decimal[] pos, decimal[] vel,   //constructor
-            decimal mass,int id=-1)
+        public Star(double[] pos, double[] vel,   //constructor
+            double mass,int id=-1)
         {
             this.pos.vec = pos;
             this.vel.vec = vel;            
@@ -35,7 +35,7 @@ namespace ClusterLib
         }
 
         public Star(Vector pos, Vector vel,   //constructor
-            decimal mass, int id, decimal dt = 2)
+            double mass, int id, double dt = 2)
         {
             this.pos = pos;
             this.vel = vel;
@@ -51,7 +51,7 @@ namespace ClusterLib
             this.mass = s.mass;
         }
 
-        public Star(Vec6 vec,decimal mass,int id=-1)
+        public Star(Vec6 vec,double mass,int id=-1)
         {
             this.pos = new Vector(vec,0);
             this.vel = new Vector(vec,1);
@@ -60,7 +60,7 @@ namespace ClusterLib
         }
 
         
-        public decimal getMass() //get mass
+        public double getMass() //get mass
         {
             return mass;
         }
@@ -73,9 +73,9 @@ namespace ClusterLib
         public void print() //print all fields of the star in the console
         {
             Console.WriteLine(this.id+"\n");
-            Console.WriteLine("pos: " + pos.toString());
-            Console.WriteLine("vel: " + vel.toString());
-            Console.WriteLine("mass: " + mass);
+            //Console.WriteLine("pos: " + pos.toString());
+            ///Console.WriteLine("vel: " + vel.toString());
+            //Console.WriteLine("mass: " + mass);
         }
 
         public Star Clone()

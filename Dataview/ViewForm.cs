@@ -22,7 +22,7 @@ namespace Dataview
         Bitmap Canvas;
         //bool three = false;
         bool trace = false;
-        decimal zoom = 10;
+        double zoom = 10;
         public ViewForm()
         {
             InitializeComponent();
@@ -125,8 +125,8 @@ namespace Dataview
             Point output = new Point(-1,-1);
             if (-80 < a.vec[1] && a.vec[1] < 80 && a.vec[2] < 80 && -80 < a.vec[2])
             {
-                output.X = (int)((Box.Width/160.0m) * a.vec[1] + Box.Width / 2);
-                output.Y = (int)((Box.Height / 160.0m) * a.vec[2] + Box.Height / 2);
+                output.X = (int)((Box.Width/160.0) * a.vec[1] + Box.Width / 2);
+                output.Y = (int)((Box.Height / 160.0) * a.vec[2] + Box.Height / 2);
             }
             
             return  output;
