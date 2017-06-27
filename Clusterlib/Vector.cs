@@ -4,21 +4,33 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ClusterLib
+namespace ClusterSim.ClusterLib
 {
     [Serializable()]
     public class Vector
     {
-        public decimal[] vec = new decimal[3]; //Field
-
+        public double[] Vec = new double[3];
+        public double[] vec  //Field
+        {
+            get{
+                return Vec;
+            }
+            set{
+                if (double.IsNaN(value[0]))
+                    throw new DivideByZeroException();
+                else
+                    Vec = value;
+            }
+        }
+        
         public Vector() { }         //blank constructor
 
-        public Vector(decimal[] vec) //decimal[3] overload
+        public Vector(double[] vec) //double[3] overload
         {
             this.vec = vec;
         }
 
-        public Vector(decimal a,decimal b,decimal c) //decimal[3] overload
+        public Vector(double a,double b,double c) //double[3] overload
         {
             this.vec[0] = a;
             this.vec[1] = b;
@@ -30,6 +42,11 @@ namespace ClusterLib
             this.vec = vec3.vec;
         }
 
+        public Vector(byte[] input)  //vector overload
+        {
+            Deserialize(input);
+        }
+
         public Vector(Vec6 vec,int i)  //vec6 overload split into a single vec3
         {
             for(int n = 0;n<3;n++)
@@ -38,31 +55,33 @@ namespace ClusterLib
 
         public static Vector operator+ (Vector a, Vector b)//+ operator overload
         {
-            return new Vector(new decimal[] { a.vec[0] + b.vec[0], a.vec[1] + b.vec[1], a.vec[2] + b.vec[2] });
+            return new Vector(new double[] { a.vec[0] + b.vec[0], a.vec[1] + b.vec[1], a.vec[2] + b.vec[2] });
         }
 
         public static Vector operator -(Vector a, Vector b)
         {
-            return new Vector(new decimal[] { a.vec[0] - b.vec[0], a.vec[1] - b.vec[1], a.vec[2] - b.vec[2] });
+            return new Vector(new double[] { a.vec[0] - b.vec[0], a.vec[1] - b.vec[1], a.vec[2] - b.vec[2] });
         }
 
         public static Vector operator *(Vector a, Vector b)
         {
-            return new Vector(new decimal[] { a.vec[0] * b.vec[0], a.vec[1] * b.vec[1], a.vec[2] * b.vec[2] });
+            return new Vector(new double[] { a.vec[0] * b.vec[0], a.vec[1] * b.vec[1], a.vec[2] * b.vec[2] });
         }
 
         public static Vector operator /(Vector a, Vector b)
         {
-            return new Vector(new decimal[] { a.vec[0] / b.vec[0], a.vec[1] / b.vec[1], a.vec[2] / b.vec[2] });
+            if (b.vec.Contains(0))
+                throw new DivideByZeroException();
+            return new Vector(new double[] { a.vec[0] / b.vec[0], a.vec[1] / b.vec[1], a.vec[2] / b.vec[2] });
         }
 
-        public static Vector operator *(decimal a, Vector b)
+        public static Vector operator *(double a, Vector b)
         {
-            return new Vector(new decimal[] { a * b.vec[0], a* b.vec[1], a* b.vec[2] });
+            return new Vector(new double[] { a * b.vec[0], a* b.vec[1], a* b.vec[2] }); 
         }
 
-
-        public void init(decimal n = 0m)//initialize vector
+        
+        public void init(double n = 0)//initialize vector
         {
             for (int i = 0; i < 3; i++)
                 this.vec[i] = n;
@@ -78,35 +97,37 @@ namespace ClusterLib
             for (int i = 0; i < 3; i++)
                 this.vec[i] -= vec.vec[i];
         }
-        public void mult(decimal value) //mult this with value
+        public void mult(double value) //mult this with value
         {
             for (int i = 0; i < 3; i++)
                 this.vec[i] *= value;
         }
-        public void div(decimal value)   //div this by value
+        public void div(double value)   //div this by value
         {
+            if (value == 0||double.IsNaN(value)|| double.IsInfinity(value))
+                throw new DivideByZeroException();
             for (int i = 0; i < 3; i++)
                 this.vec[i] /= value;
         }
-        public decimal skalar(Vector vec)    // dot product(skalarprodukt)
+        public double skalar(Vector vec)    // dot product(skalarprodukt)
         {
-            decimal output = 0;
+            double output = 0;
             for (int i = 0; i < 3; i++)
                 output += this.vec[i] * vec.vec[i];
             return output;
         }
         
-        public decimal distance()            //magnitude of the vector
+        public double distance()            //magnitude of the vector
         {
-            decimal hypo = 0;
+            double hypo = 0;
             for (int i = 0; i <= 2; i++)
                 hypo += this.vec[i]* this.vec[i];
-            return (decimal)Math.Sqrt((Double)hypo);
+            return (double)Math.Sqrt((Double)hypo);
         }
 
-        public decimal distance2()            //magnitude of the vector squared
+        public double distance2()            //magnitude of the vector squared
         {
-            decimal hypo = 0;
+            double hypo = 0;
             for (int i = 0; i <= 2; i++)
                 hypo += this.vec[i] * this.vec[i];
             return hypo;
@@ -117,7 +138,7 @@ namespace ClusterLib
             
             return vec2 - this;
         }
-        public Vector scale(decimal distance)   //scale magnitude to value
+        public Vector scale(double distance)   //scale magnitude to value
         {
             div(this.distance());
             mult(distance);
@@ -133,9 +154,9 @@ namespace ClusterLib
 
         /*public Vector polar()//convert to polar coordinates
         {
-            decimal r = this.distance();
-            decimal g = 0;
-            decimal b = 0;
+            double r = this.distance();
+            double g = 0;
+            double b = 0;
             if (this.vec[0] > 0)
                 if (this.vec[1] > 0)
                     g = this.vec[1] / (Math.Abs(this.vec[0]) + Math.Sqrt(Math.Pow(this.vec[0], 2) + Math.Pow(this.vec[1], 2)));
@@ -145,8 +166,8 @@ namespace ClusterLib
                 g = 180 - this.vec[1] / (Math.Abs(this.vec[0]) + Math.Sqrt(Math.Pow(this.vec[0], 2) + Math.Pow(this.vec[1], 2)));
 
             if (r != 0)
-                b = (decimal)Math.Asin((double)this.vec[2] / r);
-            return new ClusterLib.Vector(new decimal[3] { r, Math.Asin(this.vec[2] / r), g });
+                b = (double)Math.Asin((double)this.vec[2] / r);
+            return new ClusterLib.Vector(new double[3] { r, Math.Asin(this.vec[2] / r), g });
 
         }*/
 
@@ -154,17 +175,29 @@ namespace ClusterLib
         {
             return vec[0] + "|" + vec[1] + "|" + vec[2];
         } 
+        public byte[] Serialize()
+        {
+            var temp = new byte[24];
+            for (int i = 0; i < 3; i++)
+                Array.Copy(BitConverter.GetBytes(vec[i]), 0, temp, i*8, 8);
+            return temp;
+        }
+        public void Deserialize(byte[] input)
+        {
+            for (int i = 0; i < 3; i++)
+                vec[i] = BitConverter.ToDouble(input, i * 8);
+        }
 
 
 
     }
     public class Vec6//6 dimensional vector propertys according to Vector
     {
-        public decimal[] vec = new decimal[6]; //Field
+        public double[] vec = new double[6]; //Field
 
         public Vec6() { }         //blank constructor
 
-        public Vec6(decimal[] vec) //decimal[6] overload
+        public Vec6(double[] vec) //double[6] overload
         {
             this.vec = vec;
         }
@@ -207,11 +240,13 @@ namespace ClusterLib
         {
             Vec6 temp = new Vec6();
             for (int i = 0; i < 6; i++)
-                temp.vec[i] = a.vec[i] * b.vec[i];
+                if (b.vec[i] != 0 || !double.IsNaN(b.vec[i]) || !double.IsInfinity(b.vec[i]))
+                    temp.vec[i] = a.vec[i] / b.vec[i];
+                else throw new DivideByZeroException();
             return temp;
         }
 
-        public static Vec6 operator *(decimal a, Vec6 b)
+        public static Vec6 operator *(double a, Vec6 b)
         {
             Vec6 temp = new Vec6();
             for (int i = 0; i < 6; i++)
@@ -236,29 +271,31 @@ namespace ClusterLib
             for (int i = 0; i < 6; i++)
                 this.vec[i] -= vec.vec[i];
         }
-        public void mult(decimal value) //mult this with
+        public void mult(double value) //mult this with
         {
             for (int i = 0; i < 6; i++)
                 this.vec[i] *= value;
         }
-        public void div(decimal value)   //div this by
+        public void div(double value)   //div this by
         {
+            if (value == 0 || double.IsNaN(value) || double.IsInfinity(value))
+                throw new DivideByZeroException();
             for (int i = 0; i < 6; i++)
                 this.vec[i] /= value;
         }
-        public decimal skalar(Vec6 vec)    // skalarprodukt
+        public double skalar(Vec6 vec)    // skalarprodukt
         {
-            decimal output = 0;
+            double output = 0;
             for (int i = 0; i < 6; i++)
                 output += this.vec[i] * vec.vec[i];
             return output;
         }
-        public decimal distance()            //magnitude of the Vec6
+        public double distance()            //magnitude of the Vec6
         {
-            decimal hypo = 0;
+            double hypo = 0;
             for (int i = 0; i <= 5; i++)
-                hypo += (decimal)Math.Pow((double)this.vec[i], 5);
-            return (decimal)Math.Sqrt((double)hypo);
+                hypo += (double)Math.Pow((double)this.vec[i], 5);
+            return (double)Math.Sqrt((double)hypo);
         }
         public Vec6 direction(Vec6 vec5) //calc directionVec6 to other Vec6
         {
@@ -270,9 +307,9 @@ namespace ClusterLib
         public Vector ToVector(int i)//split Vec6 into tow seperate vectors
         {
             if (i == 0)
-                return new Vector(new decimal[] { this.vec[0], this.vec[1], this.vec[2] });
+                return new Vector(new double[] { this.vec[0], this.vec[1], this.vec[2] });
             else
-                return new Vector(new decimal[] { this.vec[3], this.vec[4], this.vec[5] });
+                return new Vector(new double[] { this.vec[3], this.vec[4], this.vec[5] });
         }
 
         public string toString()            //Translate to String

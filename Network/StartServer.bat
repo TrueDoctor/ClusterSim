@@ -1,0 +1,1 @@
+.\psexec -i -s \\192.168.2.128 C:\Users\Administrator.TARDIS\Desktop\startServer.bat -u Administrator -p B1PAn.wsd123start C:\Users\Dennis\Documents\"Visual Studio 2017"\Projects\ClusterSim\Network\Client\bin\Debug\Client.exe
