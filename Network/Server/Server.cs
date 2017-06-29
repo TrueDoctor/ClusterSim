@@ -23,7 +23,7 @@ namespace ClusterSim.Net.Server
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.Title = "CluserSim - Distribution Server";
 
-            int step = SQL.lastStep("lang"),errors=0, dt = 1;
+            int step = SQL.lastStep("lang"),errors=0, dt = 30;
             double ovrper=1;
 
             Console.WriteLine("Load Stars...");
@@ -177,7 +177,7 @@ namespace ClusterSim.Net.Server
         {
             string HostName = System.Net.Dns.GetHostName();
             System.Net.IPHostEntry hostInfo = Dns.GetHostEntry(HostName);
-            var listener = new TcpListener(hostInfo.AddressList[4], Properties.Settings.Default.Port);
+            var listener = new TcpListener(hostInfo.AddressList.Last(), Properties.Settings.Default.Port);
             var tempClient = default(TcpClient);
 
             Console.WriteLine("Server started listening on {0} : {1}\n",Properties.Settings.Default.Port,listener.LocalEndpoint);
