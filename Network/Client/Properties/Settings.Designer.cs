@@ -34,10 +34,22 @@ namespace Client.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("192.168.2.105")]
+        [global::System.Configuration.DefaultSettingValueAttribute("192.168.2.130")]
         public string IP {
             get {
                 return ((string)(this["IP"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Einstellung {
+            get {
+                return ((string)(this["Einstellung"]));
+            }
+            set {
+                this["Einstellung"] = value;
             }
         }
     }

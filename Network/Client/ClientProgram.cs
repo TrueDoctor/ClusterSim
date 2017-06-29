@@ -29,9 +29,12 @@ namespace Client
 
             Console.WriteLine("Client Started");
             loopback:
+            string HostName = System.Net.Dns.GetHostName();
+            System.Net.IPHostEntry hostInfo = Dns.GetHostEntry(HostName);
+            string ip = hostInfo.AddressList[4].ToString();//Properties.Settings.Default.IP;
             try
             {
-                clientSocket.Connect(Properties.Settings.Default.IP, Properties.Settings.Default.Port);
+                clientSocket.Connect(ip, Properties.Settings.Default.Port);
             }
             catch { Console.WriteLine("Server nicht erreichbar"); if (!Console.ReadLine().Equals("retry")) { return; } else goto loopback; }
             Console.WriteLine("Client Socket Program - Server Connected ... on "+Properties.Settings.Default.IP+":"+Properties.Settings.Default.Port);

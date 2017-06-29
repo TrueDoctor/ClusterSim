@@ -81,7 +81,7 @@ namespace ClusterSim.Net.Server
                     var tempStars = msg.Deserialize(temp);
 
                 if (msg.Stars != null)
-                    if ((msg.max - msg.min != tempStars.Count - 1)&&false)
+                    if ((max - min != tempStars.Count - 1))
                         throw new Exception("Falsche Rüchgabelänge bei:" + clientSocket.Client.LocalEndPoint.ToString());
                     else
                     {

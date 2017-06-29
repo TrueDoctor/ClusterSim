@@ -25,7 +25,7 @@ namespace ClusterSim.ClusterLib
             set
             {
                 if (value < 0)
-                { dead = true; Id = value == Int32.MinValue ? 0 : -value; }
+                { dead = true; Id = -(value+1); }
                 else
                     Id = value;
 
@@ -123,7 +123,7 @@ namespace ClusterSim.ClusterLib
             Array.Copy(pos.Serialize(), 0, temp, 0, 24);
             Array.Copy(vel.Serialize(), 0, temp, 24, 24);
             Array.Copy(BitConverter.GetBytes(mass), 0, temp, 48, 8);
-            Array.Copy(BitConverter.GetBytes(dead?id==0?Int32.MinValue:-id:id), 0, temp, 56, 4);
+            Array.Copy(BitConverter.GetBytes(dead?-(id+1):id), 0, temp, 56, 4);
             return temp;
         }
 

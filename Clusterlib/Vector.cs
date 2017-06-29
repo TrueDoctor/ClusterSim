@@ -16,9 +16,9 @@ namespace ClusterSim.ClusterLib
                 return Vec;
             }
             set{
-                if (double.IsNaN(value[0]))
-                    throw new DivideByZeroException();
-                else
+               // if (double.IsNaN(value[0]))
+                 //   throw new DivideByZeroException();
+                //else
                     Vec = value;
             }
         }
