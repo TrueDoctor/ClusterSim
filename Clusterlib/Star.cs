@@ -9,16 +9,17 @@ using System.Runtime.Serialization;
 namespace ClusterSim.ClusterLib
 {
     [Serializable]
-    public class Star 
+    public class Star : IMassive
     {
 
         //declare fields/members
         public Vector pos = new Vector();
         public Vector vel = new Vector();
-        private double mass;
+        public double mass { get; set; }
         private int Id;
-        public bool computed = false,dead=false;
-        
+        public bool computed = false;
+        public bool dead { get; set; } = false;
+
         public int id
         {
             get { return Id; }
@@ -31,6 +32,9 @@ namespace ClusterSim.ClusterLib
 
             }
         }
+
+        Vector IMassive.pos { get { return pos; } set { pos = value; } }
+        double IMassive.mass { get { return mass; } set { mass = value; } }
 
         public Star() { }//empty constructor
 

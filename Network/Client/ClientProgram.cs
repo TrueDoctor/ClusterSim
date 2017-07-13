@@ -31,7 +31,8 @@ namespace Client
             loopback:
             string HostName = System.Net.Dns.GetHostName();
             System.Net.IPHostEntry hostInfo = Dns.GetHostEntry(HostName);
-            string ip = hostInfo.AddressList[4].ToString();//Properties.Settings.Default.IP;
+            string ip = /*hostInfo.AddressList.First(x => x.ToString().Contains('.')).ToString();/*/Properties.Settings.Default.IP;
+            //string ip = "10.165.4.148";
             try
             {
                 clientSocket.Connect(ip, Properties.Settings.Default.Port);
@@ -45,8 +46,8 @@ namespace Client
             int step,min,max;
             step = min =  0;
             max = 1;
-            try
-            {
+            //try
+            //{
                 while (true)
                 {
                     NetworkStream serverStream = clientSocket.GetStream();
@@ -84,8 +85,8 @@ namespace Client
                     serverStream.Write(new Message(step, min, max, NewStars).Serialize(NewStars.Length), 0, NewStars.Length * 60 + 16);
                     serverStream.Flush();
                 }
-            }
-            catch(Exception e) { Console.WriteLine("Verbindung verloren\n\n"+e.Message);Console.ReadLine();return; }
+            //}
+            //catch(Exception e) { Console.WriteLine("Verbindung verloren\n\n"+e.Message);Console.ReadLine();return; }
         }
     }
 }

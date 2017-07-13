@@ -12,17 +12,19 @@ namespace ClusterSim.ClusterLib
         public double[] Vec = new double[3];
         public double[] vec  //Field
         {
-            get{
+            get
+            {
                 return Vec;
             }
-            set{
-               // if (double.IsNaN(value[0]))
-                 //   throw new DivideByZeroException();
+            set
+            {
+                // if (double.IsNaN(value[0]))
+                //   throw new DivideByZeroException();
                 //else
-                    Vec = value;
+                Vec = value;
             }
         }
-        
+
         public Vector() { }         //blank constructor
 
         public Vector(double[] vec) //double[3] overload
@@ -30,7 +32,7 @@ namespace ClusterSim.ClusterLib
             this.vec = vec;
         }
 
-        public Vector(double a,double b,double c) //double[3] overload
+        public Vector(double a, double b, double c) //double[3] overload
         {
             this.vec[0] = a;
             this.vec[1] = b;
@@ -47,13 +49,13 @@ namespace ClusterSim.ClusterLib
             Deserialize(input);
         }
 
-        public Vector(Vec6 vec,int i)  //vec6 overload split into a single vec3
+        public Vector(Vec6 vec, int i)  //vec6 overload split into a single vec3
         {
-            for(int n = 0;n<3;n++)
-                this.vec[n] = vec.vec[n+i*3];
+            for (int n = 0; n < 3; n++)
+                this.vec[n] = vec.vec[n + i * 3];
         }
 
-        public static Vector operator+ (Vector a, Vector b)//+ operator overload
+        public static Vector operator +(Vector a, Vector b)//+ operator overload
         {
             return new Vector(new double[] { a.vec[0] + b.vec[0], a.vec[1] + b.vec[1], a.vec[2] + b.vec[2] });
         }
@@ -68,6 +70,7 @@ namespace ClusterSim.ClusterLib
             return new Vector(new double[] { a.vec[0] * b.vec[0], a.vec[1] * b.vec[1], a.vec[2] * b.vec[2] });
         }
 
+
         public static Vector operator /(Vector a, Vector b)
         {
             if (b.vec.Contains(0))
@@ -77,20 +80,49 @@ namespace ClusterSim.ClusterLib
 
         public static Vector operator *(double a, Vector b)
         {
-            return new Vector(new double[] { a * b.vec[0], a* b.vec[1], a* b.vec[2] }); 
+            return new Vector(new double[] { a * b.vec[0], a * b.vec[1], a * b.vec[2] });
         }
 
-        
-        public void init(double n = 0)//initialize vector
+        public static Vector operator /(Vector b, double a)
+        {
+            return new Vector(new double[] { b.vec[0] / a, b.vec[1] / a, b.vec[2] / a });
+        }
+
+        public static Vector operator +(Vector b, double a)
+        {
+            return new Vector(new double[] { b.vec[0] + a, b.vec[1] + a, b.vec[2] + a });
+        }
+
+        public static bool operator ==(Vector a, Vector b)
+        {
+            return (a.vec[0] == b.vec[0] && a.vec[1] == b.vec[1] && a.vec[2] == b.vec[2]) ? true : false;
+        }
+
+        public static bool operator !=(Vector a, Vector b)
+        {
+            return (a.vec[0] != b.vec[0] && a.vec[1] != b.vec[1] && a.vec[2] != b.vec[2]) ? true : false;
+        }
+
+        public static bool operator <(Vector a, Vector b)
+        {
+            return a.vec[0] < b.vec[0] && a.vec[1] < b.vec[1] && a.vec[2] < b.vec[2] ? true : false;
+        }
+        public static bool operator >(Vector a, Vector b)
+        {
+            return a.vec[0] > b.vec[0] && a.vec[1] > b.vec[1] && a.vec[2] > b.vec[2] ? true : false;
+        }
+
+        public Vector init(double n = 0)//initialize vector
         {
             for (int i = 0; i < 3; i++)
                 this.vec[i] = n;
+            return this;
         }
 
         public void add(Vector vec) //add to vector
-        {           
+        {
             for (int i = 0; i < 3; i++)
-                this.vec[i] += vec.vec[i];           
+                this.vec[i] += vec.vec[i];
         }
         public void sub(Vector vec) //sub from vector
         {
@@ -102,12 +134,13 @@ namespace ClusterSim.ClusterLib
             for (int i = 0; i < 3; i++)
                 this.vec[i] *= value;
         }
-        public void div(double value)   //div this by value
+        public Vector div(double value)   //div this by value
         {
-            if (value == 0||double.IsNaN(value)|| double.IsInfinity(value))
+            if (value == 0 || double.IsNaN(value) || double.IsInfinity(value))
                 throw new DivideByZeroException();
             for (int i = 0; i < 3; i++)
                 this.vec[i] /= value;
+            return this;
         }
         public double skalar(Vector vec)    // dot product(skalarprodukt)
         {
@@ -116,12 +149,12 @@ namespace ClusterSim.ClusterLib
                 output += this.vec[i] * vec.vec[i];
             return output;
         }
-        
+
         public double distance()            //magnitude of the vector
         {
             double hypo = 0;
             for (int i = 0; i <= 2; i++)
-                hypo += this.vec[i]* this.vec[i];
+                hypo += this.vec[i] * this.vec[i];
             return (double)Math.Sqrt((Double)hypo);
         }
 
@@ -135,7 +168,7 @@ namespace ClusterSim.ClusterLib
 
         public Vector direction(Vector vec2) //calc directionvector to other vector
         {
-            
+
             return vec2 - this;
         }
         public Vector scale(double distance)   //scale magnitude to value
@@ -145,11 +178,33 @@ namespace ClusterSim.ClusterLib
             return this;
         }
 
-        public Vector random(double range=1)   //generate random vector
-        { 
+        public Vector random(double range = 1)   //generate random vector
+        {
             for (int i = 0; i <= 2; i++)
                 this.vec[i] = Misc.random(range);
             return this;
+        }
+        public Vector Floor()   //generate random vector
+        {
+            for (int i = 0; i <= 2; i++)
+                this.vec[i] = Math.Floor(vec[i]);
+            return this;
+        }
+
+        public bool IsNeighbour(Vector b)
+        {
+            /* for (int x = -1; x <= 1; x++)
+                 for (int y = -1; y <= 1; y++)
+                     for (int z = -1; z <= 1; z++)
+                     {
+                         if (vec[0] == b.Vec[0] && vec[1] == b.vec[1] && vec[2] == b.vec[2])
+                             return true;
+                     }*/
+            for (int i = 0; i <= 2; i++)
+                if (Math.Abs(vec[i] - b.vec[i]) > 1)
+                    return false;
+            return true;
+
         }
 
         /*public Vector polar()//convert to polar coordinates
@@ -174,12 +229,12 @@ namespace ClusterSim.ClusterLib
         public string toString()            //Translate to String
         {
             return vec[0] + "|" + vec[1] + "|" + vec[2];
-        } 
+        }
         public byte[] Serialize()
         {
             var temp = new byte[24];
             for (int i = 0; i < 3; i++)
-                Array.Copy(BitConverter.GetBytes(vec[i]), 0, temp, i*8, 8);
+                Array.Copy(BitConverter.GetBytes(vec[i]), 0, temp, i * 8, 8);
             return temp;
         }
         public void Deserialize(byte[] input)
@@ -207,9 +262,9 @@ namespace ClusterSim.ClusterLib
             this.vec = vec6.vec;
         }
 
-        public Vec6(Vector a,Vector b)  //Vec6 overload
+        public Vec6(Vector a, Vector b)  //Vec6 overload
         {
-            this.vec =  a.vec.Concat(b.vec).ToArray();
+            this.vec = a.vec.Concat(b.vec).ToArray();
         }
 
         public static Vec6 operator +(Vec6 a, Vec6 b)
@@ -302,7 +357,7 @@ namespace ClusterSim.ClusterLib
             vec5.sub(this);
             return vec5;
         }
-       
+
 
         public Vector ToVector(int i)//split Vec6 into tow seperate vectors
         {
@@ -314,7 +369,7 @@ namespace ClusterSim.ClusterLib
 
         public string toString()            //Translate to String
         {
-            return vec[0].ToString() + "|" + vec[1].ToString() + "|" + vec[2].ToString()+"|" + vec[3].ToString()+"|" + vec[4].ToString()+ "|" + vec[2].ToString();
+            return vec[0].ToString() + "|" + vec[1].ToString() + "|" + vec[2].ToString() + "|" + vec[3].ToString() + "|" + vec[4].ToString() + "|" + vec[2].ToString();
         }
     }
 }
