@@ -11,12 +11,15 @@ using ClusterSim.ClusterLib;
 
 namespace ClusterSim.Net.Server
 {
-     class Server
+     public class Server
     {
-        static List<ClientHandler> Clients = new List<ClientHandler>();
-        static List<ClientHandler> newClients = new List<ClientHandler>();
+        private List<ClientHandler> Clients = new List<ClientHandler>();
+        private List<ClientHandler> newClients = new List<ClientHandler>();
 
-        static void Main(string[] args)
+        public  event SendHandler SendData;
+        public  delegate void SendHandler(Server s, SendEventArgs e);
+
+         public void Main()
         {
             Thread listenThread = new Thread(Listen)
             {
@@ -27,6 +30,7 @@ namespace ClusterSim.Net.Server
 
             int step = SQL.lastStep("lang"),errors=0, dt = 30, year=0;
             double ovrper=1;
+            
 
             Console.WriteLine("Load Stars...");
             StarCluster Cluster = new StarCluster("lang", "lang", SQL.lastStep("lang"), dt);
@@ -39,7 +43,7 @@ namespace ClusterSim.Net.Server
             
             Console.CursorVisible = false;
             while (true)
-                try
+                //try
                 {
                     double gesper = 0, partper = 0;
 
@@ -95,22 +99,21 @@ namespace ClusterSim.Net.Server
                         if (Cluster.Stars.Exists(x => x.pos == d.pos && d.id != x.id))
                             throw new NotImplementedException(Cluster.Stars.Where(x => x.pos == d.pos && d.id != x.id).Count().ToString());
 
-
+                    var orders = new List<int[]>();
 
                     foreach (ClientHandler c in ready)
                     {
-                        /*c.OldStars.Clear();
-                        foreach (Star s in Cluster.Stars)
-                            c.OldStars.Add(s.Clone());
-                            */
-
                         end = start + (int) Math.Round(c.performance * coe);
-                        c.Send(step, start, c != ready.Last() ? end - 1 : Cluster.Stars.Count - 1, Cluster.Stars.ToList());
-                        
-
+                        orders.Add(new int[] {c.id, start, c != ready.Last() ? end - 1 : Cluster.Stars.Count - 1 });
                         start = end;
 
                     }
+
+                    //c.Send(step, start, c != ready.Last() ? end - 1 : Cluster.Stars.Count - 1, Cluster.Stars.ToList());
+
+                    var send = new SendEventArgs(step, orders, Cluster.Stars.ToArray());
+                    SendData(this, send);
+
                     Console.WriteLine(step);
 
                     foreach (Star d in Cluster.Stars)
@@ -131,7 +134,7 @@ namespace ClusterSim.Net.Server
                     foreach (ClientHandler c in ready)
                         if (c.mstep > step && c.NewStars != null)
                         {
-                            NewStars.AddRange(c.NewStars/*.Where(x =>!NewStars.Exists(y=>x.pos==y.pos))*/); 
+                            NewStars.AddRange(c.NewStars.ToList()/*.Where(x =>!NewStars.Exists(y=>x.pos==y.pos))*/); 
                         }
                         else
                             Console.WriteLine(c.mstep);
@@ -139,14 +142,17 @@ namespace ClusterSim.Net.Server
                     if (NewStars.Count != Cluster.Stars.Count&&step!=0)
                         throw new Exception("Falsche Rückgabelänge => Duplikate");
 
-                    
+                    if (NewStars[0].pos==NewStars[10].pos)
+                    {
+                        throw new NotImplementedException();
+                    }
 
                     for (int i = 0; i < Cluster.Stars.Count; i++)
                     {
                         var temp = NewStars.Find(x => x.id == i);
                         if (temp != null)
                         {
-                            Cluster.Stars[i] = temp;
+                            Cluster.Stars[i] = temp.Clone();
                         }
                         else
                         {
@@ -193,11 +199,11 @@ namespace ClusterSim.Net.Server
 
                     msg = new StringBuilder();
                 }
-                catch (Exception e) { Console.Clear(); Console.WriteLine(e.Message); Console.Beep(); Thread.Sleep(2000); Console.Clear(); errors++; }
+                //catch (Exception e) { Console.Clear(); Console.WriteLine(e.Message); Console.Beep(); Thread.Sleep(2000); Console.Clear(); errors++; }
             
         }
 
-        private static void Listen()
+        private void Listen()
         {
             string HostName = System.Net.Dns.GetHostName();
             System.Net.IPHostEntry hostInfo = Dns.GetHostEntry(HostName);
@@ -214,6 +220,7 @@ namespace ClusterSim.Net.Server
                 newClients.Add(new ClientHandler());
                 Console.Beep();
                 Console.WriteLine(" >> Client {0} connected", newClients.Last().id);
+                newClients.Last().Subscribe(this);
                 newClients.Last().StarClient(tempClient);
             }
 

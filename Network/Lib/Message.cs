@@ -16,11 +16,16 @@ using ClusterSim.Net;
 
 namespace ClusterSim.Net.Lib
 {
-    [Serializable]
     public class Message
     {
-        public int step, count, min,max;
-        public Star[] Stars;
+        public int step, count, min, max;
+        private Star[] stars;
+        public Star[] Stars 
+        {
+            get { return stars ;}
+            private set { stars = value; }
+        }
+        
 
         public Message(int count)
         {
@@ -41,19 +46,19 @@ namespace ClusterSim.Net.Lib
             this.min = min;
             this.max = max;
             this.Stars = Stars;
-            count = Stars.Length; 
+            count = Stars.Length;
         }
         public byte[] Serialize(int count)
         {
             this.count = count;
-            var output = new byte[count*60+16];
-            Array.Copy(BitConverter.GetBytes(step),0, output, 0, 4);
+            var output = new byte[count * 60 + 16];
+            Array.Copy(BitConverter.GetBytes(step), 0, output, 0, 4);
             Array.Copy(BitConverter.GetBytes(count), 0, output, 4, 4);
             Array.Copy(BitConverter.GetBytes(min), 0, output, 8, 4);
             Array.Copy(BitConverter.GetBytes(max), 0, output, 12, 4);
-            for(int i = 0; i < count; i++)
-                Array.Copy(Stars[i].Serialize(), 0, output, i*60+16, 60);
-            return output;   
+            for (int i = 0; i < count; i++)
+                Array.Copy(Stars[i].Serialize(), 0, output, i * 60 + 16, 60);
+            return output;
         }
 
         public List<Star> Deserialize(byte[] input)
@@ -64,7 +69,7 @@ namespace ClusterSim.Net.Lib
             min = BitConverter.ToInt32(input, 8);
             max = BitConverter.ToInt32(input, 12);
             var star = new byte[60];
-            
+
             for (int i = 0; i < count; i++)
             {
                 Array.Copy(input, i * 60 + 16, star, 0, 60);
