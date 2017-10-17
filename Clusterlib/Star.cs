@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Drawing;
-using System.Runtime.Serialization;
 
 namespace ClusterSim.ClusterLib
 {
@@ -18,7 +12,7 @@ namespace ClusterSim.ClusterLib
         public double mass { get; set; }
         private int Id;
         public bool computed = false;
-        public bool dead { get; set; } = false;
+        public bool dead { get; set; }
 
         public int id
         {
@@ -62,16 +56,16 @@ namespace ClusterSim.ClusterLib
 
         public Star(Star s)//constructor from given Star
         {
-            this.pos = s.pos;
-            this.vel = s.vel;
-            this.id = s.id;
-            this.mass = s.mass;
+            pos = s.pos;
+            vel = s.vel;
+            id = s.id;
+            mass = s.mass;
         }
 
         public Star(Vec6 vec,double mass,int id=-1)//create Star from Vec6
         {
-            this.pos = new Vector(vec,0);
-            this.vel = new Vector(vec,1);
+            pos = new Vector(vec,0);
+            vel = new Vector(vec,1);
             this.id = id;
             this.mass = mass;
         }
@@ -86,11 +80,11 @@ namespace ClusterSim.ClusterLib
         {
             try
             {
-                return (double)Math.Sqrt(Convert.ToDouble(mass) / (1.0 - Math.Pow((double)(this.vel.distance() / Misc.c), 2)));
+                return Math.Sqrt(Convert.ToDouble(mass) / (1.0 - Math.Pow(vel.distance() / Misc.c, 2)));
             }
             catch(Exception e)
             {
-                Console.WriteLine("\n\n\n\n\n\nGeschwingkeit von Stern {0} größer als Lichtgeschwindigkeit.\n kleinere Zeitschritte wählen!\n\n\n\n\n\n\n{1}\n\n",this.id,e.Message);
+                Console.WriteLine("\n\n\n\n\n\nGeschwingkeit von Stern {0} größer als Lichtgeschwindigkeit.\n kleinere Zeitschritte wählen!\n\n\n\n\n\n\n{1}\n\n",id,e.Message);
                 return 7922816251426433;
             }
         }
@@ -107,7 +101,7 @@ namespace ClusterSim.ClusterLib
 
         public void print() //print all fields of the star in the console
         {
-            Console.Write(this.id+", ");
+            Console.Write(id+", ");
             //Console.WriteLine("pos: " + pos.toString());
             //Console.WriteLine("vel: " + vel.toString());
             //Console.WriteLine("mass: " + mass);
@@ -116,7 +110,7 @@ namespace ClusterSim.ClusterLib
         public Star Clone()//clone method to prevent shallow copys
         {
 
-            Star clone = new Star(this.pos, this.vel, this.mass, this.id,this.dead);
+            Star clone = new Star(pos, vel, mass, id,dead);
             
             return clone;
         }

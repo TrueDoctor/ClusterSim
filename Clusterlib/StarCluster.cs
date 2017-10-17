@@ -1,16 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Threading;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization;
-using ClusterSim.ClusterLib;
-using XDMessaging;
 
 //using Newtonsoft.Json.Converters; 
 
@@ -42,7 +33,7 @@ namespace ClusterSim.ClusterLib
 
         public StarCluster(string rtable, string wtable, int start, double dt = 1)   //constructor 
         {
-            this.starCount = SQL.starsCount(rtable);
+            starCount = SQL.starsCount(rtable);
             this.rtable = rtable;
             this.wtable = wtable;
             this.start = start;
@@ -70,12 +61,11 @@ namespace ClusterSim.ClusterLib
         {
             if (Stars == null)
                 return null;
-            else
-                foreach (Star s in Stars)//reset computation status
-                    s.computed = false;
+            foreach (Star s in Stars)//reset computation status
+                s.computed = false;
 
             int processors = Environment.ProcessorCount;//get number of processors
-            int perCore = (int)starCount / processors;//divide the cluster in equal parts
+            int perCore = starCount / processors;//divide the cluster in equal parts
             int left = starCount % processors;//calc remainder
             List<Thread> threads = new List<Thread>();
 
@@ -127,13 +117,12 @@ namespace ClusterSim.ClusterLib
                 Thread save = new Thread(delegate () { export(new List<Star>(Steps.Last()), step + start, wtable); });
                 save.Priority = ThreadPriority.Highest;
                 save.Start();
-                save.Name = "save" + step.ToString();
+                save.Name = "save" + step;
                 savethreads.Add(save);
                 //export(new List<Star>(Steps.Last()), step + start, wtable);//currently disabled create new save Thread;
                 return null;
             }
-            else
-                return new List<Star>(temp.OrderBy(x => x.id)).ToArray();
+            return new List<Star>(temp.OrderBy(x => x.id)).ToArray();
         }
 
         public Star[] doStep(int step, int min, int max, Misc.Method m)
@@ -144,12 +133,15 @@ namespace ClusterSim.ClusterLib
             starCount = Stars.Count;
             if (Stars == null)
                 return null;
-            else
-                foreach (Star s in Stars)//reset computation status
-                    s.computed = false;
+            foreach (Star s in Stars)//reset computation status
+                s.computed = false;
+
+            foreach (Star c in Stars)
+                if (Stars.Exists(x => x.pos == c.pos && c.id != x.id))
+                    throw new NotImplementedException();
 
             int processors = Environment.ProcessorCount;//get number of processors
-            int perCore = (int)((max - min) + 1) / processors;//divide the cluster in equal parts
+            int perCore = ((max - min) + 1) / processors;//divide the cluster in equal parts
             int left = ((max - min) + 1) % processors;//calc remainder
             List<Thread> threads = new List<Thread>();
 
@@ -157,9 +149,10 @@ namespace ClusterSim.ClusterLib
             foreach (Star s in Stars)//clone each to prevent shallow copys
                 OldStars.Add(s.Clone());
 
+#region multithread orders
             int end;
             start = min;
-            for (int i = 0; i < processors; i++)
+            for (int i = 0; i < (processors<max-min?processors:max-min); i++)
             {
                 end = start + perCore;
                 if (left > 0)
@@ -190,22 +183,27 @@ namespace ClusterSim.ClusterLib
 
 
             }
+#endregion
 
-
+            //Merge Results
             while (threads.Exists(x => x.IsAlive) || Stars.Exists(x => !x.computed && x.id >= min && x.id <= max))
                 Thread.Sleep(10);
 
+            foreach (Star s in Stars.Where(c => c.computed))
+                if (OldStars.Exists(x => x.pos == s.pos && s.id != x.id))
+                    throw new NotImplementedException();
 
-            return Stars.Where(x => x.computed).OrderBy(x => x.id).ToArray();
+            return Stars.Where(x => x.computed && x.id>=min&& x.id <= max&&!Double.IsNaN(x.pos.vec[0])).OrderBy(x => x.id).ToArray();
         }
 
         private void CalcBoxes()
         {
+            Console.WriteLine("Calc Boxes");
             BoxSize = (Stars.Max(x => x.pos.vec.Max()) - Stars.Min(x => x.pos.vec.Min())) / Math.Pow(2, BoxLevels); //calc low level box sizes
             int halfcount = (int)Math.Pow(2, BoxLevels);
             List<IMassive> temp = new List<IMassive>();
             foreach (Star s in Stars)
-                MassLayer.Add(s as IMassive);
+                MassLayer.Add(s);
             int i = Stars.Count ;
             //for (int level = 0; level <= BoxLevels; level++)
             //{
@@ -226,7 +224,7 @@ namespace ClusterSim.ClusterLib
 
                         var thisBox = new Box(i++, boxpos, new Vector(x, y, z), BoxSize, MassLayer, ids,true);
                         Boxes[level][x,y,z]=thisBox;
-                        MassLayer.Add(thisBox as IMassive);
+                        MassLayer.Add(thisBox);
                     }
             
             for (level = 0; level < BoxLevels; level++)
@@ -238,14 +236,14 @@ namespace ClusterSim.ClusterLib
                         for (int z = 0; z < max; z++)
                         {
                             var boxpos = new Vector((x - (max / 2)) * BoxSize*Math.Pow(2,level), (y - (max / 2)) * BoxSize*Math.Pow(2, level), (z - (max / 2)) * BoxSize*Math.Pow(2, level));
-                            var vecEqual = new Vector((double)x, (double)y, (double)z);
+                            var vecEqual = new Vector(x, y, z);
                             var ids = new List<int>();
                             foreach (Box b in Boxes[level])
                                 if ((b.PosId / 2).Floor() == vecEqual)
                                     ids.Add(b.id);
                             var tempbox = new Box(i++, boxpos, new Vector(x, y, z), BoxSize* Math.Pow(2, level), MassLayer, ids);
                             Boxes[level + 1][x,y,z]=tempbox;
-                            MassLayer.Add(tempbox as IMassive);
+                            MassLayer.Add(tempbox);
                         }
 
             }
@@ -255,6 +253,7 @@ namespace ClusterSim.ClusterLib
 
         private void RefreshBoxes()
         {
+            Console.WriteLine("Refresh Boxes");
             MassLayer.Clear();
             MassLayer.AddRange(Stars);
             int halfcount = (int)Math.Pow(2, BoxLevels);
@@ -298,6 +297,7 @@ namespace ClusterSim.ClusterLib
 
         private void GenerateInstructions()
         {
+            Console.WriteLine("Generate Instructions");
             Instructions = new List<int>[Stars.Count];
             var temp = new List<Box>();
             var UpperTemp = new List<Box>();
@@ -432,8 +432,8 @@ namespace ClusterSim.ClusterLib
                             Vec6 KC = dt * f(Star - 1.216 * KA + (252.0 / 125) * KB - (44.0 / 125) * FF, s.id);
                             Vec6 KD = dt * f(Star + 9.5 * KA - (72.0 / 7) * KB + (25.0 / 14) * KC + (44.0 / 125) * FF, s.id);
                             Vec6 F = ((5.0 / 48 * KA) + (27.0 / 56 * KB) + (125.0 / 336 * KC) + (1.0 / 24 * KD));
-                            s.pos = s.pos + F.ToVector(0);
-                            s.vel = s.vel + F.ToVector(1);
+                            //s.pos = s.pos + F.ToVector(0);
+                            //s.vel = s.vel + F.ToVector(1);
                             s.print();
                         }
                         catch (DivideByZeroException)
@@ -443,33 +443,15 @@ namespace ClusterSim.ClusterLib
                     }
                 }
             }
-
-
-            //ready = false;
-
-            /*foreach (Star s in Stars)
-                if (s.computed == false)
-                    break;
-                else if (s == Stars.Last())
-                    ready = true;
-            if (ready == false)
-                cstart = 0;
-        } while (ready == false);*/
-            /*}
-            catch
-            {
-                Console.WriteLine("Thread Fehler bei: " + i);
-
-            }*/
         }
 
         private Vec6 f(Vec6 Star, int id)
         {
-            Vector acc = new Vector();
+            Vector acc = new Vector();/*
             for (int j = 0; j < Stars.Count; j++)
                 if (id != Stars[j].id && !Stars[j].dead)//no self intersection to prevent dividing by 0
                     acc.add(calcacc(Star.ToVector(0), Stars[j], id));//add all acceleration vectors
-/*
+/*/
             for (int j = 0; j < Instructions[id].Count; j++)
             {
                 int temp = Instructions[id][j];
@@ -491,9 +473,10 @@ namespace ClusterSim.ClusterLib
 
             tempDirection = a - b.pos; //direction vector to the other star
 
+            
             double D = 1 / tempDirection.distance();//Sterne und Weltraum Grundlagen der Himmelsmechanik S.91
-
-            double acceleration = b.mass * Gravitation * (double)Math.Pow((double)D, 3);
+            
+            double acceleration = b.mass * Gravitation * Math.Pow(D, 3);
             acceleration = (b.mass / Stars[id].mass) * acceleration;
             Vector AccVec = b.pos - a;
             AccVec.mult(acceleration);
@@ -513,8 +496,8 @@ namespace ClusterSim.ClusterLib
                     acc.add(calcacc(Stars[id].pos, s, id));//add all acceleration vectors
 
 
-            double Bacc = (double)acc.distance();//magnitude|x| of the vector
-            double V = (double)Math.Sqrt(Bacc * Math.Sqrt(((double)Gravitation * (double)Stars[id].getMass()) / Bacc));//Velocity=Squareroot(|acc|*r) r=Squareroot((G*m)/|acc|)
+            double Bacc = acc.distance();//magnitude|x| of the vector
+            double V = Math.Sqrt(Bacc * Math.Sqrt((Gravitation * Stars[id].getMass()) / Bacc));//Velocity=Squareroot(|acc|*r) r=Squareroot((G*m)/|acc|)
 
             double x1 = 2 * rand.NextDouble() - 1;//x1 = random -1,1
             double x2 = 2 * rand.NextDouble() - 1;//x2 = random -1,1

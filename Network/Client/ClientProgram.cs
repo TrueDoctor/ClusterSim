@@ -2,14 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters;
-using System.Runtime.Serialization.Formatters.Binary;
 
 using ClusterSim.Net.Lib;
 using ClusterSim.ClusterLib;
@@ -31,7 +25,7 @@ namespace Client
             loopback:
             string HostName = System.Net.Dns.GetHostName();
             System.Net.IPHostEntry hostInfo = Dns.GetHostEntry(HostName);
-            string ip = /*hostInfo.AddressList.First(x => x.ToString().Contains('.')).ToString();/*/Properties.Settings.Default.IP;
+            string ip = hostInfo.AddressList.First(x => x.ToString().Contains('.')).ToString();//Properties.Settings.Default.IP;
             //string ip = "10.165.4.148";
             try
             {

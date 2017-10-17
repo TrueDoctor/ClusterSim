@@ -72,9 +72,12 @@ namespace ClusterSim.Standalone
             StarCluster cluster = new StarCluster(rtable,wtable,last,dt);     //instatiate Starcluster
             for (int i = 1; i <= n&&!abort; Console.WriteLine(i++))//for steps
             {
-                cluster.doStep(i, Misc.Method.RK5);
+                cluster.doStep(i,0,199, Misc.Method.RK5);
                 broadcaster.SendToChannel("steps", "i" + i);//send "i"+step in channel steps
                 Console.WriteLine("\n" + i + "\n \n");
+                foreach (Star s in cluster.Stars)
+                    if (!s.dead)
+                        while (SQL.addRow(s, i, wtable) == false) ;//do until succesfull
             }
 
             Key.Abort();

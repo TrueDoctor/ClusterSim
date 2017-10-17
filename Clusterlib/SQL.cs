@@ -1,14 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using System.Data.SqlClient;
-using System.Data.Sql;
 
 namespace ClusterSim.ClusterLib
 {
@@ -41,8 +33,8 @@ namespace ClusterSim.ClusterLib
 
                             while (reader.Read())//for each row in buffer
                             {
-                                Vector pos = new Vector(new double[] { Convert.ToDouble(reader.GetString(reader.GetOrdinal("posx")).Replace(".", ",")), Convert.ToDouble(reader.GetString(reader.GetOrdinal("posy")).Replace(".", ",")), Convert.ToDouble(reader.GetString(reader.GetOrdinal("posz")).Replace(".", ",")) });//recive vectors and replace "." with "," because c# uses an different standart for import and export of strings
-                                Vector vel = new Vector(new double[] { Convert.ToDouble(reader.GetString(reader.GetOrdinal("velx")).Replace(".", ",")), Convert.ToDouble(reader.GetString(reader.GetOrdinal("vely")).Replace(".", ",")), Convert.ToDouble(reader.GetString(reader.GetOrdinal("velz")).Replace(".", ",")) });
+                                Vector pos = new Vector(new[] { Convert.ToDouble(reader.GetString(reader.GetOrdinal("posx")).Replace(".", ",")), Convert.ToDouble(reader.GetString(reader.GetOrdinal("posy")).Replace(".", ",")), Convert.ToDouble(reader.GetString(reader.GetOrdinal("posz")).Replace(".", ",")) });//recive vectors and replace "." with "," because c# uses an different standart for import and export of strings
+                                Vector vel = new Vector(new[] { Convert.ToDouble(reader.GetString(reader.GetOrdinal("velx")).Replace(".", ",")), Convert.ToDouble(reader.GetString(reader.GetOrdinal("vely")).Replace(".", ",")), Convert.ToDouble(reader.GetString(reader.GetOrdinal("velz")).Replace(".", ",")) });
 
                                 Stars.Add(new Star(pos.vec, vel.vec, Convert.ToDouble(reader.GetString(reader.GetOrdinal("mass")).Replace(".", ",")), reader.GetInt32(reader.GetOrdinal("id"))));//add generated Star to array
                             }
@@ -125,7 +117,7 @@ namespace ClusterSim.ClusterLib
         public static void addTable(string name)
         {
             SqlConnection con = new SqlConnection(conString);//connect
-            String[] ban = new string[] { "[", "]", "'", ".", "+", "*", "-", "/", "°", "!", "\0", "\b", "\'", "\"", "\n", "\r", "\t", @"\", "%" ,"DROP","Drop","drop","All","DELETE","Delete","delete",";",","," ","-",":"};//a table name cant be a Parameter, so all string exiting chars get replaced with ""
+            String[] ban = { "[", "]", "'", ".", "+", "*", "-", "/", "°", "!", "\0", "\b", "\'", "\"", "\n", "\r", "\t", @"\", "%" ,"DROP","Drop","drop","All","DELETE","Delete","delete",";",","," ","-",":"};//a table name cant be a Parameter, so all string exiting chars get replaced with ""
             foreach(string s in ban)
                 name = name.Replace(s,"");//replace
             

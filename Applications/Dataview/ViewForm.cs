@@ -36,7 +36,7 @@ namespace ClusterSim.Dataview
                 {
                     //MessageBox.Show(s);
                     if (list.Contains(s))
-                        this.table = s;//check if argument is valid
+                        table = s;//check if argument is valid
                 }
 
             }
@@ -192,7 +192,7 @@ namespace ClusterSim.Dataview
             if (Stars!=null)
                 if (Stars.Count < 1000)
                     c = SQL.lastStep(table);
-            this.Text = String.Format("{0}   Schritt: {1} von {2}",table,step, c);//change caption
+            Text = String.Format("{0}   Schritt: {1} von {2}",table,step, c);//change caption
 
             if (Stars != null)
                 return true;

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace ClusterSim.ClusterLib
 {
@@ -15,12 +11,12 @@ namespace ClusterSim.ClusterLib
         public List<int> ids;
         public int id { get; set; }
         public bool dead { get; set; } = false;
-        public bool root = false;
+        public bool root;
         public double mass { get; set; }
         public Vector pos
         {
-            get { return AvgPos; }
-            set { AvgPos = value; }
+            get => AvgPos;
+            set => AvgPos = value;
         }
 
 
@@ -28,8 +24,8 @@ namespace ClusterSim.ClusterLib
         {
             this.id = id;
             foreach (int i in ids)
-                this.objects.Add(Objects.Find(x=>x.id == i));
-            this.Position = Pos;
+                objects.Add(Objects.Find(x=>x.id == i));
+            Position = Pos;
             this.PosId = PosId;
             AvgPos = Dimension = new Vector();
             Dimension.init(Dim);
@@ -40,9 +36,9 @@ namespace ClusterSim.ClusterLib
         }
         public void refresh(ref List<IMassive> Objects, List<int> ids)
         {
-            this.objects.Clear();
+            objects.Clear();
             foreach (int i in ids)
-                this.objects.Add(Objects.Find(x => x.id == i));
+                objects.Add(Objects.Find(x => x.id == i));
         }
 
         public void Calc()

@@ -8,14 +8,19 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
+using System.CodeDom.Compiler;
+using System.Configuration;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+
 namespace ClusterSim.ClusterLib.Properties {
     
     
-    [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.1.0.0")]
-    internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
+    [CompilerGenerated()]
+    [GeneratedCode("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.1.0.0")]
+    internal sealed partial class Settings : ApplicationSettingsBase {
         
-        private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
+        private static Settings defaultInstance = ((Settings)(Synchronized(new Settings())));
         
         public static Settings Default {
             get {
@@ -23,10 +28,10 @@ namespace ClusterSim.ClusterLib.Properties {
             }
         }
         
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=tcp:TARDIS\\CLUSTERSIM,49172;Initial Catalog=Clustersim;Persist Securi" +
+        [ApplicationScopedSetting()]
+        [DebuggerNonUserCode()]
+        [SpecialSetting(SpecialSetting.ConnectionString)]
+        [DefaultSettingValue("Data Source=tcp:TARDIS\\CLUSTERSIM,49172;Initial Catalog=Clustersim;Persist Securi" +
             "ty Info=True;User ID=Engine;Password=mynona")]
         public string ClustersimConnectionString {
             get {
@@ -34,10 +39,10 @@ namespace ClusterSim.ClusterLib.Properties {
             }
         }
         
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=TARDIS\\CLUSTERSIM;Initial Catalog=Clustersim;Persist Security Info=Tr" +
+        [ApplicationScopedSetting()]
+        [DebuggerNonUserCode()]
+        [SpecialSetting(SpecialSetting.ConnectionString)]
+        [DefaultSettingValue("Data Source=TARDIS\\CLUSTERSIM;Initial Catalog=Clustersim;Persist Security Info=Tr" +
             "ue;User ID=Engine;Password=mynona")]
         public string ClustersimConnectionString1 {
             get {
@@ -45,10 +50,10 @@ namespace ClusterSim.ClusterLib.Properties {
             }
         }
         
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=mssql1.gear.host;Initial Catalog=clustersim;Persist Security Info=Tru" +
+        [ApplicationScopedSetting()]
+        [DebuggerNonUserCode()]
+        [SpecialSetting(SpecialSetting.ConnectionString)]
+        [DefaultSettingValue("Data Source=mssql1.gear.host;Initial Catalog=clustersim;Persist Security Info=Tru" +
             "e;User ID=clustersim;Password=Vq73wF?zo75?")]
         public string Online {
             get {
@@ -56,9 +61,9 @@ namespace ClusterSim.ClusterLib.Properties {
             }
         }
         
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("offline")]
+        [UserScopedSetting()]
+        [DebuggerNonUserCode()]
+        [DefaultSettingValue("offline")]
         public string database {
             get {
                 return ((string)(this["database"]));

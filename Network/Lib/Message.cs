@@ -28,6 +28,12 @@ namespace ClusterSim.Net.Lib
             for (int i = 0; i < count; i++)
                 Stars[i] = new Star(i);
         }
+        public Message()
+        {
+            Stars = new Star[count];
+            for (int i = 0; i < count; i++)
+                Stars[i] = new Star(i);
+        }
 
         public Message(int step, int min, int max, Star[] Stars)
         {

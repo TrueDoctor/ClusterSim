@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 
 namespace ClusterSim.ClusterLib
@@ -20,7 +16,7 @@ namespace ClusterSim.ClusterLib
 
         public static Star randomize(double pos,double vel,double massV,double massM,int id)
         {
-            return new Star(new Vector().random(pos), new Vector().random(vel), Math.Abs(Misc.random(massV,massM)), id);
+            return new Star(new Vector().random(pos), new Vector().random(vel), Math.Abs(random(massV,massM)), id);
 
         }
 
@@ -34,7 +30,7 @@ namespace ClusterSim.ClusterLib
                          Math.Sin(2.0 * Math.PI * u2); //random normal(0,1)
             double randNormal =
                          mean + stdDev * randStdNormal; //random normal(mean,stdDev^2)
-            return (double)randNormal;
+            return randNormal;
         }
 
         
@@ -43,6 +39,6 @@ namespace ClusterSim.ClusterLib
         public enum Method{     //enumerator of different Methods
             RK4,
             RK5
-        };
+        }
     }
 }

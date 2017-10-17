@@ -109,7 +109,7 @@ namespace ClusterSim.DataManager
             foreach (Star s in rand.Stars)
                 SQL.addRow(s,0,table);//export data
             
-            this.Close();//close form
+            Close();//close form
         }
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
