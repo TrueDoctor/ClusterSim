@@ -1,102 +1,132 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Net.Sockets;
-
-using ClusterSim.Net.Lib;
-using ClusterSim.ClusterLib;
-using System.Threading.Tasks;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ClientHandler.cs" company="Test">
+//   
+// </copyright>
+// <summary>
+//   Defines the ClientHandler type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace ClusterSim.Net.Server
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Diagnostics.CodeAnalysis;
+    using System.Net.Sockets;
+    using System.Threading;
+
+    using ClusterSim.ClusterLib;
+    using ClusterSim.Net.Lib;
+
+    /// <summary>
+    ///     The client handler.
+    /// </summary>
+    [SuppressMessage("ReSharper", "StyleCop.SA1201", Justification = "Reviewed. Suppression is OK here.")]
     public class ClientHandler
     {
+        // ReSharper disable once StyleCop.SA1201
+        // ReSharper disable once StyleCop.SA1215
+        public readonly int id = Id++;
+
         public TcpClient clientSocket;
 
-        private List<Star> newStars = new List<Star>();
-        public Star[] NewStars { get; private set; } //{ return newStars; } }
         public Thread ctThread;
-        public Message msg { get; set; }
-        public List<Star> OldStars { get => oldStars; }
 
-        private  List<Star> oldStars = new List<Star>();
+        private int min;
 
-        static int Id;
-        public int step, mstep, min, max, id = Id++;
-        public bool abort = false, reciveFinished = false, ready = false, send = false;
-        public double performance = 1;
-        NetworkStream networkStream;
-        event MessageHandler SendMessage;
-        delegate void MessageHandler(ClientHandler c, MessageEventArgs msg);
+        private int max;
 
+        private NetworkStream networkStream;
+
+        public bool Abort { get; set; } = false;
+
+        public int Mstep { get; set; }
+
+        public Star[] NewStars { get; private set; }
+
+        public double Performance { get; set; } = 1;
+
+        public bool Ready { get; set; }
+
+        public bool ReceiveFinished { get; set; }
+
+        public bool Send { get; set; }
+
+        public int Step { get; set; }
+
+        private static int Id { get; set; }
+
+        private List<Star> OldStars { get; set; } = new List<Star>();
+
+        public void OnSend(object o, SendEventArgs e)
+        {
+            this.Step = e.Step;
+            this.min = e.Orders.Find(x => x[0] == this.id)[1];
+            this.max = e.Orders.Find(x => x[0] == this.id)[2];
+            this.OldStars = new List<Star>();
+            if (this.OldStars.Count == 0)
+            {
+                foreach (var s in e.Stars)
+                {
+                    this.OldStars.Add(s.Clone());
+                }
+            }
+
+            this.Send = true;
+        }
 
         public void StarClient(TcpClient inClientSocket)
         {
             this.clientSocket = inClientSocket;
-            
-            ctThread = new Thread(ConnectionLoop)
-            {
-                Name = "Client:" + id
-            };
-            ctThread.Start();
 
+            this.ctThread = new Thread(this.ConnectionLoop) { Name = "Client:" + this.id };
+            this.ctThread.Start();
         }
-        private async void ConnectionLoop()
+
+        public void Subscribe(Server s)
         {
-            while (!abort)
+            s.SendData += this.OnSend;
+        }
+
+        private void ConnectionLoop()
+        {
+            while (!this.Abort)
             {
-                System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+                var watch = new Stopwatch();
                 try
                 {
-                    networkStream = clientSocket.GetStream();
+                    this.networkStream = this.clientSocket.GetStream();
 
-                    if (performance != 0)
+                    if (!this.Performance.Equals(0.0))
                     {
-                        ready = true;
-                        while (!send) { Thread.Sleep(20); }
-                        ready = false;
+                        this.Ready = true;
+                        while (!this.Send)
+                        {
+                            Thread.Sleep(20);
+                            this.networkStream.Flush();
+                        }
+
+                        this.Ready = false;
                     }
                     else
                     {
-                        min = 0;
-                        max = OldStars.Count - 1;
-                        send = false;
+                        this.min = 0;
+                        this.max = this.OldStars.Count - 1;
+                        this.Send = false;
                     }
-                    watch.Reset();
 
-                    
+                    watch.Reset();
                     watch.Start();
 
-                    int size = OldStars.Count * 60 + 16;
+                    int size = this.OldStars.Count * 60 + 16;
+                    var msg = new Message(this.Step, this.min, this.max, this.OldStars.ToArray());
 
-                    msg = new Message(step, min, max, OldStars.ToArray());
-                    SendMessage += async (c, msg) =>
-                    {
-                        await networkStream.WriteAsync(msg.Msg.Serialize(OldStars.Count), 0, size);
-                        networkStream.Flush();
-                    };
-                    networkStream.Write(msg.Serialize(OldStars.Count), 0, size);
-                    networkStream.Flush();
-                    send = false;
+                    this.networkStream.Write(msg.Serialize(this.OldStars.Count), 0, size);
+                    this.networkStream.Flush();
+                    this.Send = false;
 
-
-                    reciveFinished = false;
-                    var temp = new byte[size];
-                    networkStream.Read(temp, 0, size);
-
-
-                    //NewStars = msg.Deserialize(temp);
-                    //NewStars.Clear();
-                    //foreach (var s in msg.Deserialize(temp))
-                    //{
-                    //    NewStars.Add(s.Clone());
-                    //}
-                    msg.Deserialize(temp);
-                    NewStars = new Star[msg.max-msg.min+1];
-                    Array.Copy(msg.Stars,msg.min,NewStars,0,msg.max-msg.min+1);
+                    this.Read();
 
                     /*if (tempstars != null)
                         if ((max - min != tempStars.Count - 1))
@@ -110,104 +140,50 @@ namespace ClusterSim.Net.Server
                             foreach (Star s in tempStars)
                                 NewStars.Add(s.Clone());
                         }*/
-                    mstep = msg.step;
                     watch.Stop();
 
-                    if (max - min != NewStars.Length - 1)
-                        NewStars = null;
-                    performance = (double) (max - min) + 1 < 1 ? 1 : ((max - min) + 1) / (double) watch.ElapsedMilliseconds;
+                    if (this.max - this.min != this.NewStars.Length - 1)
+                    {
+                        this.NewStars = null;
+                    }
 
-                    performance = 1;
-                    reciveFinished = true;
-                    networkStream.Flush();
+                    this.Performance = (double)(this.max - this.min) + 1 < 1
+                                           ? 1
+                                           : (this.max - this.min + 1) / (double)watch.ElapsedMilliseconds;
 
+                    this.Performance = 1;
+                    this.ReceiveFinished = true;
+                    this.networkStream.Flush();
                 }
                 catch (Exception e)
                 {
                     Console.Clear();
-                    Console.WriteLine(" >> Client {0} disconnected\n\n{1}", id, e);
+                    Console.WriteLine(" >> Client {0} disconnected\n\n{1}", this.id, e);
                     return;
                 }
             }
+
             Console.Clear();
         }
-        public void Send(int step, int min, int max, List<Star> DStars)
-        {
-            this.step = step;
-            this.min = min;
-            this.max = max;
-            //this.oldStars = new List<Star>();
-            if (oldStars.Count == 0)
-                foreach (var S in DStars)
-                {
-                    oldStars.Add(S.Clone());
-                }
-            int size = OldStars.Count * 60 + 16;
 
-            msg = new Message(step, min, max, OldStars.ToArray());
-            SendMessage(this,new MessageEventArgs(msg));
-        }
+        private void Read()
+        {
+            int size = this.OldStars.Count * 60 + 16;
+            this.ReceiveFinished = false;
+            var buffer = new byte[size];
+            this.networkStream.Read(buffer, 0, size);
+            this.networkStream.Flush();
+            var msg = new Message(this.OldStars.Count);
+            msg.DeSerialize(buffer);
+            this.NewStars = new Star[msg.max - msg.min + 1];
+            Array.Copy(msg.Stars, msg.min, this.NewStars, 0, msg.max - msg.min + 1);
 
-        public void OnSend(object o, SendEventArgs e)
-        {
-            this.step = e.Step;
-            this.min = e.Orders.Find(x=>x[0]==this.id)[1];
-            this.max = e.Orders.Find(x => x[0] == this.id)[2];
-            oldStars = new List<Star>();
-            if (oldStars.Count == 0)
-                foreach (Star S in e.Stars)
-                {
-                    oldStars.Add(S.Clone());
-                }
-            
-            send = true;
-        }
+            for (var i = 0; i < this.NewStars.Length; i++)
+            {
+                this.NewStars[i] = this.NewStars[i].Clone();
+            }
 
-        public void Subscribe(Server s)
-        {
-            s.SendData += OnSend;
+            this.Mstep = msg.step;
         }
-    }
-    public class SendEventArgs : EventArgs
-    {
-        public SendEventArgs(int step, List<int[]> orders, Star[] DStars)
-        {
-            this.step = step;
-            dStars = DStars.ToList();
-            this.orders = orders;
-        }
-
-        
-        private int step;
-        List<Star> dStars;
-        List<int[]> orders;
-#region get set
-        public int Step
-        {
-            get { return step; }
-        }
-        public List<int[]> Orders
-        {
-            get { return orders; }
-        }
-        public List<Star> Stars
-        {
-            get { return dStars; }
-        }
-#endregion
-    }
-    public class MessageEventArgs : EventArgs
-    {
-        public MessageEventArgs(Message msg)
-        {
-            this.msg = msg;
-        }
-        private Message msg;
-        
-        public Message Msg
-        {
-            get { return msg; }
-        }
-        
     }
 }
