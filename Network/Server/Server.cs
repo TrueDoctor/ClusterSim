@@ -60,7 +60,7 @@
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.Title = "ClusterSim - Distribution Server";
 
-            int step = SQL.lastStep("lang"), errors = 0, dt = 30, year = 0;
+            int step = SQL.lastStep("lang"), errors = 0, dt = 2000, year = step;
             double ovrper = 1;
 
             Console.WriteLine("Load Stars...");
@@ -75,171 +75,174 @@
             Console.CursorVisible = false;
             while (true)
             {
-                // try
-                double gesper = 0, partper = 0;
-
-                List<ClientHandler> ready;
-                Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
-                do
+                try
                 {
-                    if (this.clients.Exists(x => x.Abort)) Console.Clear();
+                    double gesper = 0, partper = 0;
 
-                    this.newClients.RemoveAll(x => x.Abort);
-                    this.clients.RemoveAll(x => x.Abort);
-                    this.clients = this.clients.Union(this.newClients).ToList();
-
-                    gesper = 0;
-                    partper = 0;
-                    ready = this.clients.FindAll(x => x.Ready && x.Performance != 0);
-
-                    try
+                    List<ClientHandler> ready;
+                    Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
+                    do
                     {
-                        foreach (var c in this.clients)
+                        if (this.clients.Exists(x => x.Abort)) Console.Clear();
+
+                        this.newClients.RemoveAll(x => x.Abort);
+                        this.clients.RemoveAll(x => x.Abort);
+                        this.clients = this.clients.Union(this.newClients).ToList();
+
+                        gesper = 0;
+                        partper = 0;
+                        ready = this.clients.FindAll(x => x.Ready && x.Performance != 0);
+
+                        try
                         {
-                            if (c.ctThread != null) if (!c.ctThread.IsAlive) c.Abort = true;
-                            gesper += c.Performance;
+                            foreach (var c in this.clients)
+                            {
+                                if (c.ctThread != null) if (!c.ctThread.IsAlive) c.Abort = true;
+                                gesper += c.Performance;
+                            }
+
+                            Thread.Sleep(20);
+                            foreach (var c in ready) partper += c.Performance;
                         }
-
-                        Thread.Sleep(20);
-                        foreach (var c in ready) partper += c.Performance;
+                        catch (Exception e)
+                        {
+                            Console.Clear();
+                            Console.WriteLine(e);
+                        }
+                        
                     }
-                    catch (Exception e)
-                    {
-                        Console.Clear();
-                        Console.WriteLine(e);
-                    }
+                    while (partper <= gesper / 1.2 || ready.Count == 0 || Cluster.Stars == null);
+                    Thread.CurrentThread.Priority = ThreadPriority.Normal;
 
-                    // Console.ReadLine(); }
-                }
-                while (partper <= gesper / 1.2 || ready.Count == 0 || Cluster.Stars == null);
-                Thread.CurrentThread.Priority = ThreadPriority.Normal;
+                    watch.Reset();
+                    watch.Start();
 
-                watch.Reset();
-                watch.Start();
+                    double coe = Cluster.Stars.Count / partper;
 
-                double coe = Cluster.Stars.Count / partper;
-
-                msg.Append(
-                    string.Format("Step: {0,5} {1,11} {2,30} Errors: {3}\n\n", step, "Client", "Performance", errors));
-
-                var start = 0;
-                int end;
-
-                foreach (var d in Cluster.Stars)
-                    if (Cluster.Stars.Exists(x => x.pos == d.pos && d.id != x.id))
-                        throw new NotImplementedException(
-                            Cluster.Stars.Where(x => x.pos == d.pos && d.id != x.id).Count().ToString());
-
-                var orders = new List<int[]>();
-
-                foreach (var c in ready)
-                {
-                    end = start + (int)Math.Round(c.Performance * coe);
-                    orders.Add(new[] { c.id, start, c != ready.Last() ? end - 1 : Cluster.Stars.Count - 1 });
-                    start = end;
-                }
-
-                // c.Send(step, start, c != ready.Last() ? end - 1 : Cluster.Stars.Count - 1, Cluster.Stars.ToList());
-                var send = new SendEventArgs(step, orders, Cluster.Stars.ToArray());
-                this.SendData(this, send);
-
-                Console.WriteLine(step);
-
-                foreach (var d in Cluster.Stars)
-                    if (Cluster.Stars.Exists(x => x.pos == d.pos && d.id != x.id))
-                        throw new NotImplementedException(
-                            Cluster.Stars.Where(x => x.pos == d.pos && d.id != x.id).Count().ToString());
-
-                foreach (var c in this.clients)
                     msg.Append(
                         string.Format(
-                            "{0}  G:   {1,4:f2} {2,5} : {3,13} {4,12:f2}    \n",
-                            ready.Contains(c) ? '*' : ' ',
-                            ovrper,
-                            c.id,
-                            c.clientSocket.Client.RemoteEndPoint.ToString().Split(':')[0],
-                            c.Performance));
+                            "Step: {0,5} {1,11} {2,30} Errors: {3}\n\n",
+                            step,
+                            "Client",
+                            "Performance",
+                            errors));
 
-                while (ready.Exists(
-                        x => x.ctThread.IsAlive
-                             && (!x.Ready || !x.ReceiveFinished || x.Step == x.Mstep
-                                 || x.NewStars == null)) /*&& (!(watch.ElapsedMilliseconds / 10000.0 > ovrper))||true*/
-                ) Thread.Sleep(20);
+                    var start = 0;
+                    int end;
 
-                // Console.WriteLine($"ready: {ready.Count}");
-                var NewStars = new List<Star>();
-                foreach (var c in ready)
-                {
-                    if (c.Mstep > step && c.NewStars != null)
+
+                    var orders = new List<int[]>();
+
+                    foreach (var c in ready)
                     {
-                        foreach (var star in c.NewStars) NewStars.Add(star.Clone());
+                        end = start + (int)Math.Round(c.Performance * coe);
+                        orders.Add(new[] { c.id, start, c != ready.Last() ? end - 1 : Cluster.Stars.Count - 1 });
+                        start = end;
                     }
-                    else Console.WriteLine(c.Mstep);
-                }
 
-                if (NewStars.Count != Cluster.Stars.Count && step != 0)
-                    throw new Exception("Falsche Rückgabelänge => Duplikate");
+                    var send = new SendEventArgs(step,dt, orders, Cluster.Stars.ToArray());
+                    this.SendData(this, send);
 
-                if (NewStars[0].pos == NewStars[10].pos) throw new NotImplementedException();
+                    Console.WriteLine(step);
 
-                for (var i = 0; i < Cluster.Stars.Count; i++)
-                {
-                    var temp = NewStars.Find(x => x.id == i);
-                    if (temp != null)
-                    {
-                        Cluster.Stars[i] = temp.Clone();
-                    }
-                    else
-                    {
-                        Console.Beep();
-                        Console.WriteLine("\n\n\nSchritt Fehlgeschlagen");
-
-                        // errors++;
-                        // step--;
-                        throw new Exception(
+                    foreach (var c in this.clients)
+                        msg.Append(
                             string.Format(
-                                $"client: {ready[0].Step}  \nServer: {step} \n0 = {NewStars.Count - Cluster.Stars.Count}"));
+                                "{0}  G:   {1,4:f2} {2,5} : {3,13} {4,12:f2}    \n",
+                                ready.Contains(c) ? '*' : ' ',
+                                ovrper,
+                                c.id,
+                                c.clientSocket.Client.RemoteEndPoint.ToString().Split(':')[0],
+                                c.Performance));
+
+                    while (ready.Exists(
+                            x => x.ctThread.IsAlive
+                                 && (!x.Ready || !x.ReceiveFinished || x.Step == x.Mstep
+                                     || x.NewStars
+                                     == null)) /*&& (!(watch.ElapsedMilliseconds / 10000.0 > ovrper))||true*/
+                    ) Thread.Sleep(20);
+                    
+                    var NewStars = new List<Star>();
+                    foreach (var c in ready)
+                    {
+                        if (c.Mstep > step && c.NewStars != null)
+                        {
+                            NewStars.AddRange(c.NewStars);
+                        }
+                        else Console.WriteLine(c.Mstep);
                     }
-                }
 
-                step++;
-                Console.Beep();
-
-                /*if (wtable.Length != 0 && Math.Ceiling((double)(step-1) * dt / 365)< Math.Ceiling((double)step * dt / 365)&&year++>-1&&false)
-                    foreach (Star s in Cluster.Stars)
-                        if (!s.dead)
-                            while (SQL.addRow(s, year, wtable) == false) ;//do until succesfull
+                    if (NewStars.Count != Cluster.Stars.Count && step != 0)
+                        throw new Exception("Falsche Rückgabelänge => Duplikate");
 
 
-                /*if (NewStars.Count == Cluster.Stars.Count)
-                {
+                    for (var i = 0; i < Cluster.Stars.Count; i++)
+                    {
+                        var temp = NewStars.Find(x => x.id == i);
+                        if (temp != null)
+                        {
+                            Cluster.Stars[i] = temp.Clone();
+                        }
+                        else
+                        {
+                            Console.Beep();
+                            Console.WriteLine("\n\n\nSchritt Fehlgeschlagen");
+
+                            // errors++;
+                            // step--;
+                            throw new Exception(
+                                string.Format(
+                                    $"client: {ready[0].Step}  \nServer: {step} \n0 = {NewStars.Count - Cluster.Stars.Count}"));
+                        }
+                    }
+
                     step++;
                     Console.Beep();
 
-                    if (wtable.Length != 0 && step * dt % 36500 == 0)
+                    if (wtable.Length != 0 && Math.Ceiling((double)(step-1) * dt / 365)< Math.Ceiling((double)step * dt / 365)&&year++>-1)
                         foreach (Star s in Cluster.Stars)
-                            while (SQL.addRow(s, step, wtable) == false) ;//do until succesfull
+                            if (!s.dead)
+                                while (SQL.addRow(s, year, wtable) == false) ;//do until succesfull
+    
+    
+                    /*if (NewStars.Count == Cluster.Stars.Count)
+                    {
+                        step++;
+                        Console.Beep();
+    
+                        if (wtable.Length != 0 && step * dt % 36500 == 0)
+                            foreach (Star s in Cluster.Stars)
+                                while (SQL.addRow(s, step, wtable) == false) ;//do until succesfull
+                    }
+                    else 
+                    {
+                        Console.Beep();Console.WriteLine("\n\n\nSchritt Fehlgeschlagen");
+                        errors++;
+                        //step--;
+                        throw new Exception(String.Format($"client: {ready[0].step.ToString()}  \nServer: {step} \n0 = {(NewStars.Count - Cluster.Stars.Count)}"));
+    
+                    }
+                    */
+                    watch.Stop();
+                    ovrper = (watch.ElapsedMilliseconds / 1000.0 + ovrper) / 2.0;
+
+                    // Console.CursorTop = 0;//-= 2 + Clients.Count;
+                    Console.Clear();
+                    Console.Write(msg);
+
+                    msg = new StringBuilder();
                 }
-                else 
+
+                catch (Exception e)
                 {
-                    Console.Beep();Console.WriteLine("\n\n\nSchritt Fehlgeschlagen");
+                    Console.Clear();
+                    Console.WriteLine(e.Message);
+                    Console.Beep();
+                    Thread.Sleep(2000);
+                    Console.Clear();
                     errors++;
-                    //step--;
-                    throw new Exception(String.Format($"client: {ready[0].step.ToString()}  \nServer: {step} \n0 = {(NewStars.Count - Cluster.Stars.Count)}"));
-
-                }
-                */
-                watch.Stop();
-                ovrper = (watch.ElapsedMilliseconds / 1000.0 + ovrper) / 2.0;
-
-                // Console.CursorTop = 0;//-= 2 + Clients.Count;
-                Console.Clear();
-                Console.Write(msg);
-
-                msg = new StringBuilder();
+                }//*/
             }
-
-            // catch (Exception e) { Console.Clear(); Console.WriteLine(e.Message); Console.Beep(); Thread.Sleep(2000); Console.Clear(); errors++; }
         }
 
         /// <summary>

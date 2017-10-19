@@ -14,7 +14,10 @@
 
         private readonly List<int[]> orders;
 
+        public int dt {  get; private set; }
+
         #region get set
+
 
         public int Step
         {
@@ -35,11 +38,12 @@
 
         /// <inheritdoc />
         // ReSharper disable once StyleCop.SA1201
-        public SendEventArgs(int step, List<int[]> orders, Star[] dStars)
+        public SendEventArgs(int step,int dt, List<int[]> orders, Star[] dStars)
         {
             this.step = step;
             this.dStars = dStars.ToList();
             this.orders = orders;
+            this.dt = dt;
         }
     }
 }

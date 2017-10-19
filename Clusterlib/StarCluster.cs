@@ -10,7 +10,7 @@ namespace ClusterSim.ClusterLib
 
     public class StarCluster
     {
-        private const int BoxLevels = 3;
+        private const int BoxLevels = 2;
 
         // fields
         private const double Gravitation = 0.0002959122083
@@ -24,7 +24,7 @@ namespace ClusterSim.ClusterLib
 
         private double BoxSize;
 
-        private readonly double dt; // delta time
+        public double dt; // delta time
 
         private List<int>[] Instructions;
 
@@ -42,7 +42,7 @@ namespace ClusterSim.ClusterLib
 
         private readonly string wtable; // table to write at
 
-        public StarCluster(string rtable, string wtable, int start, double dt = 1)
+        public StarCluster(string rtable, string wtable, int start, double dt = 30)
         {
             // constructor 
             this.starCount = SQL.starsCount(rtable);
@@ -148,9 +148,7 @@ namespace ClusterSim.ClusterLib
             foreach (var s in this.Stars) // reset computation status
                 s.computed = false;
 
-            foreach (var c in this.Stars)
-                if (this.Stars.Exists(x => x.pos == c.pos && c.id != x.id)) throw new NotImplementedException();
-
+            
             int processors = Environment.ProcessorCount; // get number of processors
             int perCore = (max - min + 1) / processors; // divide the cluster in equal parts
             int left = (max - min + 1) % processors; // calc remainder
@@ -159,12 +157,11 @@ namespace ClusterSim.ClusterLib
             this.OldStars = new List<Star>(); // save the current values
             foreach (var s in this.Stars) // clone each to prevent shallow copys
                 this.OldStars.Add(s.Clone());
-
             
 
             int end;
             this.start = min;
-            for (var i = 0; i < (processors < max - min ? processors : max - min); i++)
+            for (var i = 0; i < (processors < max - min ? processors : max - min+1); i++)
             {
                 end = this.start + perCore;
                 if (left > 0)
@@ -210,7 +207,7 @@ namespace ClusterSim.ClusterLib
             foreach (var s in this.Stars.Where(c => c.computed))
                 if (this.OldStars.Exists(x => x.pos == s.pos && s.id != x.id)) throw new NotImplementedException();
 
-            return this.Stars.Where(x => x.computed && x.id >= min && x.id <= max && !double.IsNaN(x.pos.vec[0]))
+            return this.Stars.Where(x => x.computed && x.id >= min && x.id <= max)
                 .OrderBy(x => x.id).ToArray();
         }
 
@@ -289,8 +286,8 @@ namespace ClusterSim.ClusterLib
                                          s.id);
                             var F = 5.0 / 48 * KA + 27.0 / 56 * KB + 125.0 / 336 * KC + 1.0 / 24 * KD;
 
-                            // s.pos = s.pos + F.ToVector(0);
-                            // s.vel = s.vel + F.ToVector(1);
+                            s.pos = s.pos + F.ToVector(0);
+                            s.vel = s.vel + F.ToVector(1);
                             s.print();
                         }
                         catch (DivideByZeroException)
@@ -306,6 +303,9 @@ namespace ClusterSim.ClusterLib
             Vector tempDirection;
 
             tempDirection = a - b.pos; // direction vector to the other star
+
+            if(a==b.pos)
+                throw new DivideByZeroException();
 
             double D = 1 / tempDirection.distance(); // Sterne und Weltraum Grundlagen der Himmelsmechanik S.91
 
@@ -421,7 +421,7 @@ namespace ClusterSim.ClusterLib
             foreach (var b in this.Boxes[0])
             {
                 // For each level 0 Box
-                if (b.ids.Count == 0) // Skip emty Boxes
+                if (b.ids.Count == 0) // Skip empty Boxes
                     continue;
                 temp = new List<Box>(); // initialize temp
                 UpperTemp = new List<Box>(); // initialize Upper temp
@@ -433,7 +433,7 @@ namespace ClusterSim.ClusterLib
                 for (var level = 0; level < BoxLevels; level++)
                 {
                     // for all levels
-                    // doesnt work
+                    // doesn't work
                     Boxids[level + 1] = new List<int>(); // initialize id array
                     if (level != 0 || true)
                     {
@@ -442,7 +442,7 @@ namespace ClusterSim.ClusterLib
                         foreach (var c in oldtemp) // add level-1 ids of surrounding level
                         foreach (var t in this.Boxes[level]) // foreach Box in same layer
                             if (!temp.Exists(x => x.id == t.id) && !oldtemp.Exists(x => x.id == t.id) && t.mass != 0
-                            ) // if boxes dont already exst an are Neighbours
+                            ) // if boxes dont already exst an are Neighbors
                                 if (t.PosId.IsNeighbour(c.PosId))
                                 {
                                     Boxids[level].AddRange(t.ids); // add ids of surrounding Boxes

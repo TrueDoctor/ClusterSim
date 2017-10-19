@@ -13,6 +13,7 @@ namespace ClusterSim.Net.Server
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
+    using System.Linq;
     using System.Net.Sockets;
     using System.Threading;
 
@@ -39,6 +40,8 @@ namespace ClusterSim.Net.Server
 
         private NetworkStream networkStream;
 
+        private int dt;
+
         public bool Abort { get; set; } = false;
 
         public int Mstep { get; set; }
@@ -64,15 +67,8 @@ namespace ClusterSim.Net.Server
             this.Step = e.Step;
             this.min = e.Orders.Find(x => x[0] == this.id)[1];
             this.max = e.Orders.Find(x => x[0] == this.id)[2];
-            this.OldStars = new List<Star>();
-            if (this.OldStars.Count == 0)
-            {
-                foreach (var s in e.Stars)
-                {
-                    this.OldStars.Add(s.Clone());
-                }
-            }
-
+            this.OldStars = e.Stars.ToList();
+            this.dt = e.dt;
             this.Send = true;
         }
 
@@ -119,8 +115,8 @@ namespace ClusterSim.Net.Server
                     watch.Reset();
                     watch.Start();
 
-                    int size = this.OldStars.Count * 60 + 16;
-                    var msg = new Message(this.Step, this.min, this.max, this.OldStars.ToArray());
+                    int size = this.OldStars.Count * 60 + 20;
+                    var msg = new Message(this.Step,this.dt, this.min, this.max, this.OldStars.ToArray());
 
                     this.networkStream.Write(msg.Serialize(this.OldStars.Count), 0, size);
                     this.networkStream.Flush();
@@ -128,18 +124,6 @@ namespace ClusterSim.Net.Server
 
                     this.Read();
 
-                    /*if (tempstars != null)
-                        if ((max - min != tempStars.Count - 1))
-                            throw new Exception("Falsche Rüchgabelänge bei:" + clientSocket.Client.LocalEndPoint.ToString());
-                        else
-                        {
-                            NewStars.Clear();
-                            foreach (Star d in tempStars)                       //remove for performance
-                                if (OldStars.Exists(x => x.pos == d.pos && d.id != x.id))
-                                    throw new NotImplementedException();
-                            foreach (Star s in tempStars)
-                                NewStars.Add(s.Clone());
-                        }*/
                     watch.Stop();
 
                     if (this.max - this.min != this.NewStars.Length - 1)
@@ -168,21 +152,15 @@ namespace ClusterSim.Net.Server
 
         private void Read()
         {
-            int size = this.OldStars.Count * 60 + 16;
+            int size = this.OldStars.Count * 60 + 20;
             this.ReceiveFinished = false;
             var buffer = new byte[size];
             this.networkStream.Read(buffer, 0, size);
             this.networkStream.Flush();
             var msg = new Message(this.OldStars.Count);
-            msg.DeSerialize(buffer);
-            this.NewStars = new Star[msg.max - msg.min + 1];
-            Array.Copy(msg.Stars, msg.min, this.NewStars, 0, msg.max - msg.min + 1);
-
-            for (var i = 0; i < this.NewStars.Length; i++)
-            {
-                this.NewStars[i] = this.NewStars[i].Clone();
-            }
-
+            this.NewStars=msg.DeSerialize(buffer).ToArray();
+            //this.NewStars = new Star[msg.max - msg.min + 1];
+            //Array.Copy(msg.Stars, msg.min, this.NewStars, 0, msg.max - msg.min + 1);
             this.Mstep = msg.step;
         }
     }

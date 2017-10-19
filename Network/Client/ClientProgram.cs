@@ -78,32 +78,33 @@ namespace Client
             int step, min, max;
             step = min = 0;
             max = 1;
-            try
-            {
+            /*try
+            {//*/
                 while (true)
                 {
                     var serverStream = clientSocket.GetStream();
 
                     ready = true;
 
-                    var header = new byte[16];
-                    if (serverStream.Read(header, 0, 16) != 16) throw new Exception("header zu kurz");
+                    var header = new byte[20];
+                    if (serverStream.Read(header, 0, 20) != 20) throw new Exception("header zu kurz");
                     int size = BitConverter.ToInt32(header, 4);
                     var read = 0;
-                    var data = new byte[size * 60 + 16];
+                    var data = new byte[size * 60 + 20];
 
                     do
                     {
-                        read += serverStream.Read(data, read + 16, size * 60 - read);
+                        read += serverStream.Read(data, read + 20, size * 60 - read);
                     }
                     while (read < size * 60);
-                    Array.Copy(header, data, 16);
+                    Array.Copy(header, data, 20);
 
                     var msg = new Message(size);
                     msg.DeSerialize(data);
 
                     ready = false;
                     Cluster.Stars = msg.Stars.ToList();
+                    Cluster.dt = msg.dt;
                     step = msg.step;
                     min = msg.min;
                     max = msg.max;
@@ -114,18 +115,16 @@ namespace Client
 
                     // if (Cluster.Stars.Count != 120)
                     // return;
-                    serverStream.Write(
-                        new Message(step, min, max, NewStars).Serialize(NewStars.Length),
-                        0,
-                        NewStars.Length * 60 + 16);
+                    var message = new Message(step, 0, min, max, NewStars).Serialize(NewStars.Length);
+                    serverStream.Write(message,0,NewStars.Length * 60 + 20);
                     serverStream.Flush();
                 }
-            }
+            /*}
             catch (Exception e)
             {
                 Console.WriteLine("Verbindung verloren\n\n" + e.Message);
                 Thread.Sleep(2000);
-            }
+            }//*/
 
             // Console.ReadLine()););return; }
         }
