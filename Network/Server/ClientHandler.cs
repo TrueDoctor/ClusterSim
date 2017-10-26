@@ -116,7 +116,7 @@ namespace ClusterSim.Net.Server
                     watch.Start();
 
                     int size = this.OldStars.Count * 60 + 20;
-                    var msg = new Message(this.Step,this.dt, this.min, this.max, this.OldStars.ToArray());
+                    var msg = new Message(this.Step, this.dt, this.min, this.max, this.OldStars.ToArray());
 
                     this.networkStream.Write(msg.Serialize(this.OldStars.Count), 0, size);
                     this.networkStream.Flush();
@@ -158,9 +158,10 @@ namespace ClusterSim.Net.Server
             this.networkStream.Read(buffer, 0, size);
             this.networkStream.Flush();
             var msg = new Message(this.OldStars.Count);
-            this.NewStars=msg.DeSerialize(buffer).ToArray();
-            //this.NewStars = new Star[msg.max - msg.min + 1];
-            //Array.Copy(msg.Stars, msg.min, this.NewStars, 0, msg.max - msg.min + 1);
+            this.NewStars = msg.DeSerialize(buffer).ToArray();
+
+            // this.NewStars = new Star[msg.max - msg.min + 1];
+            // Array.Copy(msg.Stars, msg.min, this.NewStars, 0, msg.max - msg.min + 1);
             this.Mstep = msg.step;
         }
     }

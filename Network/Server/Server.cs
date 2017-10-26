@@ -60,7 +60,7 @@
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.Title = "ClusterSim - Distribution Server";
 
-            int step = SQL.lastStep("lang"), errors = 0, dt = 2000, year = step;
+            int step = SQL.lastStep("lang"), errors = 0, dt = 800, year = step;
             double ovrper = 1;
 
             Console.WriteLine("Load Stars...");
@@ -199,7 +199,7 @@
                     step++;
                     Console.Beep();
 
-                    if (wtable.Length != 0 && Math.Ceiling((double)(step-1) * dt / 365)< Math.Ceiling((double)step * dt / 365)&&year++>-1)
+                    if (wtable.Length != 0 && Math.Ceiling((double)(step-1) *dt / 3650)< Math.Ceiling((double)step * dt / 3650)&&year++>-1||true)
                         foreach (Star s in Cluster.Stars)
                             if (!s.dead)
                                 while (SQL.addRow(s, year, wtable) == false) ;//do until succesfull

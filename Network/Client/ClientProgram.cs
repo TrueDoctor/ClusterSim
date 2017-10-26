@@ -56,7 +56,7 @@ namespace Client
             string ip = hostInfo.AddressList.First(x => x.ToString().Contains('.'))
                 .ToString(); // Properties.Settings.Default.IP;
 
-            // string ip = "10.165.4.148";
+             //ip = "192.168.2.42";
             try
             {
                 clientSocket.Connect(ip, Settings.Default.Port);

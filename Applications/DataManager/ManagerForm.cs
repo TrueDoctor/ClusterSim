@@ -3,64 +3,64 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using ClusterSim.ClusterLib;
-using XDMessaging;
-using System.Threading;
-using System.IO;
 
+using ClusterSim.ClusterLib;
+
+using XDMessaging;
 
 namespace ClusterSim.DataManager
 {
     public partial class DataManager : Form
     {
-        string table;//current selected table
-        int index=0;
+        string table; // current selected table
+
+        int index = 0;
+
         public DataManager()
         {
             InitializeComponent();
             ListRefresh_Tick(new object(), new EventArgs());
-            
-            
         }
 
-        private void ListRefresh_Tick(object sender, EventArgs e)//show tables
+        private void ListRefresh_Tick(object sender, EventArgs e)
         {
-            List<String> list = SQL.readTables();
+            // show tables
+            List<string> list = SQL.readTables();
             if (list != null)
             {
                 ServerList.Items.Clear();
-                foreach (string s in list)
-                    ServerList.Items.Add(s);
+                foreach (string s in list) ServerList.Items.Add(s);
             }
+
             ServerList.SetSelected(index, true);
         }
 
-        private void ListIndexChange(object sender, EventArgs e)//display detailed information on selection
+        private void ListIndexChange(object sender, EventArgs e)
         {
+            // display detailed information on selection
             try
             {
                 index = ServerList.SelectedIndex;
                 table = ServerList.SelectedItem.ToString();
                 int s = SQL.lastStep(table);
-                if (s == -1)
-                    SchritteAns.Text = "Liste ist leer";
-                else
-                    SchritteAns.Text = "Schritte: " + Convert.ToString(s + 1);
-
+                if (s == -1) SchritteAns.Text = "Liste ist leer";
+                else SchritteAns.Text = "Schritte: " + Convert.ToString(s + 1);
 
                 int i = SQL.starsCount(table);
-                if (i == -1)
-                    SterneAns.Text = "Liste ist leer";
-                else
-                    SterneAns.Text = "Sterne: " + Convert.ToString(i);
+                if (i == -1) SterneAns.Text = "Liste ist leer";
+                else SterneAns.Text = "Sterne: " + Convert.ToString(i);
                 newTableName.Text = table;
             }
-            catch (Exception ex) { Console.WriteLine(ex.Message); }
-            
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
 
         private void ServerList_KeyDown(object sender, KeyEventArgs e)
@@ -68,21 +68,19 @@ namespace ClusterSim.DataManager
             switch (e.KeyCode)
             {
                 case Keys.Delete:
-                    string messageBoxText = String.Format("Wollen sie die Tabelle {0} unwiederruflich löschen?",table);
+                    string messageBoxText = string.Format("Wollen sie die Tabelle {0} unwiederruflich löschen?", table);
                     string caption = "Tabelle löschen";
                     MessageBoxButtons button = MessageBoxButtons.YesNo;
                     MessageBoxIcon icon = MessageBoxIcon.Warning;
-                    DialogResult res= MessageBox.Show(messageBoxText, caption, button, icon) ;
+                    DialogResult res = MessageBox.Show(messageBoxText, caption, button, icon);
 
-                    if (res == DialogResult.Yes)
-                        SQL.dropTable(table);
-                    if(ServerList.SelectedIndex>0)
-                        ServerList.SelectedIndex--;
+                    if (res == DialogResult.Yes) SQL.dropTable(table);
+                    if (ServerList.SelectedIndex > 0) ServerList.SelectedIndex--;
                     ListRefresh_Tick(new object(), new EventArgs());
                     break;
 
                 case Keys.D:
-                    SQL.deleteStep(table,SQL.lastStep(table));
+                    SQL.deleteStep(table, SQL.lastStep(table));
                     ListRefresh_Tick(new object(), new EventArgs());
                     break;
             }
@@ -91,10 +89,10 @@ namespace ClusterSim.DataManager
         private void AddTable_Click(object sender, EventArgs e)
         {
             string name = newTableName.Text;
-            
+
             if (SQL.readTables().Contains(name))
             {
-                string messageBoxText = String.Format("Sie sind im Begriff die Tabelle {0} zu überschreiben", name);
+                string messageBoxText = string.Format("Sie sind im Begriff die Tabelle {0} zu überschreiben", name);
                 string caption = "Tabelle Überschreiben";
                 MessageBoxButtons button = MessageBoxButtons.YesNo;
                 MessageBoxIcon icon = MessageBoxIcon.Warning;
@@ -104,34 +102,37 @@ namespace ClusterSim.DataManager
                 {
                     SQL.dropTable(name);
                     SQL.addTable(name);
-                    
+
                     ListRefresh_Tick(new object(), new EventArgs());
                 }
             }
+
             SQL.addTable(newTableName.Text);
             ListRefresh_Tick(new object(), new EventArgs());
             ServerList.SelectedItem = newTableName.Text;
         }
 
-        private void Refresh_Click(object sender, EventArgs e)//refresh icon
+        private void Refresh_Click(object sender, EventArgs e)
         {
+            // refresh icon
             ListRefresh_Tick(new object(), new EventArgs());
         }
 
         private void DataView_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process.Start(@"DataView.exe", table);//start Dataview with table as parameter
+            System.Diagnostics.Process.Start(@"DataView.exe", table); // start Dataview with table as parameter
         }
 
         private void randomTable_Click(object sender, EventArgs e)
         {
-            string name=newTableName.Text;
-            //if (ServerList.Items.Contains(newTableName.Text))//check if input name already existes
-            //name = ServerList.SelectedItem.ToString();
+            string name = newTableName.Text;
+
+            // if (ServerList.Items.Contains(newTableName.Text))//check if input name already existes
+            // name = ServerList.SelectedItem.ToString();
             /*else */
             if (SQL.readTables().Contains(name))
             {
-                string messageBoxText = String.Format("Sie sind im Begriff die Tabelle {0} zu überschreiben", name);
+                string messageBoxText = string.Format("Sie sind im Begriff die Tabelle {0} zu überschreiben", name);
                 string caption = "Tabelle Überschreiben";
                 MessageBoxButtons button = MessageBoxButtons.YesNo;
                 MessageBoxIcon icon = MessageBoxIcon.Warning;
@@ -143,19 +144,20 @@ namespace ClusterSim.DataManager
                     SQL.addTable(name);
 
                     Random form = new Random(name);
-                    form.Show();//start random Form and pass name as argument
+                    form.Show(); // start random Form and pass name as argument
                     ListRefresh_Tick(new object(), new EventArgs());
                 }
             }
-            else 
+            else
             {
-                name = newTableName.Text;//else crate new table
+                name = newTableName.Text; // else crate new table
                 SQL.addTable(name);
 
                 Random form = new Random(name);
-                form.Show();//start random Form and pass name as argument
+                form.Show(); // start random Form and pass name as argument
                 ListRefresh_Tick(new object(), new EventArgs());
             }
+
             ServerList.SelectedItem = name;
         }
 
@@ -164,79 +166,72 @@ namespace ClusterSim.DataManager
             progressBar.Visible = true;
             progressBar.Value = 0;
 
-            XDMessagingClient client = new XDMessagingClient(); //https://github.com/TheCodeKing/XDMessaging.Net
+            XDMessagingClient client = new XDMessagingClient(); // https://github.com/TheCodeKing/XDMessaging.Net
             IXDListener listener = client.Listeners.GetListenerForMode(XDTransportMode.HighPerformanceUI);
             listener.RegisterChannel("steps");
 
             listener.MessageReceived += (o, ep) =>
-            {
-                if (ep.DataGram.Channel == "steps")//select channel
                 {
-                    switch (ep.DataGram.Message.First().ToString())
+                    if (ep.DataGram.Channel == "steps")
                     {
-                        case "s":
-                            int n = Convert.ToInt32(ep.DataGram.Message.Remove(0, 1)); //check wether message is max or current value
-                            
-                            progressBar.Maximum = n;
-                            break;
-                        case "i":
-                            
-                            int m = Convert.ToInt32(ep.DataGram.Message.Remove(0, 1));
-                            progressBar.Value = m;
+                        // select channel
+                        switch (ep.DataGram.Message.First().ToString())
+                        {
+                            case "s":
+                                int n = Convert.ToInt32(
+                                    ep.DataGram.Message.Remove(0, 1)); // check wether message is max or current value
 
-                            break;
-                        case "a":
-                            if (ep.DataGram.Message == "abort")
-                                progressBar.Visible = false;
-                            break;
-                            
+                                progressBar.Maximum = n;
+                                break;
+                            case "i":
+
+                                int m = Convert.ToInt32(ep.DataGram.Message.Remove(0, 1));
+                                progressBar.Value = m;
+
+                                break;
+                            case "a":
+                                if (ep.DataGram.Message == "abort") progressBar.Visible = false;
+                                break;
+                        }
                     }
-                }
-                if (!(progressBar.Value < progressBar.Maximum - 1))
-                    progressBar.Visible = false;//make invisible after execution 
-            };
-            System.Diagnostics.Process.Start(@"ClusterSim.exe", table);
-            
-        }
 
+                    if (!(progressBar.Value < progressBar.Maximum - 1))
+                        progressBar.Visible = false; // make invisible after execution 
+                };
+            System.Diagnostics.Process.Start(@"ClusterSim.exe", table);
+        }
 
         private bool tableWorking(string name)
         {
             progressBar.Maximum = SQL.lastStep(name);
-            progressBar.Visible= true;
+            progressBar.Visible = true;
             int count = SQL.starsCount(name);
-            for (int i = SQL.firstStep(name); i <= SQL.lastStep(name); i++)//check if every step has the same amount of stars
-                if (count != SQL.starsCount(name, i))
-                    return false;
-                else
-                    progressBar.Value = i;
+            for (int i = SQL.firstStep(name);
+                 i <= SQL.lastStep(name);
+                 i++) // check if every step has the same amount of stars
+                if (count != SQL.starsCount(name, i)) return false;
+                else progressBar.Value = i;
             progressBar.Visible = false;
             return true;
         }
 
         private void Check_Click(object sender, EventArgs e)
         {
-            if (tableWorking(table))
-                MessageBox.Show("Fehlerfrei");
-            else
-                MessageBox.Show("Tabelle fehlerhaft");
+            if (tableWorking(table)) MessageBox.Show("Fehlerfrei");
+            else MessageBox.Show("Tabelle fehlerhaft");
         }
 
         private void Download_Click(object sender, EventArgs e)
         {
-            if (table!=null)
+            if (table != null)
             {
-                int von=0, bis=0;
+                int von = 0, bis = 0;
                 string inputvon = "Von";
-                if (ShowInputDialog(ref inputvon) == DialogResult.OK)
-                    von = Convert.ToInt32(inputvon);
+                if (ShowInputDialog(ref inputvon) == DialogResult.OK) von = Convert.ToInt32(inputvon);
                 string inputbis = "Bis";
-                if (ShowInputDialog(ref inputbis) == DialogResult.OK)
-                    bis = Convert.ToInt32(inputbis);
+                if (ShowInputDialog(ref inputbis) == DialogResult.OK) bis = Convert.ToInt32(inputbis);
 
-
-
-                SaveFileDialog saveFileDialog1 = new SaveFileDialog();//savefile dialouge
+                SaveFileDialog saveFileDialog1 = new SaveFileDialog(); // savefile dialouge
                 saveFileDialog1.InitialDirectory = @"C:\";
                 saveFileDialog1.FileName = table;
                 saveFileDialog1.Title = "Save table as File";
@@ -259,35 +254,41 @@ namespace ClusterSim.DataManager
                         progressBar.Value = i;
                         Application.DoEvents();
                     }
+
                     progressBar.Value = 0;
                     progressBar.Maximum = list.Count;
                     List<string> lines = new List<string>();
                     List<int> colors = new List<int>();
                     System.Random int255 = new System.Random();
-                    for (int i = 0; i<list.Count;i++)
-                        colors.Add(65536 * int255.Next(255)+ 256 * int255.Next(255)+ int255.Next(255));
+                    for (int i = 0; i < list.Count; i++)
+                        colors.Add(65536 * int255.Next(255) + 256 * int255.Next(255) + int255.Next(255));
 
                     foreach (Star s in list)
                     {
-                        lines.Add(s.toTsv().Replace(',', '.')+ "    "+colors[s.id]);
+                        lines.Add(s.toTsv().Replace(',', '.') + "    " + colors[s.id]);
                         progressBar.Increment(1);
                     }
-                    System.IO.File.WriteAllLines(path,lines);
+
+                    System.IO.File.WriteAllLines(path, lines);
                     progressBar.Value = 0;
                     progressBar.Visible = false;
                 }
             }
         }
-        private static DialogResult ShowInputDialog(ref string input)//http://stackoverflow.com/questions/97097/what-is-the-c-sharp-version-of-vb-nets-inputdialog
+
+        private static DialogResult
+            ShowInputDialog(
+                ref string input)
         {
-            System.Drawing.Size size = new System.Drawing.Size(200, 70);
+            // http://stackoverflow.com/questions/97097/what-is-the-c-sharp-version-of-vb-nets-inputdialog
+            Size size = new System.Drawing.Size(200, 70);
             Form inputBox = new Form();
 
             inputBox.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             inputBox.ClientSize = size;
             inputBox.Text = "Name";
 
-            System.Windows.Forms.TextBox textBox = new TextBox();
+            TextBox textBox = new TextBox();
             textBox.Size = new System.Drawing.Size(size.Width - 10, 23);
             textBox.Location = new System.Drawing.Point(5, 5);
             textBox.Text = input;

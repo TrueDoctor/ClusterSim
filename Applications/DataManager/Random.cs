@@ -85,8 +85,15 @@ namespace ClusterSim.DataManager
                 while (SQL.addRow(new Star(new Vector().random(Math.Pow(10, PosBar.Value)), new Vector().random(Math.Pow(10, VelBar.Value)),
                     masses[i], i), 0, table) == false) ;
                 else
-                while (SQL.addRow(Misc.randomize(Math.Pow(10, PosBar.Value), Math.Pow(10, VelBar.Value),
-                    Math.Pow(10, MassVBar.Value), Math.Pow(10, MassMBar.Value), i), 0, table) == false) ;//add new row of stars
+                    while (SQL.addRow(
+                               Misc.randomize(
+                                   Math.Pow(10, PosBar.Value), /*Math.Pow(10, VelBar.Value)*/
+                                   0,
+                                   Math.Pow(10, MassVBar.Value),
+                                   Math.Pow(10, MassMBar.Value),
+                                   i),
+                               0,
+                               table) == false) ; //add new row of stars
                 //while (SQL.addRow(Misc.randomize(Convert.ToDouble(textBox1.Text), Convert.ToDouble(textBox2.Text),
                     //Convert.ToDouble(textBox3.Text), Convert.ToDouble(textBox4.Text), i), 0, table) == false) ;//add new row of stars
 

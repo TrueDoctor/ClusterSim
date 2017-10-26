@@ -10,7 +10,7 @@ namespace ClusterSim.ClusterLib
 
     public class StarCluster
     {
-        private const int BoxLevels = 2;
+        private const int BoxLevels = 3;
 
         // fields
         private const double Gravitation = 0.0002959122083
@@ -42,7 +42,7 @@ namespace ClusterSim.ClusterLib
 
         private readonly string wtable; // table to write at
 
-        public StarCluster(string rtable, string wtable, int start, double dt = 30)
+        public StarCluster(string rtable, string wtable, int start, double dt = 1)
         {
             // constructor 
             this.starCount = SQL.starsCount(rtable);
@@ -386,11 +386,11 @@ namespace ClusterSim.ClusterLib
 
         private Vec6 f(Vec6 Star, int id)
         {
-            var acc = new Vector(); /*
+            var acc = new Vector(); 
             for (int j = 0; j < Stars.Count; j++)
                 if (id != Stars[j].id && !Stars[j].dead)//no self intersection to prevent dividing by 0
                     acc.add(calcacc(Star.ToVector(0), Stars[j], id));//add all acceleration vectors
-/*/
+//
             for (var j = 0; j < this.Instructions[id].Count; j++)
             {
                 int temp = this.Instructions[id][j];
@@ -402,13 +402,13 @@ namespace ClusterSim.ClusterLib
                 }
                 else if (this.MassLayer[temp].mass != 0)
                 {
-                }
-            }
- /*
-                                                            for (int j = 0; j < Boxes.Count; j++)
+                } //m67
+            }//*/
+ 
+   /*                                                         for (int j = 0; j < Boxes.Count; j++)
                                                                 if (id != Boxes[j].id)//no self intersection to prevent dividing by 0
                                                                     acc.add(calcacc(Star.ToVector(0), Boxes[j], id));//add all acceleration vectors
-                                                                    */
+                                                                    //*/
             return new Vec6(Star.ToVector(1), acc);
         }
 
