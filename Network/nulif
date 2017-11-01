@@ -1,0 +1,7 @@
+
+PsExec v2.2 - Execute processes remotely
+Copyright (C) 2001-2016 Mark Russinovich
+Sysinternals - www.sysinternals.com
+
+Connecting to 192.168.2.128...                                                                               Starting PSEXESVC service on 192.168.2.128...                                                                               Connecting with PsExec service on 192.168.2.128...                                                                               Starting C:\Users\Administrator.TARDIS\Desktop\startServer.bat on 192.168.2.128...                                                                               
+C:\Users\Administrator.TARDIS\Desktop\startServer.bat exited on 192.168.2.128 with error code 0.

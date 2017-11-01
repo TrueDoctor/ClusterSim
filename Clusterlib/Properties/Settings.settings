@@ -1,5 +1,5 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="ClusterLib.Properties" GeneratedClassName="Settings">
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="ClusterSim.ClusterLib.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
     <Setting Name="ClustersimConnectionString" Type="(Connection string)" Scope="Application">
@@ -23,6 +23,9 @@
   &lt;ConnectionString&gt;Data Source=mssql1.gear.host;Initial Catalog=clustersim;Persist Security Info=True;User ID=clustersim;Password=Vq73wF?zo75?&lt;/ConnectionString&gt;
 &lt;/SerializableConnectionString&gt;</DesignTimeValue>
       <Value Profile="(Default)">Data Source=mssql1.gear.host;Initial Catalog=clustersim;Persist Security Info=True;User ID=clustersim;Password=Vq73wF?zo75?</Value>
+    </Setting>
+    <Setting Name="database" Type="System.String" Scope="User">
+      <Value Profile="(Default)">offline</Value>
     </Setting>
   </Settings>
 </SettingsFile>
