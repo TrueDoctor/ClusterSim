@@ -1,6 +1,6 @@
 ﻿namespace ClusterSim.Net.Server
 {
-    #region
+    #region using directives
 
     using System;
     using System.Collections.Generic;
@@ -16,58 +16,34 @@
 
     #endregion
 
-    /// <summary>
-    ///     The server.
-    /// </summary>
+    
     public class Server
     {
-        /// <summary>
-        ///     The new clients.
-        /// </summary>
         private readonly List<ClientHandler> newClients = new List<ClientHandler>();
 
-        /// <summary>
-        ///     The clients.
-        /// </summary>
         private List<ClientHandler> clients = new List<ClientHandler>();
 
-        /// <summary>
-        ///     The send handler.
-        /// </summary>
-        /// <param name="s">
-        ///     The s.
-        /// </param>
-        /// <param name="e">
-        ///     The e.
-        /// </param>
+        public string rtable { get; set; } = "e";
+
+        public string wtable { get; set; } = "e";
+
         public delegate void SendHandler(Server s, SendEventArgs e);
-
-        /// <summary>
-        ///     The send data.
-        /// </summary>
+        
         public event SendHandler SendData;
-
-        /// <summary>
-        ///     The main.
-        /// </summary>
-        /// <exception cref="NotImplementedException">
-        /// </exception>
-        /// <exception cref="Exception">
-        /// </exception>
+        
         public void Main()
         {
             var listenThread = new Thread(this.Listen) { Name = "ListenThread" };
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.Title = "ClusterSim - Distribution Server";
 
-            int step = SQL.lastStep("lang"), errors = 0, dt = 800, year = step;
+            int step = SQL.lastStep(rtable), errors = 0, dt = 100000, year = step;
             double ovrper = 1;
 
             Console.WriteLine("Load Stars...");
-            var Cluster = new StarCluster("lang", "lang", SQL.lastStep("lang"), dt);
+            var Cluster = new StarCluster(rtable, wtable, step, dt);
             Console.WriteLine("Loading finished");
             listenThread.Start();
-            var wtable = "lang";
 
             var msg = new StringBuilder();
             var watch = new Stopwatch();
@@ -199,7 +175,7 @@
                     step++;
                     Console.Beep();
 
-                    if (wtable.Length != 0 && Math.Ceiling((double)(step-1) *dt / 3650)< Math.Ceiling((double)step * dt / 3650)&&year++>-1||true)
+                    if (wtable.Length != 0 && Math.Ceiling((double)(step-1) *dt / 12)< Math.Ceiling((double)step * dt / 12)&&year++>-1)
                         foreach (Star s in Cluster.Stars)
                             if (!s.dead)
                                 while (SQL.addRow(s, year, wtable) == false) ;//do until succesfull

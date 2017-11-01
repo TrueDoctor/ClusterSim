@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.6
+VisualStudioVersion = 15.0.27004.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClusterSim", "Applications\ClusterSim\ClusterSim.csproj", "{CCFCB65F-D68C-47FB-BF06-3A7A1D1C674E}"
 EndProject
@@ -159,6 +159,15 @@ Global
 		{762EB6A9-1816-4913-8979-C7CF289C86FF} = {9E146698-53D7-48FE-8CD8-613DFBE5FB14}
 		{6BC91410-D90E-4EAA-92A4-995D5B40E099} = {9E146698-53D7-48FE-8CD8-613DFBE5FB14}
 		{631D9E7E-1C12-4C7D-BFC8-89EAAA3D71D3} = {9E146698-53D7-48FE-8CD8-613DFBE5FB14}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {608F8E85-0EBD-4502-B890-8A0322C51625}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true

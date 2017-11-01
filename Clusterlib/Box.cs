@@ -34,25 +34,34 @@ namespace ClusterSim.ClusterLib
             Calc();
             this.root = root;
         }
-        public void refresh(ref List<IMassive> Objects, List<int> ids)
+        public void refresh(List<IMassive> Objects)
         {
             objects.Clear();
-            foreach (int i in ids)
+            foreach (int i in this.ids)
                 objects.Add(Objects.Find(x => x.id == i));
         }
 
         public void Calc()
         {
+            pos = Position + (Dimension / 2);
+            var temp = new Vector();
+            mass = 0;
+
             #region Avg 
             if (ids.Count != 0)
             {
+                 
+                objects.ForEach(x => mass += x.mass);
+                
                 foreach (IMassive m in objects)
                 {
-                    pos += m.mass * m.pos;
-                    mass += m.mass;
+                    if (m.mass == 0)
+                        continue;
+                    temp += (m.mass/mass) * (m.pos-pos);
                 }
-                if (mass!=0)
-                    pos.div(mass);
+                pos += temp;
+                //if (mass!=0)
+                  //  pos.div(mass);
             }
             #endregion
         }

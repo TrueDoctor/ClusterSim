@@ -97,7 +97,7 @@ namespace ClusterSim.ClusterLib
                     case Misc.Method.RK4:
                         threads.Add(
                             new Thread(
-                                delegate()
+                                delegate ()
                                     {
                                         this.RK4(step, start, this.starCount - 1);
                                     })); // new Thread(start step,steps to process)
@@ -105,7 +105,7 @@ namespace ClusterSim.ClusterLib
                     case Misc.Method.RK5:
                         threads.Add(
                             new Thread(
-                                delegate()
+                                delegate ()
                                     {
                                         this.RK5(step, start, this.starCount - 1);
                                     })); // new Thread(start step,steps to process)
@@ -126,7 +126,7 @@ namespace ClusterSim.ClusterLib
                 this.Steps.Add(new List<Star>(temp.OrderBy(x => x.id))); // add step to steps array
 
                 var save = new Thread(
-                    delegate() { this.export(new List<Star>(this.Steps.Last()), step + this.start, this.wtable); });
+                    delegate () { this.export(new List<Star>(this.Steps.Last()), step + this.start, this.wtable); });
                 save.Priority = ThreadPriority.Highest;
                 save.Start();
                 save.Name = "save" + step;
@@ -144,11 +144,16 @@ namespace ClusterSim.ClusterLib
             if (this.Boxes[0] == null) this.CalcBoxes();
             this.RefreshBoxes();
             this.starCount = this.Stars.Count;
+            foreach (var Box in Boxes[0])
+            {
+                if (Box.ids.Count != 0)
+                    ;
+            }
             if (this.Stars == null) return null;
             foreach (var s in this.Stars) // reset computation status
                 s.computed = false;
 
-            
+
             int processors = Environment.ProcessorCount; // get number of processors
             int perCore = (max - min + 1) / processors; // divide the cluster in equal parts
             int left = (max - min + 1) % processors; // calc remainder
@@ -157,11 +162,11 @@ namespace ClusterSim.ClusterLib
             this.OldStars = new List<Star>(); // save the current values
             foreach (var s in this.Stars) // clone each to prevent shallow copys
                 this.OldStars.Add(s.Clone());
-            
+
 
             int end;
             this.start = min;
-            for (var i = 0; i < (processors < max - min ? processors : max - min+1); i++)
+            for (var i = 0; i < (processors < max - min ? processors : max - min + 1); i++)
             {
                 end = this.start + perCore;
                 if (left > 0)
@@ -178,7 +183,7 @@ namespace ClusterSim.ClusterLib
                     case Misc.Method.RK4:
                         threads.Add(
                             new Thread(
-                                delegate()
+                                delegate ()
                                     {
                                         this.RK4(step, test, end - 1);
                                     })); // new Thread(start step,steps to process)
@@ -186,7 +191,7 @@ namespace ClusterSim.ClusterLib
                     case Misc.Method.RK5:
                         threads.Add(
                             new Thread(
-                                delegate()
+                                delegate ()
                                     {
                                         this.RK5(step, test, end - 1);
                                     })); // new Thread(start step,steps to process)
@@ -298,13 +303,13 @@ namespace ClusterSim.ClusterLib
             }
         }
 
-        private Vector calcacc(Vector a, IMassive b, int id = -1)
+        private Vector calcacc(Vector a, IMassive b, int id = -1,int bid = -1)
         {
             Vector tempDirection;
 
             tempDirection = a - b.pos; // direction vector to the other star
 
-            if(a==b.pos)
+            if (a == b.pos)
                 throw new DivideByZeroException();
 
             double D = 1 / tempDirection.distance(); // Sterne und Weltraum Grundlagen der Himmelsmechanik S.91
@@ -312,6 +317,8 @@ namespace ClusterSim.ClusterLib
             double acceleration = b.mass * Gravitation * Math.Pow(D, 3);
             acceleration = b.mass / this.Stars[id].mass * acceleration;
             var AccVec = b.pos - a;
+            /*if (Double.IsNaN(acceleration))
+                ;*/
             AccVec.mult(acceleration);
             return AccVec;
         }
@@ -331,54 +338,54 @@ namespace ClusterSim.ClusterLib
             var level = 0;
             this.Boxes[level] = new Box[halfcount, halfcount, halfcount];
             for (var x = 0; x < halfcount; x++)
-            for (var y = 0; y < halfcount; y++)
-            for (var z = 0; z < halfcount; z++)
-            {
-                var boxpos = new Vector(
-                    (x - halfcount / 2) * this.BoxSize,
-                    (y - halfcount / 2) * this.BoxSize,
-                    (z - halfcount / 2) * this.BoxSize);
-                var dim = new Vector().init(this.BoxSize);
+                for (var y = 0; y < halfcount; y++)
+                    for (var z = 0; z < halfcount; z++)
+                    {
+                        var boxpos = new Vector(
+                            (x - halfcount / 2) * this.BoxSize,
+                            (y - halfcount / 2) * this.BoxSize,
+                            (z - halfcount / 2) * this.BoxSize);
+                        var dim = new Vector().init(this.BoxSize);
 
-                var boxStars = this.Stars.Where(
-                    s => (x == 0 ? true : s.pos.vec[0] > boxpos.vec[0])
-                         && (x == halfcount - 1 ? true : s.pos.vec[0] <= boxpos.vec[0] + this.BoxSize)
-                         && (y == 0 ? true : s.pos.vec[1] > boxpos.vec[1])
-                         && (y == halfcount - 1 ? true : s.pos.vec[1] <= boxpos.vec[1] + this.BoxSize) && !s.dead
-                         && (z == 0 ? true : s.pos.vec[2] > boxpos.vec[2])
-                         && (z == halfcount - 1 ? true : s.pos.vec[2] <= boxpos.vec[2] + this.BoxSize)).ToList();
-                var ids = boxStars.Select(p => p.id).ToList();
+                        var boxStars = this.Stars.Where(
+                            s => (x == 0 ? true : s.pos.vec[0] > boxpos.vec[0])
+                                 && (x == halfcount - 1 ? true : s.pos.vec[0] <= boxpos.vec[0] + this.BoxSize)
+                                 && (y == 0 ? true : s.pos.vec[1] > boxpos.vec[1])
+                                 && (y == halfcount - 1 ? true : s.pos.vec[1] <= boxpos.vec[1] + this.BoxSize) && !s.dead
+                                 && (z == 0 ? true : s.pos.vec[2] > boxpos.vec[2])
+                                 && (z == halfcount - 1 ? true : s.pos.vec[2] <= boxpos.vec[2] + this.BoxSize)).ToList();
+                        var ids = new List<int>();//boxStars.Select(p => p.id).ToList();
 
-                var thisBox = new Box(i++, boxpos, new Vector(x, y, z), this.BoxSize, this.MassLayer, ids, true);
-                this.Boxes[level][x, y, z] = thisBox;
-                this.MassLayer.Add(thisBox);
-            }
+                        var thisBox = new Box(i++, boxpos, new Vector(x, y, z), this.BoxSize, this.MassLayer, ids, true);
+                        this.Boxes[level][x, y, z] = thisBox;
+                        this.MassLayer.Add(thisBox);
+                    }
 
             for (level = 0; level < BoxLevels; level++)
             {
                 var max = (int)Math.Pow(2, BoxLevels - level - 1);
                 this.Boxes[level + 1] = new Box[max, max, max];
                 for (var x = 0; x < max; x++)
-                for (var y = 0; y < max; y++)
-                for (var z = 0; z < max; z++)
-                {
-                    var boxpos = new Vector(
-                        (x - max / 2) * this.BoxSize * Math.Pow(2, level),
-                        (y - max / 2) * this.BoxSize * Math.Pow(2, level),
-                        (z - max / 2) * this.BoxSize * Math.Pow(2, level));
-                    var vecEqual = new Vector(x, y, z);
-                    var ids = new List<int>();
-                    foreach (var b in this.Boxes[level]) if ((b.PosId / 2).Floor() == vecEqual) ids.Add(b.id);
-                    var tempbox = new Box(
-                        i++,
-                        boxpos,
-                        new Vector(x, y, z),
-                        this.BoxSize * Math.Pow(2, level),
-                        this.MassLayer,
-                        ids);
-                    this.Boxes[level + 1][x, y, z] = tempbox;
-                    this.MassLayer.Add(tempbox);
-                }
+                    for (var y = 0; y < max; y++)
+                        for (var z = 0; z < max; z++)
+                        {
+                            var boxpos = new Vector(
+                                (x - max / 2) * this.BoxSize * Math.Pow(2, level),
+                                (y - max / 2) * this.BoxSize * Math.Pow(2, level),
+                                (z - max / 2) * this.BoxSize * Math.Pow(2, level));
+                            var vecEqual = new Vector(x, y, z);
+                            var ids = new List<int>();
+                            foreach (var b in this.Boxes[level]) if ((b.PosId / 2).Floor() == vecEqual) ids.Add(b.id);
+                            var tempbox = new Box(
+                                i++,
+                                boxpos,
+                                new Vector(x, y, z),
+                                this.BoxSize * Math.Pow(2, level),
+                                this.MassLayer,
+                                ids);
+                            this.Boxes[level + 1][x, y, z] = tempbox;
+                            this.MassLayer.Add(tempbox);
+                        }
             }
 
             this.GenerateInstructions();
@@ -386,11 +393,11 @@ namespace ClusterSim.ClusterLib
 
         private Vec6 f(Vec6 Star, int id)
         {
-            var acc = new Vector(); 
-            for (int j = 0; j < Stars.Count; j++)
+            var acc = new Vector();
+            /*for (int j = 0; j < Stars.Count; j++)
                 if (id != Stars[j].id && !Stars[j].dead)//no self intersection to prevent dividing by 0
                     acc.add(calcacc(Star.ToVector(0), Stars[j], id));//add all acceleration vectors
-//
+                                                                     //*/
             for (var j = 0; j < this.Instructions[id].Count; j++)
             {
                 int temp = this.Instructions[id][j];
@@ -398,17 +405,17 @@ namespace ClusterSim.ClusterLib
                     && temp != id)
                 {
                     // no self intersection to prevent dividing by 0
-                    acc.add(this.calcacc(Star.ToVector(0), this.MassLayer[temp], id)); // add all acceleration vectors
+                    acc.add(this.calcacc(Star.ToVector(0), this.MassLayer[temp],id, temp)); // add all acceleration vectors
                 }
                 else if (this.MassLayer[temp].mass != 0)
                 {
                 } //m67
             }//*/
- 
-   /*                                                         for (int j = 0; j < Boxes.Count; j++)
-                                                                if (id != Boxes[j].id)//no self intersection to prevent dividing by 0
-                                                                    acc.add(calcacc(Star.ToVector(0), Boxes[j], id));//add all acceleration vectors
-                                                                    //*/
+
+            /*                                                         for (int j = 0; j < Boxes.Count; j++)
+                                                                         if (id != Boxes[j].id)//no self intersection to prevent dividing by 0
+                                                                             acc.add(calcacc(Star.ToVector(0), Boxes[j], id));//add all acceleration vectors
+                                                                             //*/
             return new Vec6(Star.ToVector(1), acc);
         }
 
@@ -440,14 +447,14 @@ namespace ClusterSim.ClusterLib
                         var oldtemp = new List<Box>(temp); // dublicate list  to prevent enumeration failures
                         temp.Clear(); // clear Temp
                         foreach (var c in oldtemp) // add level-1 ids of surrounding level
-                        foreach (var t in this.Boxes[level]) // foreach Box in same layer
-                            if (!temp.Exists(x => x.id == t.id) && !oldtemp.Exists(x => x.id == t.id) && t.mass != 0
-                            ) // if boxes dont already exst an are Neighbors
-                                if (t.PosId.IsNeighbour(c.PosId))
-                                {
-                                    Boxids[level].AddRange(t.ids); // add ids of surrounding Boxes
-                                    temp.Add(t); // add box to current layer selected
-                                }
+                            foreach (var t in this.Boxes[level]) // foreach Box in same layer
+                                if (!temp.Exists(x => x.id == t.id) && !oldtemp.Exists(x => x.id == t.id) && t.mass != 0
+                                ) // if boxes dont already exst an are Neighbors
+                                    if (t.PosId.IsNeighbour(c.PosId))
+                                    {
+                                        Boxids[level].AddRange(t.ids); // add ids of surrounding Boxes
+                                        temp.Add(t); // add box to current layer selected
+                                    }
                     }
 
                     // propably working
@@ -474,8 +481,8 @@ namespace ClusterSim.ClusterLib
                     {
                         this.Instructions[id] = new List<int>();
                         foreach (var list in Boxids)
-                            this.Instructions[id].AddRange(list.Where(x => x != id && x != b.id));
-
+                            this.Instructions[id].AddRange(list.Where(x => x != id && x != b.id&&MassLayer[x].mass!=0));
+                        Instructions[id].Sort();
                         // Instructions[id].RemoveAll(x=>x==b.id);
                     }
             }
@@ -488,6 +495,12 @@ namespace ClusterSim.ClusterLib
             this.MassLayer.AddRange(this.Stars);
             var halfcount = (int)Math.Pow(2, BoxLevels);
             Vector temp;
+
+            foreach (var b in Boxes[0])
+            {
+                b.ids.Clear();
+            }
+
             foreach (var s in this.Stars)
             {
                 temp = (s.pos / this.BoxSize).Floor() + halfcount / 2;
@@ -499,6 +512,7 @@ namespace ClusterSim.ClusterLib
             for (var j = 0; j < this.Boxes.Length; j++)
                 foreach (var b in this.Boxes[j])
                 {
+                    b.refresh(MassLayer);
                     b.Calc();
                     this.MassLayer.Add(b);
                 }
@@ -527,6 +541,7 @@ namespace ClusterSim.ClusterLib
                         /*for (int j = 1; j < Boxes.Length; j++)
                             MassLayer.AddRange(Boxes[j]);*/
             this.MassLayer.OrderBy(x => x.id);
+            GenerateInstructions();
         }
 
         private void RK4(int step, int cstart, int end)

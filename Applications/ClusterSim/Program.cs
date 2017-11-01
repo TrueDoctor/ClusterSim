@@ -16,8 +16,8 @@ namespace ClusterSim.Standalone
         {
             XDMessagingClient client = new XDMessagingClient(); //https://github.com/TheCodeKing/XDMessaging.Net
             IXDBroadcaster broadcaster = client.Broadcasters.GetBroadcasterForMode(XDTransportMode.HighPerformanceUI);
-            string rtable="";
-            
+            string rtable = "";
+
             if (args.Length > 0)//if the program gets called with arguments
             {
                 List<String> list = SQL.readTables();
@@ -28,13 +28,13 @@ namespace ClusterSim.Standalone
                     {
                         if (list.Contains(s))//check if argument is a valid table name
                             rtable = s;
-                        
+
 
                         Console.WriteLine(rtable);
                     }
 
                 }
-                
+
             }
 
             if (rtable == "")//if argument handover failed or was not  given
@@ -42,7 +42,7 @@ namespace ClusterSim.Standalone
                 Console.WriteLine("Auswahltabelle: ");//input name maualy 
                 rtable = Console.ReadLine();
             }
-            int last=0;
+            int last = 0;
 
             Console.WriteLine("\nLeer lassen, für gleiche Liste, oder Speichern nach: ");
             string wtable = Console.ReadLine();
@@ -62,41 +62,44 @@ namespace ClusterSim.Standalone
             int n = Convert.ToInt32(Console.ReadLine());
 
 
-            Console.WriteLine("Der simulierte Zeitraum entspricht einem Äquivalent von {0} Jahren.\n 'X' jederzeit zum Abbrechen drücken",Math.Round((dt*n)/365,2));
+            Console.WriteLine("Der simulierte Zeitraum entspricht einem Äquivalent von {0} Jahren.\n 'X' jederzeit zum Abbrechen drücken", Math.Round((dt * n) / 365, 2));
             Thread.Sleep(2000);
-            broadcaster.SendToChannel("steps", "s"+n);// send max step to steps channel
+            broadcaster.SendToChannel("steps", "s" + n);// send max step to steps channel
 
 
             Thread Key = new Thread(listen);
             Key.Start();
-            StarCluster cluster = new StarCluster(rtable,wtable,last,dt);     //instatiate Starcluster
-            for (int i = 1; i <= n&&!abort; Console.WriteLine(i++))//for steps
+            StarCluster cluster = new StarCluster(rtable, wtable, last, dt);     //instatiate Starcluster
+            for (int i = last*12; i <= n && !abort; Console.WriteLine(i++))//for steps
             {
-                cluster.doStep(i,0,199, Misc.Method.RK5);
+                cluster.doStep(i, 0, cluster.Stars.Count - 1, Misc.Method.RK5);
                 broadcaster.SendToChannel("steps", "i" + i);//send "i"+step in channel steps
                 Console.WriteLine("\n" + i + "\n \n");
-                foreach (Star s in cluster.Stars)
-                    if (!s.dead)
-                        while (SQL.addRow(s, i, wtable) == false) ;//do until succesfull
+                if (i % 12 == 0)
+                    foreach (Star s in cluster.Stars)
+                        if (!s.dead)
+                            while (SQL.addRow(s, i/12, wtable) == false) ;//do until succesfull
             }
 
             Key.Abort();
 
-            while (cluster.savethreads.FindAll(x => x.IsAlive).Count>1)
+            while (cluster.savethreads.FindAll(x => x.IsAlive).Count > 1)
                 Console.WriteLine("Warte auf die Beendigung von {0} Speicher Threads", cluster.savethreads.FindAll(x => x.IsAlive).Count);
             Thread t = cluster.savethreads.Find(x => x.IsAlive);
-            try {
+            try
+            {
                 Console.WriteLine(t.ThreadState.ToString());
                 Console.WriteLine(t.Name);
-                while (t.IsAlive);
+                while (t.IsAlive) ;
                 Thread.Sleep(10);
-            } catch { }
+            }
+            catch { }
             SQL.order(wtable);
             broadcaster.SendToChannel("steps", "abort");
 
             Console.WriteLine("Direkt in Dataview öffnen? (y/n)");
             string view = Console.ReadLine();                         //wait for input
-            if (view=="y"||view=="Y")
+            if (view == "y" || view == "Y")
                 System.Diagnostics.Process.Start(@"DataView.exe", wtable);
         }
 
@@ -109,7 +112,7 @@ namespace ClusterSim.Standalone
             do
             {
                 keyinfo = Console.ReadKey();
-                
+
             }
             while (keyinfo.Key != ConsoleKey.X);
             Console.WriteLine("\n\n\n\n Beenden Eingeleitet\n\n\n\n");
