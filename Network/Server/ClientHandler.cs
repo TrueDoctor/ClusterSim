@@ -135,7 +135,7 @@ namespace ClusterSim.Net.Server
                                            ? 1
                                            : (this.max - this.min + 1) / (double)watch.ElapsedMilliseconds;
 
-                    this.Performance = 1;
+                    //this.Performance = 1;
                     this.ReceiveFinished = true;
                     this.networkStream.Flush();
                 }

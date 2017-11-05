@@ -10,7 +10,7 @@ namespace ClusterSim.ClusterLib
 
     public class StarCluster
     {
-        private const int BoxLevels = 3;
+        private const int BoxLevels = 4;
 
         // fields
         private const double Gravitation = 0.0002959122083
@@ -111,7 +111,7 @@ namespace ClusterSim.ClusterLib
                                     })); // new Thread(start step,steps to process)
                         break;
                 }
-                threads.Last().Priority = ThreadPriority.AboveNormal;
+                threads.Last().Priority = ThreadPriority.Highest;
                 threads.Last().Start();
             }
 
@@ -144,11 +144,7 @@ namespace ClusterSim.ClusterLib
             if (this.Boxes[0] == null) this.CalcBoxes();
             this.RefreshBoxes();
             this.starCount = this.Stars.Count;
-            foreach (var Box in Boxes[0])
-            {
-                if (Box.ids.Count != 0)
-                    ;
-            }
+            
             if (this.Stars == null) return null;
             foreach (var s in this.Stars) // reset computation status
                 s.computed = false;
@@ -197,7 +193,7 @@ namespace ClusterSim.ClusterLib
                                     })); // new Thread(start step,steps to process)
                         break;
                 }
-                threads.Last().Priority = ThreadPriority.AboveNormal;
+                threads.Last().Priority = ThreadPriority.Highest;
                 threads.Last().Name = string.Format("Calc{0}-{1}", this.start, end - 1);
                 threads.Last().Start();
 
@@ -209,8 +205,8 @@ namespace ClusterSim.ClusterLib
             while (threads.Exists(x => x.IsAlive) || this.Stars.Exists(x => !x.computed && x.id >= min && x.id <= max))
                 Thread.Sleep(10);
 
-            foreach (var s in this.Stars.Where(c => c.computed))
-                if (this.OldStars.Exists(x => x.pos == s.pos && s.id != x.id)) throw new NotImplementedException();
+            //foreach (var s in this.Stars.Where(c => c.computed))
+            //if (this.OldStars.Exists(x => x.pos == s.pos && s.id != x.id)) throw new NotImplementedException();
 
             return this.Stars.Where(x => x.computed && x.id >= min && x.id <= max)
                 .OrderBy(x => x.id).ToArray();
@@ -241,7 +237,7 @@ namespace ClusterSim.ClusterLib
 
             foreach (var s in this.Stars)
                 if (s.id != this.Stars[id].id)
-                    acc.add(this.calcacc(this.Stars[id].pos, s, id)); // add all acceleration vectors
+                    acc.add(this.Calcacc(this.Stars[id].pos, s, id)); // add all acceleration vectors
 
             double Bacc = acc.distance(); // magnitude|x| of the vector
             double V = Math.Sqrt(
@@ -303,14 +299,47 @@ namespace ClusterSim.ClusterLib
             }
         }
 
-        private Vector calcacc(Vector a, IMassive b, int id = -1,int bid = -1)
+        private Vec6 f(Vec6 Star, int id)
+        {
+            var acc = new Vector();
+            /*for (int j = 0; j < Stars.Count; j++)
+                if (id != Stars[j].id && !Stars[j].dead)//no self intersection to prevent dividing by 0
+                    acc.add(calcacc(Star.ToVector(0), Stars[j], id));//add all acceleration vectors
+                                                                     //*/
+            for (var j = 0; j < this.Instructions[id].Count; j++)
+            {
+                int temp = this.Instructions[id][j];
+                if (!this.MassLayer[temp].dead && !this.MassLayer[id].dead && this.MassLayer[temp].mass != 0
+                    && temp != id)
+                {
+                    // no self intersection to prevent dividing by 0
+                    acc.add(this.Calcacc(Star.ToVector(0), this.MassLayer[temp], id, temp)); // add all acceleration vectors
+                }
+                else if (this.MassLayer[temp].mass != 0)
+                {
+                } //m67s tow layers up, get added to instructions
+            }//*/
+
+            /*                                                         for (int j = 0; j < Boxes.Count; j++)
+                                                                         if (id != Boxes[j].id)//no self intersection to prevent dividing by 0
+                                                                             acc.add(calcacc(Star.ToVector(0), Boxes[j], id));//add all acceleration vectors
+                                                                             //*/
+            return new Vec6(Star.ToVector(1), acc);
+        }
+
+        private Vector Calcacc(Vector a, IMassive b, int id = -1, int bid = -1)
         {
             Vector tempDirection;
 
             tempDirection = a - b.pos; // direction vector to the other star
 
             if (a == b.pos)
+            {
+                foreach (Box bs in Boxes[2])
+                    if (bs.ids.Contains(4548))
+                        Console.WriteLine(bs.id);
                 throw new DivideByZeroException();
+            }
 
             double D = 1 / tempDirection.distance(); // Sterne und Weltraum Grundlagen der Himmelsmechanik S.91
 
@@ -391,33 +420,7 @@ namespace ClusterSim.ClusterLib
             this.GenerateInstructions();
         }
 
-        private Vec6 f(Vec6 Star, int id)
-        {
-            var acc = new Vector();
-            /*for (int j = 0; j < Stars.Count; j++)
-                if (id != Stars[j].id && !Stars[j].dead)//no self intersection to prevent dividing by 0
-                    acc.add(calcacc(Star.ToVector(0), Stars[j], id));//add all acceleration vectors
-                                                                     //*/
-            for (var j = 0; j < this.Instructions[id].Count; j++)
-            {
-                int temp = this.Instructions[id][j];
-                if (!this.MassLayer[temp].dead && !this.MassLayer[id].dead && this.MassLayer[temp].mass != 0
-                    && temp != id)
-                {
-                    // no self intersection to prevent dividing by 0
-                    acc.add(this.calcacc(Star.ToVector(0), this.MassLayer[temp],id, temp)); // add all acceleration vectors
-                }
-                else if (this.MassLayer[temp].mass != 0)
-                {
-                } //m67
-            }//*/
-
-            /*                                                         for (int j = 0; j < Boxes.Count; j++)
-                                                                         if (id != Boxes[j].id)//no self intersection to prevent dividing by 0
-                                                                             acc.add(calcacc(Star.ToVector(0), Boxes[j], id));//add all acceleration vectors
-                                                                             //*/
-            return new Vec6(Star.ToVector(1), acc);
-        }
+        
 
         private void GenerateInstructions()
         {
@@ -428,8 +431,8 @@ namespace ClusterSim.ClusterLib
             foreach (var b in this.Boxes[0])
             {
                 // For each level 0 Box
-                if (b.ids.Count == 0) // Skip empty Boxes
-                    continue;
+                //if (b.ids.Count == 0) // Skip empty Boxes
+                    //continue;
                 temp = new List<Box>(); // initialize temp
                 UpperTemp = new List<Box>(); // initialize Upper temp
 
@@ -452,6 +455,8 @@ namespace ClusterSim.ClusterLib
                                 ) // if boxes dont already exst an are Neighbors
                                     if (t.PosId.IsNeighbour(c.PosId))
                                     {
+                                        if (!c.Neighbours.Contains(t))
+                                            c.Neighbours.Add(t);
                                         Boxids[level].AddRange(t.ids); // add ids of surrounding Boxes
                                         temp.Add(t); // add box to current layer selected
                                     }
@@ -475,16 +480,59 @@ namespace ClusterSim.ClusterLib
                     UpperTemp.Clear();
                 }
 
-                b.Calcids = Boxids;
+                var topLevelCalcIds = new List<int>();
+
+                for (int i = 1; i < Boxes.Length; i++)
+                {
+                    topLevelCalcIds.AddRange(new List<int>(Boxids[i]));
+                }
+
+                b.Calcids = topLevelCalcIds;
                 if (b.root)
+                {
                     foreach (int id in b.ids)
                     {
                         this.Instructions[id] = new List<int>();
                         foreach (var list in Boxids)
-                            this.Instructions[id].AddRange(list.Where(x => x != id && x != b.id&&MassLayer[x].mass!=0));
+                            this.Instructions[id].AddRange(list.Where(x => x != id && x != b.id && MassLayer[x].mass != 0));
                         Instructions[id].Sort();
                         // Instructions[id].RemoveAll(x=>x==b.id);
                     }
+                }
+            }
+        }
+
+        private void RefreshInstruction()
+        {
+
+            Console.WriteLine("Refresh Instructions");
+
+            foreach (List<int> i in Instructions)
+                i.Clear();
+
+            foreach (Box b in Boxes[0])
+            {
+                if (b.ids.Count == 0)
+                {
+                    continue;
+                }
+                foreach (int id in b.ids)
+                {
+                    var temp = new List<int>();
+
+                    temp.AddRange(b.ids);
+
+                    foreach (var n in b.Neighbours)
+                    {
+                        foreach (var ids in n.ids)
+                            if(ids!=b.id)
+                                temp.Add(ids); //(n.Neighbours.Select(x=>x.ids));
+                    }
+
+                    temp.AddRange(b.Calcids);
+
+                    Instructions[id].AddRange(temp.Except(new int[] { id,b.id }).Where(x=>MassLayer[x].mass!=0));
+                }
             }
         }
 
@@ -541,7 +589,11 @@ namespace ClusterSim.ClusterLib
                         /*for (int j = 1; j < Boxes.Length; j++)
                             MassLayer.AddRange(Boxes[j]);*/
             this.MassLayer.OrderBy(x => x.id);
-            GenerateInstructions();
+
+            if(Instructions.Contains(null))
+                GenerateInstructions();
+            else
+                RefreshInstruction();
         }
 
         private void RK4(int step, int cstart, int end)

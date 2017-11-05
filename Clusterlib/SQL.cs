@@ -38,6 +38,7 @@ namespace ClusterSim.ClusterLib
                                 Vector vel = new Vector(new[] { Convert.ToDouble(reader.GetString(reader.GetOrdinal("velx")).Replace(".", ",")), Convert.ToDouble(reader.GetString(reader.GetOrdinal("vely")).Replace(".", ",")), Convert.ToDouble(reader.GetString(reader.GetOrdinal("velz")).Replace(".", ",")) });
 
                                 Stars.Add(new Star(pos.vec, vel.vec, Convert.ToDouble(reader.GetString(reader.GetOrdinal("mass")).Replace(".", ",")), reader.GetInt32(reader.GetOrdinal("id"))));//add generated Star to array
+                                
                             }
                             con.Close();//close connection
                             return Stars;//return stars
@@ -63,7 +64,7 @@ namespace ClusterSim.ClusterLib
             using (SqlCommand cmd = new SqlCommand("INSERT INTO[dbo].[" + table + "] ([step] ,[id], [pos x], [pos y], [pos z], [vel x], [vel y], [vel z], [mass]) VALUES(" + values + ")", con))
             {
                 cmd.Parameters.Add(new SqlParameter("@step", step));//Parameterized Command: the @ string gets replaced by valus
-                cmd.Parameters.Add(new SqlParameter("@id", s.id));
+                cmd.Parameters.Add(new SqlParameter("@id", s.dead?-s.id:s.id));
                 cmd.Parameters.Add(new SqlParameter("@posx", s.pos.vec[0]));
                 cmd.Parameters.Add(new SqlParameter("@posy", s.pos.vec[1]));
                 cmd.Parameters.Add(new SqlParameter("@posz", s.pos.vec[2]));

@@ -6,7 +6,7 @@
       <Value Profile="(Default)">4242</Value>
     </Setting>
     <Setting Name="IP" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">192.168.2.130</Value>
+      <Value Profile="(Default)">192.168.2.105</Value>
     </Setting>
     <Setting Name="Einstellung" Type="System.String" Scope="User">
       <Value Profile="(Default)" />

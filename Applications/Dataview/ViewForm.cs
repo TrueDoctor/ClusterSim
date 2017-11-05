@@ -153,6 +153,7 @@ namespace ClusterSim.Dataview
             try
             {
                 //if (Misc.CountFiles(@"C:\Users\Dennis\Documents\Clustersim\")<=i&&i>=0);
+                
                 if (SQL.lastStep(table) >= i && i >= 0) //if in in porpper range
                     Stars = SQL.readStars(table,i);//JsonConvert.DeserializeObject<List<Star>>(System.IO.File.ReadAllText(@"C:\Users\Dennis\Documents\Clustersim\file" + i + ".json"));
                 
@@ -190,7 +191,7 @@ namespace ClusterSim.Dataview
             Box.Refresh();
             Box.Cursor = Cursors.Cross;
             if (Stars!=null)
-                if (Stars.Count < 1000)
+                if (Stars.Count <= 10000)
                     c = SQL.lastStep(table);
             Text = String.Format("{0}   Schritt: {1} von {2}",table,step, c);//change caption
 

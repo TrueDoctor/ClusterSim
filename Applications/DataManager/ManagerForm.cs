@@ -206,11 +206,15 @@ namespace ClusterSim.DataManager
             progressBar.Maximum = SQL.lastStep(name);
             progressBar.Visible = true;
             int count = SQL.starsCount(name);
-            for (int i = SQL.firstStep(name);
-                 i <= SQL.lastStep(name);
-                 i++) // check if every step has the same amount of stars
-                if (count != SQL.starsCount(name, i)) return false;
-                else progressBar.Value = i;
+
+            for (int i = SQL.firstStep(name); i <= SQL.lastStep(name); i++) // check if every step has the same amount of stars
+            {
+                if (count != SQL.starsCount(name, i))
+                    return false;
+                else
+                    progressBar.Value = i;
+                Application.DoEvents();
+            }
             progressBar.Visible = false;
             return true;
         }

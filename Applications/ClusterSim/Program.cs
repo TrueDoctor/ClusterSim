@@ -17,6 +17,7 @@ namespace ClusterSim.Standalone
             XDMessagingClient client = new XDMessagingClient(); //https://github.com/TheCodeKing/XDMessaging.Net
             IXDBroadcaster broadcaster = client.Broadcasters.GetBroadcasterForMode(XDTransportMode.HighPerformanceUI);
             string rtable = "";
+            Console.ForegroundColor = ConsoleColor.DarkRed;
 
             if (args.Length > 0)//if the program gets called with arguments
             {
@@ -69,7 +70,7 @@ namespace ClusterSim.Standalone
 
             Thread Key = new Thread(listen);
             Key.Start();
-            StarCluster cluster = new StarCluster(rtable, wtable, last, dt);     //instatiate Starcluster
+            StarCluster cluster = new StarCluster(rtable, wtable, last++, dt);     //instatiate Starcluster
             for (int i = last*12; i <= n && !abort; Console.WriteLine(i++))//for steps
             {
                 cluster.doStep(i, 0, cluster.Stars.Count - 1, Misc.Method.RK5);

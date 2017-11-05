@@ -217,6 +217,10 @@
                     Thread.Sleep(2000);
                     Console.Clear();
                     errors++;
+                    foreach (ClientHandler c in clients)
+                    {
+                        c.Performance = 1;
+                    }
                 }//*/
             }
         }
