@@ -5,6 +5,7 @@ namespace ClusterSim.ClusterLib
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel.Design.Serialization;
     using System.Linq;
     using System.Threading;
 
@@ -20,7 +21,7 @@ namespace ClusterSim.ClusterLib
 
         public List<Star> Stars; // Array of Stars
 
-        private readonly Box[][,,] Boxes = new Box[BoxLevels + 1][,,];
+        private List<Box> Boxes = new List<Box>();
 
         private double BoxSize;
 
@@ -141,10 +142,10 @@ namespace ClusterSim.ClusterLib
 
         public Star[] doStep(int step, int min, int max, Misc.Method m)
         {
-            if (this.Boxes[0] == null) this.CalcBoxes();
-            this.RefreshBoxes();
+            this.CalcBoxes();
+            this.GenerateInstructions();
             this.starCount = this.Stars.Count;
-            
+
             if (this.Stars == null) return null;
             foreach (var s in this.Stars) // reset computation status
                 s.computed = false;
@@ -335,9 +336,9 @@ namespace ClusterSim.ClusterLib
 
             if (a == b.pos)
             {
-                foreach (Box bs in Boxes[2])
+                /*foreach (Box bs in Boxes.Where(x=Y))
                     if (bs.ids.Contains(4548))
-                        Console.WriteLine(bs.id);
+                        Console.WriteLine(bs.id);*/
                 throw new DivideByZeroException();
             }
 
@@ -355,246 +356,104 @@ namespace ClusterSim.ClusterLib
         private void CalcBoxes()
         {
             Console.WriteLine("Calc Boxes");
-            this.BoxSize = (this.Stars.Max(x => x.pos.vec.Max()) - this.Stars.Min(x => x.pos.vec.Min()))
-                           / Math.Pow(2, BoxLevels); // calc low level box sizes
-            var halfcount = (int)Math.Pow(2, BoxLevels);
-            var temp = new List<IMassive>();
+            this.BoxSize = (this.Stars.Max(x => x.pos.vec.Max()) - this.Stars.Min(x => x.pos.vec.Min()));
+
+            this.MassLayer.Clear();
+            this.Boxes.Clear();
             foreach (var s in this.Stars) this.MassLayer.Add(s);
-            int i = this.Stars.Count;
+            int id = this.Stars.Count;
 
-            // for (int level = 0; level <= BoxLevels; level++)
-            // {
-            var level = 0;
-            this.Boxes[level] = new Box[halfcount, halfcount, halfcount];
-            for (var x = 0; x < halfcount; x++)
-                for (var y = 0; y < halfcount; y++)
-                    for (var z = 0; z < halfcount; z++)
-                    {
-                        var boxpos = new Vector(
-                            (x - halfcount / 2) * this.BoxSize,
-                            (y - halfcount / 2) * this.BoxSize,
-                            (z - halfcount / 2) * this.BoxSize);
-                        var dim = new Vector().init(this.BoxSize);
+            this.AddBox(ref this.Boxes, ref id, new Vector().init(-this.BoxSize / 2), this.BoxSize, new List<IMassive>(this.Stars));
 
-                        var boxStars = this.Stars.Where(
-                            s => (x == 0 ? true : s.pos.vec[0] > boxpos.vec[0])
-                                 && (x == halfcount - 1 ? true : s.pos.vec[0] <= boxpos.vec[0] + this.BoxSize)
-                                 && (y == 0 ? true : s.pos.vec[1] > boxpos.vec[1])
-                                 && (y == halfcount - 1 ? true : s.pos.vec[1] <= boxpos.vec[1] + this.BoxSize) && !s.dead
-                                 && (z == 0 ? true : s.pos.vec[2] > boxpos.vec[2])
-                                 && (z == halfcount - 1 ? true : s.pos.vec[2] <= boxpos.vec[2] + this.BoxSize)).ToList();
-                        var ids = new List<int>();//boxStars.Select(p => p.id).ToList();
+            //this.Boxes.OrderBy(x => x.id);
 
-                        var thisBox = new Box(i++, boxpos, new Vector(x, y, z), this.BoxSize, this.MassLayer, ids, true);
-                        this.Boxes[level][x, y, z] = thisBox;
-                        this.MassLayer.Add(thisBox);
-                    }
-
-            for (level = 0; level < BoxLevels; level++)
-            {
-                var max = (int)Math.Pow(2, BoxLevels - level - 1);
-                this.Boxes[level + 1] = new Box[max, max, max];
-                for (var x = 0; x < max; x++)
-                    for (var y = 0; y < max; y++)
-                        for (var z = 0; z < max; z++)
-                        {
-                            var boxpos = new Vector(
-                                (x - max / 2) * this.BoxSize * Math.Pow(2, level),
-                                (y - max / 2) * this.BoxSize * Math.Pow(2, level),
-                                (z - max / 2) * this.BoxSize * Math.Pow(2, level));
-                            var vecEqual = new Vector(x, y, z);
-                            var ids = new List<int>();
-                            foreach (var b in this.Boxes[level]) if ((b.PosId / 2).Floor() == vecEqual) ids.Add(b.id);
-                            var tempbox = new Box(
-                                i++,
-                                boxpos,
-                                new Vector(x, y, z),
-                                this.BoxSize * Math.Pow(2, level),
-                                this.MassLayer,
-                                ids);
-                            this.Boxes[level + 1][x, y, z] = tempbox;
-                            this.MassLayer.Add(tempbox);
-                        }
-            }
-
-            this.GenerateInstructions();
+            this.MassLayer.AddRange(this.Boxes.OrderBy(x=>x.id));
+            
+            //this.MassLayer.OrderBy(x => x.id);
         }
 
-        
+        private int AddBox(ref List<Box> boxes, ref int boxId, Vector pos, double size, List<IMassive> stars)
+        {
+            if (stars.Count == 1)
+            {
+                boxes.Add(new Box(boxId++, pos / size, pos, size, stars, new List<int>() { stars[0].id }, true));
+                return boxId - 1; //warning, this might not work when multithreated
+            }
+            else
+            {
+                var tbox = new Box(boxId++, pos, pos / size, size, new List<IMassive>(), new List<int>(), false);
+                var x = stars.Where(a => a.pos.vec[0] < pos.vec[0] + size / 2).ToList();
+                for (int i = 0; i < 2; i++)
+                {
+                    var y = x.Where(a => a.pos.vec[1] < pos.vec[1] + size / 2).ToList();
+                    for (int j = 0; j < 2 && x.Count != 0; j++)
+                    {
+                        var z = y.Where(a => a.pos.vec[2] < pos.vec[2] + size / 2).ToList();
+                        for (int k = 0; k < 2 && y.Count != 0; k++)
+                        {
+                            if (z.Count != 0)
+                                tbox.ids.Add(this.AddBox(ref boxes, ref boxId, pos + size / 2 * new Vector(i, j, k), size / 2, z.ToList()));
+                            z = y.Except(z).ToList();
+                        }
+                        y = x.Except(y).ToList();
+                    }
+                    x = stars.Except(x).ToList();
+                }
+                tbox.refresh(boxes.Select(v => v as IMassive).ToList());
+                tbox.Calc();
+                boxes.Add(tbox);
+                return tbox.id;
+            }
+
+
+        }
 
         private void GenerateInstructions()
         {
             Console.WriteLine("Generate Instructions");
             this.Instructions = new List<int>[this.Stars.Count];
-            var temp = new List<Box>();
-            var UpperTemp = new List<Box>();
-            foreach (var b in this.Boxes[0])
+            foreach (Star s in this.Stars)
             {
-                // For each level 0 Box
-                //if (b.ids.Count == 0) // Skip empty Boxes
-                    //continue;
-                temp = new List<Box>(); // initialize temp
-                UpperTemp = new List<Box>(); // initialize Upper temp
-
-                var Boxids = new List<int>[BoxLevels + 1]; // create box instruction array
-                Boxids[0] = new List<int>();
-
-                temp.Add(b); // Add Box as initial seed
-                for (var level = 0; level < BoxLevels; level++)
-                {
-                    // for all levels
-                    // doesn't work
-                    Boxids[level + 1] = new List<int>(); // initialize id array
-                    if (level != 0 || true)
-                    {
-                        var oldtemp = new List<Box>(temp); // dublicate list  to prevent enumeration failures
-                        temp.Clear(); // clear Temp
-                        foreach (var c in oldtemp) // add level-1 ids of surrounding level
-                            foreach (var t in this.Boxes[level]) // foreach Box in same layer
-                                if (!temp.Exists(x => x.id == t.id) && !oldtemp.Exists(x => x.id == t.id) && t.mass != 0
-                                ) // if boxes dont already exst an are Neighbors
-                                    if (t.PosId.IsNeighbour(c.PosId))
-                                    {
-                                        if (!c.Neighbours.Contains(t))
-                                            c.Neighbours.Add(t);
-                                        Boxids[level].AddRange(t.ids); // add ids of surrounding Boxes
-                                        temp.Add(t); // add box to current layer selected
-                                    }
-                    }
-
-                    // propably working
-                    foreach (var t in temp)
-                    {
-                        // add level-1 ids to completet level+1 of existing
-                        var pos = (t.PosId / 2).Floor();
-                        var Upper = this.Boxes[level + 1][(int)pos.vec[0], (int)pos.vec[1], (int)pos.vec[2]];
-                        Boxids[level + 1].AddRange(
-                            Upper.ids.Where(x => !temp.Exists(y => y.id == x) && !Boxids[level + 1].Contains(x)));
-
-                        // if (!UpperTemp.Exists(x=>x.id==Upper.id))
-                        UpperTemp.Add(Upper);
-                    }
-
-                    temp.Clear();
-                    temp.AddRange(UpperTemp);
-                    UpperTemp.Clear();
-                }
-
-                var topLevelCalcIds = new List<int>();
-
-                for (int i = 1; i < Boxes.Length; i++)
-                {
-                    topLevelCalcIds.AddRange(new List<int>(Boxids[i]));
-                }
-
-                b.Calcids = topLevelCalcIds;
-                if (b.root)
-                {
-                    foreach (int id in b.ids)
-                    {
-                        this.Instructions[id] = new List<int>();
-                        foreach (var list in Boxids)
-                            this.Instructions[id].AddRange(list.Where(x => x != id && x != b.id && MassLayer[x].mass != 0));
-                        Instructions[id].Sort();
-                        // Instructions[id].RemoveAll(x=>x==b.id);
-                    }
-                }
+                this.Instructions[s.id] = GetInstruction(s.pos, s.id, this.Boxes.Last());
             }
+
         }
 
-        private void RefreshInstruction()
+        private List<int> GetInstruction(Vector sPos,int sid, Box box)
         {
-
-            Console.WriteLine("Refresh Instructions");
-
-            foreach (List<int> i in Instructions)
-                i.Clear();
-
-            foreach (Box b in Boxes[0])
+            switch (box.ids.Count)
             {
-                if (b.ids.Count == 0)
-                {
-                    continue;
-                }
-                foreach (int id in b.ids)
-                {
-                    var temp = new List<int>();
-
-                    temp.AddRange(b.ids);
-
-                    foreach (var n in b.Neighbours)
+                case 0:
+                    return new List<int>();
+                    break;
+                case 1:
+                    if(box.ids.Contains(sid))
+                        return new List<int>();
+                    else 
+                        return new List<int>() { box.id };
+                    break;
+                default:
+                    var D = (sPos - (box.pos + (box.Dimension / 2))).distance2();
+                    if (D > 1 && !box.ids.Contains(sid))
                     {
-                        foreach (var ids in n.ids)
-                            if(ids!=b.id)
-                                temp.Add(ids); //(n.Neighbours.Select(x=>x.ids));
+                        if (box.size * box.size / D < 0.6)
+                        {
+                            return new List<int>() { box.id };
+                        }
+                        else
+                        {
+                            var temp = new List<int>();
+                            foreach (int id in box.ids)
+                            {
+                                temp.AddRange(GetInstruction(sPos, sid, this.Boxes.First(x => x.id == id)));
+                            }
+                            return temp;
+                        }
                     }
-
-                    temp.AddRange(b.Calcids);
-
-                    Instructions[id].AddRange(temp.Except(new int[] { id,b.id }).Where(x=>MassLayer[x].mass!=0));
-                }
+                    else return new List<int>();
             }
         }
 
-        private void RefreshBoxes()
-        {
-            Console.WriteLine("Refresh Boxes");
-            this.MassLayer.Clear();
-            this.MassLayer.AddRange(this.Stars);
-            var halfcount = (int)Math.Pow(2, BoxLevels);
-            Vector temp;
-
-            foreach (var b in Boxes[0])
-            {
-                b.ids.Clear();
-            }
-
-            foreach (var s in this.Stars)
-            {
-                temp = (s.pos / this.BoxSize).Floor() + halfcount / 2;
-                this.Boxes[0][temp.vec[0] < 0 ? 0 : temp.vec[0] > halfcount - 1 ? halfcount - 1 : (int)temp.vec[0],
-                    temp.vec[1] < 0 ? 0 : temp.vec[1] > halfcount - 1 ? halfcount - 1 : (int)temp.vec[1],
-                    temp.vec[2] < 0 ? 0 : temp.vec[2] > halfcount - 1 ? halfcount - 1 : (int)temp.vec[2]].ids.Add(s.id);
-            }
-
-            for (var j = 0; j < this.Boxes.Length; j++)
-                foreach (var b in this.Boxes[j])
-                {
-                    b.refresh(MassLayer);
-                    b.Calc();
-                    this.MassLayer.Add(b);
-                }
-
-            /*
-                        List<IMassive> temp = new List<IMassive>();
-                        int i = 0;
-                        //MassLayer.Clear();
-                        //MassLayer.AddRange(Stars);
-                        
-                        for (int x = 0; x < halfcount; x++)
-                            for (int y = 0; y < halfcount; y++)
-                                for (int z = 0; z < halfcount; z++)
-                                {
-                                    Box b = Boxes[0][x,y,z];
-                                    var boxpos = b.PosId;
-                                    
-                                    var ids =
-                                        Stars.Where(s => ((x == 0 ? true : s.pos.vec[0] > boxpos.vec[0]) && (x == halfcount - 1 ? true : s.pos.vec[0] <= boxpos.vec[0] + BoxSize))
-                                         && ((y == 0 ? true : s.pos.vec[1] > boxpos.vec[1]) && (y == halfcount - 1 ? true : s.pos.vec[1] <= boxpos.vec[1] + BoxSize)) && (!s.dead)
-                                         && ((z == 0 ? true : s.pos.vec[2] > boxpos.vec[2]) && (z == halfcount - 1 ? true : s.pos.vec[2] <= boxpos.vec[2] + BoxSize))).Select(p => p.id).ToList();
-                                    
-                                    b.refresh(ref MassLayer, ids);
-                                    //MassLayer.Add(b);
-                                }
-                        /*for (int j = 1; j < Boxes.Length; j++)
-                            MassLayer.AddRange(Boxes[j]);*/
-            this.MassLayer.OrderBy(x => x.id);
-
-            if(Instructions.Contains(null))
-                GenerateInstructions();
-            else
-                RefreshInstruction();
-        }
 
         private void RK4(int step, int cstart, int end)
         {

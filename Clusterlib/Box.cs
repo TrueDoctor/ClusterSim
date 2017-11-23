@@ -4,8 +4,8 @@ namespace ClusterSim.ClusterLib
 {
     class Box : IMassive
     {
-        Vector Position, Dimension, AvgPos;
-        public Vector PosId;
+        Vector Position,  AvgPos;
+        public Vector PosId, Dimension;
         List<IMassive> objects = new List<IMassive>();
         public List<int> Calcids;
         public List<Box> Neighbours { get; set; }= new List<Box>();
@@ -14,6 +14,7 @@ namespace ClusterSim.ClusterLib
         public bool dead { get; set; } = false;
         public bool root;
         public double mass { get; set; }
+        public double size { get; set; }
         public Vector pos
         {
             get => AvgPos;
@@ -30,8 +31,9 @@ namespace ClusterSim.ClusterLib
             this.PosId = PosId;
             AvgPos = Dimension = new Vector();
             Dimension.init(Dim);
+            this.size = Dim;
             this.ids = ids;
-            pos.init();
+            //pos.init();
             Calc();
             this.root = root;
         }

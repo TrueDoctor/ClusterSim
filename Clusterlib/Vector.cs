@@ -52,6 +52,11 @@ namespace ClusterSim.ClusterLib
                 this.vec[n] = vec.vec[n + i * 3];
         }
 
+        public static Vector Abs(Vector a)
+        {
+            return new Vector(a.vec.Select(x => Math.Abs(x)).ToArray());
+        }
+
         public static Vector operator +(Vector a, Vector b)//+ operator overload
         {
             return new Vector(new[] { a.vec[0] + b.vec[0], a.vec[1] + b.vec[1], a.vec[2] + b.vec[2] });
@@ -92,7 +97,7 @@ namespace ClusterSim.ClusterLib
 
         public static bool operator ==(Vector a, Vector b)
         {
-            return (a.vec[0] == b.vec[0] && a.vec[1] == b.vec[1] && a.vec[2] == b.vec[2]) ? true : false;
+            return (Math.Abs(a.vec[0] - b.vec[0]) < 0.000000001 && Math.Abs(a.vec[1] - b.vec[1]) < 0.000000001 && Math.Abs(a.vec[2] - b.vec[2]) < 0.000000001) ? true : false;
         }
 
         public static bool operator !=(Vector a, Vector b)
