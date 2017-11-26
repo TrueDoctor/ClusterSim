@@ -9,7 +9,8 @@ namespace ClusterSim.ClusterLib
 
         //const string conString = @"Data Source=tcp:ND-2,1433;Initial Catalog=Clustersim; MultipleActiveResultSets=true;";//initialize connection
         //const string conString = @"Server=ND-2;Database=Clustersim;Trusted_Connection=True;";
-        const string conString = @"Server=Dennis-HP;Database=Clustersim;Trusted_Connection=True;"; 
+        //const string conString = @"Data Source=tcp:Dennis-HP,1433;Initial Catalog=Clustersim;User Id=Papa;Password=mynona; MultipleActiveResultSets=true;";//initialize connection
+        const string conString = @"Server=Dennis-HP;Database=Clustersim;Trusted_Connection=True;User Id=Papa;Password=mynona;"; 
         //const string conString = @"Data Source=tcp:TARDIS\CLUSTERSIM,49172;Initial Catalog=Clustersim;User Id=Engine;Password=mynona; MultipleActiveResultSets=true;";//initialize connection
         //const string conString = @"Data Source=mssql1.gear.host;Initial Catalog=clustersim;User Id=clustersim;Password=Vq73wF?zo75?; MultipleActiveResultSets=true;";//initialize connection
 

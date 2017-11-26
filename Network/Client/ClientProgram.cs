@@ -59,7 +59,7 @@ namespace Client
             if (!Properties.Settings.Default.IP.Equals(String.Empty))
                 ip = Settings.Default.IP;
 
-             //ip = "192.168.2.42";
+             ip = "192.168.2.42";
             try
             {
                 clientSocket.Connect(ip, Settings.Default.Port);

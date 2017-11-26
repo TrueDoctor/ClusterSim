@@ -288,9 +288,9 @@ namespace ClusterSim.ClusterLib
                                          s.id);
                             var F = 5.0 / 48 * KA + 27.0 / 56 * KB + 125.0 / 336 * KC + 1.0 / 24 * KD;
 
-                            s.pos = s.pos + F.ToVector(0);
-                            s.vel = s.vel + F.ToVector(1);
-                            s.print();
+                            s.pos += F.ToVector(0);
+                            s.vel += F.ToVector(1);
+                            //s.print();
                         }
                         catch (DivideByZeroException)
                         {
@@ -367,8 +367,9 @@ namespace ClusterSim.ClusterLib
 
             //this.Boxes.OrderBy(x => x.id);
 
-            this.MassLayer.AddRange(this.Boxes.OrderBy(x=>x.id));
-            
+            this.Boxes = this.Boxes.OrderBy(x => x.id).ToList();
+            this.MassLayer.AddRange(this.Boxes);
+
             //this.MassLayer.OrderBy(x => x.id);
         }
 
@@ -414,44 +415,36 @@ namespace ClusterSim.ClusterLib
             this.Instructions = new List<int>[this.Stars.Count];
             foreach (Star s in this.Stars)
             {
-                this.Instructions[s.id] = GetInstruction(s.pos, s.id, this.Boxes.Last());
+                this.Instructions[s.id] = GetInstruction(s.pos, s.id, this.Boxes[0]);
             }
 
         }
 
-        private List<int> GetInstruction(Vector sPos,int sid, Box box)
+        private List<int> GetInstruction(Vector sPos, int sid, Box box)
         {
-            switch (box.ids.Count)
+            if (box.ids.Count == 0)
             {
-                case 0:
-                    return new List<int>();
-                    break;
-                case 1:
-                    if(box.ids.Contains(sid))
-                        return new List<int>();
-                    else 
-                        return new List<int>() { box.id };
-                    break;
-                default:
-                    var D = (sPos - (box.pos + (box.Dimension / 2))).distance2();
-                    if (D > 1 && !box.ids.Contains(sid))
-                    {
-                        if (box.size * box.size / D < 0.6)
-                        {
-                            return new List<int>() { box.id };
-                        }
-                        else
-                        {
-                            var temp = new List<int>();
-                            foreach (int id in box.ids)
-                            {
-                                temp.AddRange(GetInstruction(sPos, sid, this.Boxes.First(x => x.id == id)));
-                            }
-                            return temp;
-                        }
-                    }
-                    else return new List<int>();
+                return new List<int>();
             }
+            if (box.ids.Count == 1)
+                if (box.ids.Contains(sid) || box.mass == 0)
+                    return new List<int>();
+                else if (box.root)
+                    return new List<int>() { box.id };
+
+            if (box.size * box.size / (sPos - box.pos).distance2() < 0.6)
+            {
+                return new List<int>() { box.id };
+            }
+            var temp = new List<int>();
+            foreach (int id in box.ids)
+            {
+                if (this.Boxes[id - this.Stars.Count].mass != 0)
+                    temp.AddRange(GetInstruction(sPos, sid, this.Boxes[id - this.Stars.Count]));
+            }
+            return temp;
+
+
         }
 
 
@@ -489,7 +482,7 @@ namespace ClusterSim.ClusterLib
             }
 
             /*ready = false;//initialize bool
-            
+
                         foreach (Star s in Stars)//check for not yet computed stars
                             if (s.computed == false)
                                 break;//abort if not computed

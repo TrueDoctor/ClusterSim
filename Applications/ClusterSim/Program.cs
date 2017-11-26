@@ -71,15 +71,15 @@ namespace ClusterSim.Standalone
             Thread Key = new Thread(listen);
             Key.Start();
             StarCluster cluster = new StarCluster(rtable, wtable, last++, dt);     //instatiate Starcluster
-            for (int i = last*12; i <= n && !abort; Console.WriteLine(i++))//for steps
+            for (int i = last*120; (i <= n||true) && !abort; Console.WriteLine(i++))//for steps
             {
                 cluster.doStep(i, 0, cluster.Stars.Count - 1, Misc.Method.RK5);
                 broadcaster.SendToChannel("steps", "i" + i);//send "i"+step in channel steps
                 Console.WriteLine("\n" + i + "\n \n");
-                if (i % 12 == 0)
+                if (i % 120 == 0)
                     foreach (Star s in cluster.Stars)
                         if (!s.dead)
-                            while (SQL.addRow(s, i/12, wtable) == false) ;//do until succesfull
+                            while (SQL.addRow(s, i/120, wtable) == false) ;//do until succesfull
             }
 
             Key.Abort();

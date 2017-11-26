@@ -23,9 +23,9 @@
 
         private List<ClientHandler> clients = new List<ClientHandler>();
 
-        public string rtable { get; set; } = "e";
+        public string rtable { get; set; } = "lang";
 
-        public string wtable { get; set; } = "e";
+        public string wtable { get; set; } = "lang";
 
         public delegate void SendHandler(Server s, SendEventArgs e);
         
@@ -37,7 +37,7 @@
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.Title = "ClusterSim - Distribution Server";
 
-            int step = SQL.lastStep(rtable), errors = 0, dt = 100000, year = step;
+            int step = SQL.lastStep(rtable), errors = 0, dt = 1000000, year = step;
             double ovrper = 1;
 
             Console.WriteLine("Load Stars...");
@@ -175,7 +175,7 @@
                     step++;
                     Console.Beep();
 
-                    if (wtable.Length != 0 && Math.Ceiling((double)(step-1) *dt / 12)< Math.Ceiling((double)step * dt / 12)&&year++>-1)
+                    if (wtable.Length != 0 && Math.Ceiling((double)(step-1) *dt / 120)< Math.Ceiling((double)step * dt / 120)&&year++>-1)
                         foreach (Star s in Cluster.Stars)
                             if (!s.dead)
                                 while (SQL.addRow(s, year, wtable) == false) ;//do until succesfull
