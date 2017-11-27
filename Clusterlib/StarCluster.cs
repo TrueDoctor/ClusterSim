@@ -143,7 +143,8 @@ namespace ClusterSim.ClusterLib
         public Star[] doStep(int step, int min, int max, Misc.Method m)
         {
             this.CalcBoxes();
-            this.GenerateInstructions();
+            //this.GenerateInstructions();
+            this.Instructions = new List<int>[this.Stars.Count];
             this.starCount = this.Stars.Count;
 
             if (this.Stars == null) return null;
@@ -278,6 +279,8 @@ namespace ClusterSim.ClusterLib
                     if (!s.dead)
                         try
                         {
+                           GetInstruction(s.pos, s.id, this.Boxes[0],ref this.Instructions[s.id]);
+
                             var Star = new Vec6(this.OldStars[i].pos, this.OldStars[i].vel);
                             var KA = this.dt * this.f(Star, s.id);
                             var FF = this.dt * this.f(KA, s.id);
@@ -415,34 +418,38 @@ namespace ClusterSim.ClusterLib
             this.Instructions = new List<int>[this.Stars.Count];
             foreach (Star s in this.Stars)
             {
-                this.Instructions[s.id] = GetInstruction(s.pos, s.id, this.Boxes[0]);
+                //this.Instructions[s.id] = GetInstruction(s.pos, s.id, this.Boxes[0]);
             }
 
         }
 
-        private List<int> GetInstruction(Vector sPos, int sid, Box box)
+        private void GetInstruction(Vector sPos, int sid, Box box, ref List<int> ids) 
         {
             if (box.ids.Count == 0)
             {
-                return new List<int>();
+                return;
             }
             if (box.ids.Count == 1)
                 if (box.ids.Contains(sid) || box.mass == 0)
-                    return new List<int>();
+                    return;
                 else if (box.root)
-                    return new List<int>() { box.id };
+                {
+                    ids.Add(box.id);
+                    return;
+                }
+                    
 
-            if (box.size * box.size / (sPos - box.pos).distance2() < 0.6)
+            if (box.size * box.size / (sPos - box.pos).distance2() < 0.4)
             {
-                return new List<int>() { box.id };
+                ids.Add(box.id);
+                return;
             }
-            var temp = new List<int>();
             foreach (int id in box.ids)
             {
                 if (this.Boxes[id - this.Stars.Count].mass != 0)
-                    temp.AddRange(GetInstruction(sPos, sid, this.Boxes[id - this.Stars.Count]));
+                    GetInstruction(sPos, sid, this.Boxes[id - this.Stars.Count],ref ids);
             }
-            return temp;
+            return;
 
 
         }
@@ -465,6 +472,9 @@ namespace ClusterSim.ClusterLib
                 if (s.computed == false)
                 {
                     s.computed = true;
+
+                    GetInstruction(s.pos, s.id, this.Boxes[0],ref this.Instructions[s.id]);
+
                     var Star = new Vec6(this.OldStars[i].pos, this.OldStars[i].vel); // convert star to vec6
                     var KA = this.f(Star, s.id); // calculate help values
                     var KB = this.f(Star + this.dt / 2 * KA, s.id);
