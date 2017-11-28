@@ -377,12 +377,13 @@ namespace ClusterSim.ClusterLib
             //this.MassLayer.OrderBy(x => x.id);
         }
 
-        private int AddBox(ref List<Box> boxes, ref int boxId, Vector pos, double size, List<IMassive> stars)
+        private int AddBox(ref List<Box> boxes, ref int boxId, Vector pos, double size, ICollection<IMassive> stars)
         {
             if (stars.Count == 1)
             {
-                boxes.Add(new Box(boxId++, pos / size, pos, size, stars, new List<int>() { stars[0].id }, true));
-                return boxId - 1; //warning, this might not work when multithreated
+                int tempID = boxId++;
+                boxes.Add(new Box(tempID, pos / size, pos, size, stars, new List<int>() { stars.First().id }, true));
+                return tempID; 
             }
             else
             {
@@ -397,7 +398,7 @@ namespace ClusterSim.ClusterLib
                         for (int k = 0; k < 2 && y.Count != 0; k++)
                         {
                             if (z.Count != 0)
-                                tbox.ids.Add(this.AddBox(ref boxes, ref boxId, pos + size / 2 * new Vector(i, j, k), size / 2, z.ToList()));
+                                tbox.ids.Add(this.AddBox(ref boxes, ref boxId, pos + size / 2 * new Vector(i, j, k), size / 2, z));
                             z = y.Except(z).ToList();
                         }
                         y = x.Except(y).ToList();
