@@ -2,8 +2,6 @@
 
 namespace ClusterSim.ClusterLib
 {
-    using System.Linq;
-
     class Box : IMassive
     {
         Vector Position,  AvgPos;
@@ -24,11 +22,11 @@ namespace ClusterSim.ClusterLib
         }
 
 
-        public Box(int id,Vector Pos,Vector PosId, double Dim, IEnumerable<IMassive> Objects, List<int> ids,bool root = false)
+        public Box(int id,Vector Pos,Vector PosId, double Dim, List<IMassive> Objects, List<int> ids,bool root = false)
         {
             this.id = id;
             foreach (int i in ids)
-                objects.Add(Objects.First(x=>x.id == i));
+                objects.Add(Objects.Find(x=>x.id == i));
             Position = Pos;
             this.PosId = PosId;
             AvgPos = Dimension = new Vector();
