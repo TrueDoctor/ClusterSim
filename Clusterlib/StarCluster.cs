@@ -377,9 +377,9 @@ namespace ClusterSim.ClusterLib
             //this.MassLayer.OrderBy(x => x.id);
         }
 
-        private int AddBox(ref List<Box> boxes, ref int boxId, Vector pos, double size, ICollection<IMassive> stars)
+        private int AddBox(ref List<Box> boxes, ref int boxId, Vector pos, double size, IEnumerable<IMassive> stars)
         {
-            if (stars.Count == 1)
+            if (stars.Count() == 1)
             {
                 int tempID = boxId++;
                 boxes.Add(new Box(tempID, pos / size, pos, size, stars, new List<int>() { stars.First().id }, true));
@@ -388,16 +388,16 @@ namespace ClusterSim.ClusterLib
             else
             {
                 var tbox = new Box(boxId++, pos, pos / size, size, new List<IMassive>(), new List<int>(), false);
-                var x = stars.Where(a => a.pos.vec[0] < pos.vec[0] + size / 2).ToList();
+                var x = stars.Where(a => a.pos.vec[0] < pos.vec[0] + size / 2);
                 for (int i = 0; i < 2; i++)
                 {
-                    var y = x.Where(a => a.pos.vec[1] < pos.vec[1] + size / 2).ToList();
-                    for (int j = 0; j < 2 && x.Count != 0; j++)
+                    var y = x.Where(a => a.pos.vec[1] < pos.vec[1] + size / 2);
+                    for (int j = 0; j < 2 && x.Count() != 0; j++)
                     {
-                        var z = y.Where(a => a.pos.vec[2] < pos.vec[2] + size / 2).ToList();
-                        for (int k = 0; k < 2 && y.Count != 0; k++)
+                        var z = y.Where(a => a.pos.vec[2] < pos.vec[2] + size / 2);
+                        for (int k = 0; k < 2 && y.Count() != 0; k++)
                         {
-                            if (z.Count != 0)
+                            if (z.Count() != 0)
                                 tbox.ids.Add(this.AddBox(ref boxes, ref boxId, pos + size / 2 * new Vector(i, j, k), size / 2, z));
                             z = y.Except(z).ToList();
                         }

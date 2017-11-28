@@ -24,7 +24,7 @@ namespace ClusterSim.ClusterLib
         }
 
 
-        public Box(int id,Vector Pos,Vector PosId, double Dim, ICollection<IMassive> Objects, List<int> ids,bool root = false)
+        public Box(int id,Vector Pos,Vector PosId, double Dim, IEnumerable<IMassive> Objects, List<int> ids,bool root = false)
         {
             this.id = id;
             foreach (int i in ids)
