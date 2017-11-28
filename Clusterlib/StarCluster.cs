@@ -279,6 +279,7 @@ namespace ClusterSim.ClusterLib
                     if (!s.dead)
                         try
                         {
+                            Instructions[s.id] = new List<int>();
                            GetInstruction(s.pos, s.id, this.Boxes[0],ref this.Instructions[s.id]);
 
                             var Star = new Vec6(this.OldStars[i].pos, this.OldStars[i].vel);

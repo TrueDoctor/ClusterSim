@@ -77,9 +77,10 @@ namespace ClusterSim.Standalone
                 broadcaster.SendToChannel("steps", "i" + i);//send "i"+step in channel steps
                 Console.WriteLine("\n" + i + "\n \n");
                 if (i % 120 == 0)
-                    foreach (Star s in cluster.Stars)
-                        if (!s.dead)
-                            while (SQL.addRow(s, i/120, wtable) == false) ;//do until succesfull
+                    SQL.addRows(cluster.Stars, i/120, wtable);
+                    //foreach (Star s in cluster.Stars)
+                      //  if (!s.dead)
+                        //    while (SQL.addRow(s, i/120, wtable) == false) ;//do until succesfull
             }
 
             Key.Abort();
