@@ -405,8 +405,12 @@ namespace ClusterSim.ClusterLib
                     }
                     x = stars.Except(x).ToList();
                 }
-                tbox.refresh(boxes.Select(v => v as IMassive).ToList());
-                tbox.Calc();
+                var temp = (from box in boxes
+                            join id in tbox.ids on box.id equals id
+                            select box as IMassive);
+                tbox.objects = temp.ToList();
+                 //boxes.Join(tbox.ids,v=>v.id,g=>g,(v,g)=>v);
+                 tbox.Calc();
                 boxes.Add(tbox);
                 return tbox.id;
             }
