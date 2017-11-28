@@ -389,13 +389,13 @@ namespace ClusterSim.ClusterLib
                 return tempId; // warning, this might not work when multithreated
             }
             var tbox = new Box(this.boxId++, pos, pos / size, size, new List<IMassive>(), new List<int>(), false);
-            var x = stars.Where(a => a.pos.vec[0] < pos.vec[0] + size / 2).ToList();
+            var x = stars.Where(a => a.pos.vec[0] < pos.vec[0] + size / 2);
             for (int i = 0; i < 2; i++)
             {
-                var y = x.Where(a => a.pos.vec[1] < pos.vec[1] + size / 2).ToList();
+                var y = x.Where(a => a.pos.vec[1] < pos.vec[1] + size / 2);
                 for (int j = 0; j < 2 && x.Count() != 0; j++)
                 {
-                    var z = y.Where(a => a.pos.vec[2] < pos.vec[2] + size / 2).ToList();
+                    var z = y.Where(a => a.pos.vec[2] < pos.vec[2] + size / 2);
                     for (int k = 0; k < 2 && y.Count() != 0; k++)
                     {
                         if (z.Count() != 0)
