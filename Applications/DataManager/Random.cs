@@ -53,54 +53,56 @@ namespace ClusterSim.DataManager
             BarAns.Visible = true;
             BarAns.Text = "Generiere Zufallsparameter";
 
-            
+
             if (Kroupa.Checked)
             {
                 System.Random randm = new System.Random();
-                for (int i =0; i<(int)StarCount.Value;i++)
+                for (int i = 0; i < (int)StarCount.Value; i++)
                 {
                     double r = randm.NextDouble();
-                    
-                    if(r < 0.371572)
-                        masses.Add((double)Math.Pow(0.352183*r+0.039811,10/7.0));
 
-                    else if(r < 0.849794)
-                        masses.Add((double)Math.Pow(2.834447  - 1.886697*r, -10 / 3.0));
-                            
+                    if (r < 0.371572)
+                        masses.Add((double)Math.Pow(0.352183 * r + 0.039811, 10 / 7.0));
+
+                    else if (r < 0.849794)
+                        masses.Add((double)Math.Pow(2.834447 - 1.886697 * r, -10 / 3.0));
+
                     else
-                        masses.Add((double)Math.Pow(16.357585  - 16.351370*r, -10 / 13.0));
-                    
+                        masses.Add((double)Math.Pow(16.357585 - 16.351370 * r, -10 / 13.0));
+
                 }
             }
 
 
 
-
+            var Stars = new List<Star>();
 
             for (int i = 0; i < (int)StarCount.Value; i++)
             {
                 Application.DoEvents();
-                
-                if(Kroupa.Checked)
-                while (SQL.addRow(new Star(new Vector().random(Math.Pow(10, PosBar.Value)), new Vector().random(Math.Pow(10, VelBar.Value)),
-                    masses[i], i), 0, table) == false) ;
+
+                if (Kroupa.Checked)
+                    Stars.Add(
+                        new Star(
+                            new Vector().random(Math.Pow(10, PosBar.Value)),
+                            new Vector().random(Math.Pow(10, VelBar.Value)),
+                            masses[i], i));
+
                 else
-                    while (SQL.addRow(
+                    Stars.Add(
                                Misc.randomize(
                                    Math.Pow(10, PosBar.Value), /*Math.Pow(10, VelBar.Value)*/
                                    0,
                                    Math.Pow(10, MassVBar.Value),
                                    Math.Pow(10, MassMBar.Value),
-                                   i),
-                               0,
-                               table) == false) ; //add new row of stars
-                //while (SQL.addRow(Misc.randomize(Convert.ToDouble(textBox1.Text), Convert.ToDouble(textBox2.Text),
-                    //Convert.ToDouble(textBox3.Text), Convert.ToDouble(textBox4.Text), i), 0, table) == false) ;//add new row of stars
+                                   i)); //add new row of stars
 
                 progressBar.Increment(1);
             }
 
-            StarCluster rand = new StarCluster(table,table,0,1);
+            SQL.addRows(Stars, 0, table);
+
+            StarCluster rand = new StarCluster(table, table, 0, 1);
 
             progressBar.Value = 0;
             BarAns.Text = "Berechne Initialgeschwindigkeiten";
@@ -113,9 +115,8 @@ namespace ClusterSim.DataManager
             }
             SQL.dropTable(table);
             SQL.addTable(table);//clear table 
-            foreach (Star s in rand.Stars)
-                SQL.addRow(s,0,table);//export data
-            
+            SQL.addRows(rand.Stars, 0, table);//export data
+
             Close();//close form
         }
 
@@ -141,13 +142,13 @@ namespace ClusterSim.DataManager
         {
             double mass;
             double n = (int)StarCount.Value;
-            double r3 = Math.Pow(10, PosBar.Value*3);
-            if(Kroupa.Checked)
+            double r3 = Math.Pow(10, PosBar.Value * 3);
+            if (Kroupa.Checked)
                 mass = (double)StarCount.Value * 0.36;
             else
                 mass = (double)StarCount.Value * Math.Pow(10, MassMBar.Value * 3);
-            double relax = 800000 * Math.Sqrt((n * r3) / mass) * (1 / (Math.Log(n)-1));
-            Relaxation.Text=String.Format("Relaxationszeit: {0} Jahre",Math.Round(relax,1));
+            double relax = 800000 * Math.Sqrt((n * r3) / mass) * (1 / (Math.Log(n) - 1));
+            Relaxation.Text = String.Format("Relaxationszeit: {0} Jahre", Math.Round(relax, 1));
         }
     }
 }
