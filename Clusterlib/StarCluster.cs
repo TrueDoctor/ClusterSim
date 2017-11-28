@@ -8,7 +8,6 @@ namespace ClusterSim.ClusterLib
     using System.ComponentModel.Design.Serialization;
     using System.Linq;
     using System.Threading;
-    using System.Threading.Tasks;
 
     public class StarCluster
     {
@@ -37,8 +36,6 @@ namespace ClusterSim.ClusterLib
         private readonly string rtable; // table to read from
 
         private int starCount;
-
-        private int boxId;
 
         private int start; // starting step
 
@@ -282,8 +279,8 @@ namespace ClusterSim.ClusterLib
                     if (!s.dead)
                         try
                         {
-                            Instructions[s.id]= new List<int>();
-                            GetInstruction(s.pos, s.id, this.Boxes[0],ref this.Instructions[s.id]);
+                            Instructions[s.id] = new List<int>();
+                           GetInstruction(s.pos, s.id, this.Boxes[0],ref this.Instructions[s.id]);
 
                             var Star = new Vec6(this.OldStars[i].pos, this.OldStars[i].vel);
                             var KA = this.dt * this.f(Star, s.id);
@@ -360,7 +357,7 @@ namespace ClusterSim.ClusterLib
             return AccVec;
         }
 
-        private async void CalcBoxes()
+        private void CalcBoxes()
         {
             Console.WriteLine("Calc Boxes");
             this.BoxSize = (this.Stars.Max(x => x.pos.vec.Max()) - this.Stars.Min(x => x.pos.vec.Min()));
@@ -368,60 +365,52 @@ namespace ClusterSim.ClusterLib
             this.MassLayer.Clear();
             this.Boxes.Clear();
             foreach (var s in this.Stars) this.MassLayer.Add(s);
-            boxId = this.Stars.Count;
+            int id = this.Stars.Count;
 
-            Task.WaitAll(this.AddBox( new Vector().init(-this.BoxSize / 2), this.BoxSize, new List<IMassive>(this.Stars)));
+            this.AddBox(ref this.Boxes, ref id, new Vector().init(-this.BoxSize / 2), this.BoxSize, new List<IMassive>(this.Stars));
 
+            //this.Boxes.OrderBy(x => x.id);
 
-            // this.Boxes.OrderBy(x => x.id);
             this.Boxes = this.Boxes.OrderBy(x => x.id).ToList();
             this.MassLayer.AddRange(this.Boxes);
 
-            // this.MassLayer.OrderBy(x => x.id);
+            //this.MassLayer.OrderBy(x => x.id);
         }
 
-        private async Task<int> AddBox( Vector pos, double size, IEnumerable<IMassive> stars)
+        private int AddBox(ref List<Box> boxes, ref int boxId, Vector pos, double size, List<IMassive> stars)
         {
-            if (stars.Count() == 1)
+            if (stars.Count == 1)
             {
-                int tempId = this.boxId++;
-                Boxes.Add(new Box(tempId, pos / size, pos, size, stars, new List<int>() { stars.First().id }, true));
-                return tempId; // warning, this might not work when multithreated
+                boxes.Add(new Box(boxId++, pos / size, pos, size, stars, new List<int>() { stars[0].id }, true));
+                return boxId - 1; //warning, this might not work when multithreated
             }
-            var tbox = new Box(this.boxId++, pos, pos / size, size, new List<IMassive>(), new List<int>(), false);
-            var x = stars.Where(a => a.pos.vec[0] < pos.vec[0] + size / 2).ToList();
-            for (int i = 0; i < 2; i++)
+            else
             {
-                var y = x.Where(a => a.pos.vec[1] < pos.vec[1] + size / 2).ToList();
-                for (int j = 0; j < 2 && x.Count() != 0; j++)
+                var tbox = new Box(boxId++, pos, pos / size, size, new List<IMassive>(), new List<int>(), false);
+                var x = stars.Where(a => a.pos.vec[0] < pos.vec[0] + size / 2).ToList();
+                for (int i = 0; i < 2; i++)
                 {
-                    var z = y.Where(a => a.pos.vec[2] < pos.vec[2] + size / 2).ToList();
-                    for (int k = 0; k < 2 && y.Count() != 0; k++)
+                    var y = x.Where(a => a.pos.vec[1] < pos.vec[1] + size / 2).ToList();
+                    for (int j = 0; j < 2 && x.Count != 0; j++)
                     {
-                        if (z.Count() != 0)
-                            if (z.Count() > this.Stars.Count / (Environment.ProcessorCount * 2))
-                            {
-                                tbox.ids.Add(
-                                    await Task.Run(
-                                        () => this.AddBox(
-                                            pos + size / 2 * new Vector(i, j, k),
-                                            size / 2,
-                                            z)));
-                            }
-                            else
-                            {
-                                tbox.ids.Add(await this.AddBox( pos + size / 2 * new Vector(i, j, k), size / 2, z));
-                            }
-                        z = y.Except(z).ToList();
+                        var z = y.Where(a => a.pos.vec[2] < pos.vec[2] + size / 2).ToList();
+                        for (int k = 0; k < 2 && y.Count != 0; k++)
+                        {
+                            if (z.Count != 0)
+                                tbox.ids.Add(this.AddBox(ref boxes, ref boxId, pos + size / 2 * new Vector(i, j, k), size / 2, z.ToList()));
+                            z = y.Except(z).ToList();
+                        }
+                        y = x.Except(y).ToList();
                     }
-                    y = x.Except(y).ToList();
+                    x = stars.Except(x).ToList();
                 }
-                x = stars.Except(x).ToList();
+                tbox.refresh(boxes.Select(v => v as IMassive).ToList());
+                tbox.Calc();
+                boxes.Add(tbox);
+                return tbox.id;
             }
-            tbox.refresh(this.Boxes.Select(v => v as IMassive).ToList());
-            tbox.Calc();
-            this.Boxes.Add(tbox);
-            return tbox.id;
+
+
         }
 
         private void GenerateInstructions()
