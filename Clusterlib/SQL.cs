@@ -5,13 +5,15 @@ using System.Data;
 
 namespace ClusterSim.ClusterLib
 {
+    using System.Linq.Expressions;
+
     public class SQL
     {
 
         //const string conString = @"Data Source=tcp:ND-2,1433;Initial Catalog=Clustersim; MultipleActiveResultSets=true;";//initialize connection
         //const string conString = @"Server=ND-2;Database=Clustersim;Trusted_Connection=True;";
-        const string conString = @"Server=Dennis-HP;Database=Clustersim;Trusted_Connection=True;User Id=Papa;Password=mynona;";
-        //const string conString = @"Data Source=tcp:TARDIS\CLUSTERSIM,49172;Initial Catalog=Clustersim;User Id=Engine;Password=mynona; MultipleActiveResultSets=true;";//initialize connection
+        //const string conString = @"Server=Dennis-HP;Database=Clustersim;Trusted_Connection=True;User Id=Papa;Password=mynona;";
+        const string conString = @"Data Source=tcp:TARDIS\CLUSTERSIM,49172;Initial Catalog=Clustersim;User Id=Engine;Password=mynona; MultipleActiveResultSets=true;";//initialize connection
         //const string conString = @"Data Source=mssql1.gear.host;Initial Catalog=clustersim;User Id=clustersim;Password=Vq73wF?zo75?; MultipleActiveResultSets=true;";//initialize connection
 
 
@@ -53,10 +55,11 @@ namespace ClusterSim.ClusterLib
         {
             SqlConnection con = new SqlConnection(conString);//connect
             List<Star> Stars = new List<Star>();//initialize Array of Star objects
-            using (SqlCommand cmd = new SqlCommand("SELECT id,[pos x] AS posx,[pos y] AS posy,[pos z] AS posz,[vel x] AS velx,[vel y] AS vely,[vel z] AS velz, mass FROM " +
-                "[" + table + "] WHERE step = " + step + "", con))//Sql querry to select all lines where [step] = step 
+            using (SqlCommand cmd = new SqlCommand(
+                "SELECT id,[pos x] AS posx,[pos y] AS posy,[pos z] AS posz,[vel x] AS velx,[vel y] AS vely,[vel z] AS velz, mass FROM " +
+                "[" + table + "] WHERE step = " + step,
+                con)) //Sql querry to select all lines where [step] = step 
             {
-
                 try
                 {
                     con.Open();//open connection
@@ -94,37 +97,54 @@ namespace ClusterSim.ClusterLib
         {
             SqlConnection con = new SqlConnection(conString);//connect
 
-            using (SqlCommand cmd = con.CreateCommand())
+            try
             {
-                cmd.CommandText =
-                    $"CREATE TYPE [dbo].[StarTableType] AS TABLE([step][int] NULL,[id][int] NULL,[pos x][varchar](32) NULL,[pos y][varchar](32) NULL,"
-                    + $" [pos z][varchar](32) NULL,[vel x][varchar](32) NULL,[vel y][varchar](32) NULL,[vel z][varchar](32) NULL,[mass][varchar](32) NULL)";
-                cmd.CommandType = CommandType.Text;
+                using (SqlCommand cmd = con.CreateCommand())
+                {
+                    cmd.CommandText =
+                        $"CREATE TYPE [dbo].[StarTableType] AS TABLE([step][int] NULL,[id][int] NULL,[pos x][varchar](32) NULL,[pos y][varchar](32) NULL,"
+                        + $" [pos z][varchar](32) NULL,[vel x][varchar](32) NULL,[vel y][varchar](32) NULL,[vel z][varchar](32) NULL,[mass][varchar](32) NULL)";
+                    cmd.CommandType = CommandType.Text;
 
-                con.Open();
-                cmd.ExecuteNonQuery();
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                    con.Close();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Erstellen von Datentyp Stern fehlgeschlagen, vlt. Keine Verbindung zum Server möglich \n" + e.Message + "\n");
                 con.Close();
             }
         }
 
         private static void CrateProcedure(string table)
         {
-            SqlConnection con = new SqlConnection(conString);//connect
+            SqlConnection con = new SqlConnection(conString); //connect
 
-            using (SqlCommand cmd = con.CreateCommand())
+            try
             {
-                cmd.CommandText = $"CREATE PROCEDURE spInsert" + table +
-                                  " @StarTableType StarTableType READONLY " +
-                                  "AS " +
-                                  "BEGIN " +
-                                    "INSERT INTO " + table +
-                                    " SELECT* FROM @StarTableType " +
-                                  "END";
 
-                cmd.CommandType = CommandType.Text;
+                using (SqlCommand cmd = con.CreateCommand())
+                {
+                    cmd.CommandText = $"CREATE PROCEDURE spInsert" + table +
+                                      " @StarTableType StarTableType READONLY " +
+                                      "AS " +
+                                      "BEGIN " +
+                                      "INSERT INTO " + table +
+                                      " SELECT* FROM @StarTableType " +
+                                      "END";
 
-                con.Open();
-                cmd.ExecuteNonQuery();
+                    cmd.CommandType = CommandType.Text;
+
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                    con.Close();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Erstellen von Prozedur spInsert{table} fehlgeschlagen, vlt. Keine Verbindung zum Server möglich \n{ e.Message }\n");
                 con.Close();
             }
         }
@@ -135,21 +155,33 @@ namespace ClusterSim.ClusterLib
 
             SqlConnection con = new SqlConnection(conString);//connect
 
-            using (DataTable myTvpTable = CreateDataTable(stars, step))
-            using (SqlCommand cmd = new SqlCommand($"spInsert{table}", con))
+            try
             {
-                cmd.CommandType = CommandType.StoredProcedure;
-
-                SqlParameter paramTVP = new SqlParameter()
+                using (DataTable myTvpTable = CreateDataTable(stars, step))
+                using (SqlCommand cmd = new SqlCommand($"spInsert{table}", con))
                 {
-                    ParameterName = "@StarTableType",
-                    Value = myTvpTable
-                };
-                cmd.Parameters.Add(paramTVP);
-                
-                con.Open();
-                cmd.ExecuteNonQuery();
-                con.Close();
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    SqlParameter paramTVP = new SqlParameter()
+                                                {
+                                                    ParameterName = "@StarTableType",
+                                                    Value = myTvpTable
+                                                };
+                    cmd.Parameters.Add(paramTVP);
+
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                    con.Close();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Hinzufügen von Datenschritt zu { table } fehlgeschlagen \n{ e.Message}\n");
+
+                if (e.Message.Contains("Prozedur"))
+                    CrateProcedure(table);
+
+                return false;
             }
             ////con.Close();
             return true;//sucsessfull execution
@@ -182,7 +214,7 @@ namespace ClusterSim.ClusterLib
 
                 catch (Exception e)
                 {
-                    Console.WriteLine("Hinzufügen von Spalte zu" + table + "fehlgeschlagen \n" + e.Message + "\n");
+                    Console.WriteLine("Hinzufügen von Reihe zu" + table + "fehlgeschlagen \n" + e.Message + "\n");
                     con.Close();
                     return false;
                 }
@@ -220,7 +252,7 @@ namespace ClusterSim.ClusterLib
             SqlConnection con = new SqlConnection(conString);//connect
             String[] ban = { "[", "]", "'", ".", "+", "*", "-", "/", "°", "!", "\0", "\b", "\'", "\"", "\n", "\r", "\t", @"\", "%", "DROP", "Drop", "drop", "All", "DELETE", "Delete", "delete", ";", ",", " ", "-", ":" };//a table name cant be a Parameter, so all string exiting chars get replaced with ""
             foreach (string s in ban)
-                name = name.Replace(s, "");//replace
+                name = name.Replace(s, string.Empty);//replace
 
             CrateProcedure(name);
 
@@ -252,7 +284,7 @@ namespace ClusterSim.ClusterLib
         public static void dropTable(string table)
         {
             SqlConnection con = new SqlConnection(conString);//connect
-            using (SqlCommand cmd = new SqlCommand("DROP TABLE[dbo].[" + table + "] DROP PROC spInsert" + table , con))
+            using (SqlCommand cmd = new SqlCommand("DROP TABLE[dbo].[" + table + "] DROP PROC spInsert" + table, con))
             {
                 try
                 {

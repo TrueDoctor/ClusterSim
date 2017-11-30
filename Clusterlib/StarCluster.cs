@@ -4,8 +4,8 @@
 namespace ClusterSim.ClusterLib
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.ComponentModel.Design.Serialization;
     using System.Linq;
     using System.Threading;
 
@@ -147,6 +147,8 @@ namespace ClusterSim.ClusterLib
             this.Instructions = new List<int>[this.Stars.Count];
             this.starCount = this.Stars.Count;
 
+            Console.WriteLine("Calc Forces");
+
             if (this.Stars == null) return null;
             foreach (var s in this.Stars) // reset computation status
                 s.computed = false;
@@ -279,8 +281,9 @@ namespace ClusterSim.ClusterLib
                     if (!s.dead)
                         try
                         {
-                            Instructions[s.id] = new List<int>();
-                           GetInstruction(s.pos, s.id, this.Boxes[0],ref this.Instructions[s.id]);
+                            var tempInst = new ConcurrentStack<int>();
+                            GetInstruction(s.pos, s.id, this.Boxes[0], ref tempInst);
+                            Instructions[s.id] = tempInst.ToList();
 
                             var Star = new Vec6(this.OldStars[i].pos, this.OldStars[i].vel);
                             var KA = this.dt * this.f(Star, s.id);
@@ -429,7 +432,7 @@ namespace ClusterSim.ClusterLib
 
         }
 
-        private void GetInstruction(Vector sPos, int sid, Box box, ref List<int> ids) 
+        private void GetInstruction(Vector sPos, int sid, Box box, ref ConcurrentStack<int> ids) 
         {
             if (box.ids.Count == 0)
             {
@@ -440,14 +443,14 @@ namespace ClusterSim.ClusterLib
                     return;
                 else if (box.root)
                 {
-                    ids.Add(box.id);
+                    ids.Push(box.id);
                     return;
                 }
                     
 
             if (box.size * box.size / (sPos - box.pos).distance2() < 0.4)
             {
-                ids.Add(box.id);
+                ids.Push(box.id);
                 return;
             }
             foreach (int id in box.ids)
@@ -478,8 +481,10 @@ namespace ClusterSim.ClusterLib
                 if (s.computed == false)
                 {
                     s.computed = true;
-
-                    GetInstruction(s.pos, s.id, this.Boxes[0],ref this.Instructions[s.id]);
+                    
+                    var tempInst = new ConcurrentStack<int>();
+                    GetInstruction(s.pos, s.id, this.Boxes[0],ref tempInst);
+                    Instructions[s.id] = tempInst.ToList();
 
                     var Star = new Vec6(this.OldStars[i].pos, this.OldStars[i].vel); // convert star to vec6
                     var KA = this.f(Star, s.id); // calculate help values

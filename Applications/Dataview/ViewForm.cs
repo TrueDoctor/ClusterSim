@@ -8,19 +8,27 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using AviFile; //https://www.codeproject.com/Articles/7388/A-Simple-C-Wrapper-for-the-AviFile-Library
+using Accord;
+using Accord.IO;
 using ClusterSim.ClusterLib;
 
 
 namespace ClusterSim.Dataview
 {
+    using System.Threading;
+
+    using Accord.Video.FFMPEG;
+
+    using ClusterSim.ClusterLib.Analysis;
+
     public partial class ViewForm : Form
     {
-        string table =null;
+        string table = null;
         int step = 1;
         //List<List<Star>> Steps = new List<List<Star>>();
         List<Star> Stars = new List<ClusterLib.Star>();
         Bitmap Canvas;
-        int c=0;
+        int c = 0;
         //bool three = false;
         bool trace = false;//trace the star position
         double zoom = 10;
@@ -42,7 +50,7 @@ namespace ClusterSim.Dataview
             }
             DialogResult res;
             string name = "Tabellenname";
-            
+
             if (table == null)
             {
                 do
@@ -51,47 +59,49 @@ namespace ClusterSim.Dataview
                 table = name;//table = result
             }
             step = SQL.firstStep(table);//initialize step
-            
+
         }
 
         private void Tasterdruck(object sender, KeyEventArgs e)
         {
-            if (Box.Cursor!=Cursors.WaitCursor)
-            switch(e.KeyCode)
-            {
-                case Keys.Right: step++; import(step);
+            if (Box.Cursor != Cursors.WaitCursor)
+                switch (e.KeyCode)
+                {
+                    case Keys.Right:
+                        step++; import(step);
                         break;
 
-                case Keys.Left: step--; import(step);
+                    case Keys.Left:
+                        step--; import(step);
                         break;
 
-                case Keys.U:
+                    case Keys.U:
                         step += 10; import(step);
                         break;
 
-                case Keys.Z:
+                    case Keys.Z:
                         step -= 10; import(step);
                         break;
 
-                case Keys.Up:
-                        zoom*=2;
-                        Canvas = new Bitmap(Box.Width, Box.Height);
+                    case Keys.Up:
+                        zoom *= 2;
+                        Canvas = new Bitmap(Box.Width - this.Box.Width % 2, Box.Height - this.Box.Height % 2);
                         break;
 
-                 case Keys.Down:
-                        Canvas = new Bitmap(Box.Width, Box.Height);
-                        zoom /=2;
+                    case Keys.Down:
+                        Canvas = new Bitmap(Box.Width - this.Box.Width % 2, Box.Height - this.Box.Height % 2);
+                        zoom /= 2;
                         break;
-                 case Keys.Enter:
+                    case Keys.Enter:
                         string frames = "frames";
                         var res = ShowInputDialog(ref frames);//open input dialouge
-                        if (res==DialogResult.OK)
+                        if (res == DialogResult.OK)
                             export(Convert.ToInt32(frames));
-                        
+
                         break;
 
                     case Keys.T:
-                        trace= !trace;//switch trace state
+                        trace = !trace;//switch trace state
                         break;
 
                     case Keys.G:
@@ -100,28 +110,31 @@ namespace ClusterSim.Dataview
                             step = Convert.ToInt32(inputstep);
                         import(step);
                         break;
+                    case Keys.P:
+                        this.ShowPlot();
+                        break;
 
                     case Keys.S://speicherung eines Frames
                         SaveFileDialog saveFileDialog1 = new SaveFileDialog();//savefile dialouge
                         saveFileDialog1.InitialDirectory = @"C:\";
                         saveFileDialog1.Title = "Save Screenshot";
-                        saveFileDialog1.FileName = table +"s"+ step +"z"+ zoom +"x"+ Canvas.Width + "y" + Canvas.Height + ".jpg";
+                        saveFileDialog1.FileName = table + "s" + step + "z" + zoom + "x" + Canvas.Width + "y" + Canvas.Height + ".jpg";
                         saveFileDialog1.CheckPathExists = true;
                         saveFileDialog1.DefaultExt = "jpg";
                         saveFileDialog1.Filter = "Jpeg files (*.jpg)|*.jpg|Png files (*.png)|*.png|Bitmap files (*.bmp)|*.bmp|All files alle Bildformate unterstüzt (*.*)|*.*";
                         saveFileDialog1.FilterIndex = 2;
                         saveFileDialog1.RestoreDirectory = true;
 
-                        
-                        if (saveFileDialog1.ShowDialog() == DialogResult.OK && GetImageFormat(System.IO.Path.GetExtension(saveFileDialog1.FileName))!=null)
+
+                        if (saveFileDialog1.ShowDialog() == DialogResult.OK && GetImageFormat(System.IO.Path.GetExtension(saveFileDialog1.FileName)) != null)
                         {
                             string filepath = saveFileDialog1.FileName;
 
-                            System.Drawing.Imaging.ImageFormat format = GetImageFormat(System.IO.Path.GetExtension(filepath).Replace(".",""));
-                            if (format!=null) 
+                            System.Drawing.Imaging.ImageFormat format = GetImageFormat(System.IO.Path.GetExtension(filepath).Replace(".", ""));
+                            if (format != null)
                                 Canvas.Save(filepath, format);
                         }
-                            break;
+                        break;
 
 
                 }
@@ -141,7 +154,7 @@ namespace ClusterSim.Dataview
             }
             catch (Exception)
             {
-                MessageBox.Show("Bildformat"+ format.Replace(".", "")+" nicht unterstützt");
+                MessageBox.Show("Bildformat" + format.Replace(".", "") + " nicht unterstützt");
                 //throw;
             }
 
@@ -153,14 +166,14 @@ namespace ClusterSim.Dataview
             try
             {
                 //if (Misc.CountFiles(@"C:\Users\Dennis\Documents\Clustersim\")<=i&&i>=0);
-                
+
                 if (SQL.lastStep(table) >= i && i >= 0) //if in in porpper range
-                    Stars = SQL.readStars(table,i);//JsonConvert.DeserializeObject<List<Star>>(System.IO.File.ReadAllText(@"C:\Users\Dennis\Documents\Clustersim\file" + i + ".json"));
-                
-                
+                    Stars = SQL.readStars(table, i);//JsonConvert.DeserializeObject<List<Star>>(System.IO.File.ReadAllText(@"C:\Users\Dennis\Documents\Clustersim\file" + i + ".json"));
+
+
             }
             catch { }
-            
+
         }
 
         private bool draw()
@@ -170,30 +183,30 @@ namespace ClusterSim.Dataview
             Box.Cursor = Cursors.WaitCursor;
             //import(step);
             if (trace == true)//if trace = false reset bitmap
-                Canvas = new Bitmap(Canvas, Box.Width, Box.Height);
+                Canvas = new Bitmap(Canvas, Box.Width - this.Box.Width % 2, Box.Height - this.Box.Height % 2);
             else
-                Canvas = new Bitmap(Box.Width, Box.Height);
-            
-            
+                Canvas = new Bitmap(Box.Width - this.Box.Width % 2, Box.Height - this.Box.Height % 2);
+
+
             if (Stars != null)
-                foreach (Star s in Stars) 
+                foreach (Star s in Stars)
                 {
-                    Point p;
+                    System.Drawing.Point p;
                     /*if (three == true)
                         p = mapAngle(s.pos.polar());      //Color new = (Color)ColorConverter.ConnvertFormString("#FFFFF");
-                    else*/                
-                        p = MapKoord(s.pos);//translate koordinates
+                    else*/
+                    p = MapKoord(s.pos);//translate koordinates
 
-                    if (p != new Point(-1, -1))//if point in range
+                    if (p != new System.Drawing.Point(-1, -1))//if point in range
                         Canvas.SetPixel(p.X, p.Y, Color.White);//draw point
                 }
             Box.Image = Canvas;
             Box.Refresh();
             Box.Cursor = Cursors.Cross;
-            if (Stars!=null)
+            if (Stars != null)
                 if (Stars.Count <= 10000)
                     c = SQL.lastStep(table);
-            Text = String.Format("{0}   Schritt: {1} von {2}",table,step, c);//change caption
+            Text = String.Format("{0}   Schritt: {1} von {2}", table, step, c);//change caption
 
             if (Stars != null)
                 return true;
@@ -201,6 +214,34 @@ namespace ClusterSim.Dataview
                 return false;
 
             //Canvas.Save(@"C:\Users\Dennis\Documents\Clustersim\Pictures\file" + step + zoom+Canvas.Width+"x"+Canvas.Height + ".jpg",System.Drawing.Imaging.ImageFormat.Png);
+        }
+
+        private void ShowPlot()
+        {
+            var last = SQL.lastStep(table);
+
+            GnuPlot.Set(
+                "xrange [-100000000:100000000]",
+                "yrange [-100000000:100000000]",
+                "zrange [-50000000:50000000]",
+                "cbrange[0:255]");//"palette mode RGB");
+
+            double min = Math.Log(Stars.Min(x => x.mass));
+            double max = Math.Log(Stars.Max(x => x.mass));
+            double div = max - min;
+
+            for (int i = 0; i < last; i++)
+            {
+                GnuPlot.SPlot(this.Stars.Select(x => x.pos.vec[0]).ToArray(),
+                    this.Stars.Select(x => x.pos.vec[1]).ToArray(),
+                    this.Stars.Select(x => x.pos.vec[2]).ToArray(),
+                    this.Stars.Select(x => 255 * ((Math.Log(x.mass) - min) / div)).ToArray(),
+                    "with points palette pt 7");
+                Thread.Sleep(30);
+
+                this.Stars = SQL.readStars(this.table, i);
+            }
+
         }
 
         /*private Point mapAngle(Vector a)//3d maping to ignore
@@ -216,16 +257,16 @@ namespace ClusterSim.Dataview
 
         }*/
 
-        private Point MapKoord(Vector a)
+        private System.Drawing.Point MapKoord(Vector a)
         {
-            Point output = new Point(-1, -1);
-            
-            output.X =(int) Math.Round(zoom * a.vec[0] + Box.Width / 2);
-            output.Y = (int)Math.Round(zoom * a.vec[1] + Box.Height / 2);
+            var output = new System.Drawing.Point(-1, -1);
 
-            if (output.X > 0 && output.X < Box.Width && output.Y > 0 && output.Y < Box.Height)//if output in range of Box
+            output.X = (int)Math.Round(zoom * a.vec[0] + this.Canvas.Width / 2);
+            output.Y = (int)Math.Round(zoom * a.vec[1] + this.Canvas.Height / 2);
+
+            if (output.X > 0 && output.X < this.Canvas.Width && output.Y > 0 && output.Y < this.Canvas.Height)//if output in range of Box
                 return output;
-            else return new Point(-1,-1);
+            else return new System.Drawing.Point(-1, -1);
 
 
         }
@@ -241,15 +282,15 @@ namespace ClusterSim.Dataview
             saveFileDialog1.FilterIndex = 2;
             saveFileDialog1.RestoreDirectory = true;
 
-            string path=null;
+            string path = null;
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 path = saveFileDialog1.FileName;
 
-                AviManager aviManager =
+                /*AviManager aviManager =
                     new AviManager(path, false);
                 VideoStream aviStream =
-                    aviManager.AddVideoStream(true, 30/*framerate*/, bitmap);
+                    aviManager.AddVideoStream(true, 30, bitmap);
 
                 try
                 {
@@ -266,7 +307,8 @@ namespace ClusterSim.Dataview
                 {
                     MessageBox.Show("Speichern fehlgeschlagen");
                 }
-                aviManager.Close();
+                aviManager.Close();/*/
+                FfMpeg(path, frames);
             }
             else
                 MessageBox.Show("Dateipfad fehlerhaft");
@@ -277,7 +319,38 @@ namespace ClusterSim.Dataview
             import(0);
             draw();
             c = SQL.lastStep(table);
-            
+
+        }
+
+        private void FfMpeg(string path, int frames)
+        {
+            var x = new Accord.Video.FFMPEG.VideoFileWriter();
+            x.Open(path, this.Canvas.Width, this.Canvas.Height, 24, VideoCodec.H264, 1600000);
+
+            try
+            {
+                for (int i = 1; i < frames; i++) //add frames
+                {
+                    import(++step);
+                    while (draw() == false) ;
+                    Bitmap frame = (Bitmap)new Bitmap(Canvas);
+                    try
+                    {
+                        x.WriteVideoFrame(frame);
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBox.Show(e.Message);
+                        step--;
+                    }
+                    frame.Dispose();
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Speichern fehlgeschlagen");
+            }
+            x.Close();
         }
 
         private static DialogResult ShowInputDialog(ref string input)//http://stackoverflow.com/questions/97097/what-is-the-c-sharp-version-of-vb-nets-inputdialog

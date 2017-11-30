@@ -45,8 +45,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Analysis\Statistics.cs" />
     <Compile Include="Box.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Analysis\GnuPlot.cs" />
     <Compile Include="IMassive.cs" />
     <Compile Include="Misc.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

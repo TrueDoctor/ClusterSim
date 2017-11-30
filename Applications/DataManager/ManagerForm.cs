@@ -261,16 +261,20 @@ namespace ClusterSim.DataManager
 
                     progressBar.Value = 0;
                     progressBar.Maximum = list.Count;
+                    double min = Math.Log(list.Min(x => x.mass));
+                    double max = Math.Log(list.Max(x => x.mass));
+
                     List<string> lines = new List<string>();
-                    List<int> colors = new List<int>();
+                    /*List<int> colors = new List<int>();
                     System.Random int255 = new System.Random();
                     for (int i = 0; i < list.Count; i++)
-                        colors.Add(65536 * int255.Next(255) + 256 * int255.Next(255) + int255.Next(255));
+                        colors.Add(65536 * int255.Next(255) + 256 * int255.Next(255) + int255.Next(255));*/
 
                     foreach (Star s in list)
                     {
-                        lines.Add(s.toTsv().Replace(',', '.') + "    " + colors[s.id]);
+                        lines.Add(s.toTsv().Replace(',', '.') + "    " + 255*((Math.Log(s.mass)-min)/(max-min)));
                         progressBar.Increment(1);
+                        Application.DoEvents();
                     }
 
                     System.IO.File.WriteAllLines(path, lines);
