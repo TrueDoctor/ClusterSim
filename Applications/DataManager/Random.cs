@@ -100,7 +100,11 @@ namespace ClusterSim.DataManager
                 progressBar.Increment(1);
             }
 
-            SQL.addRows(Stars, 0, table);
+            StarCluster cluster = new StarCluster(0);
+            cluster.Stars = Stars;
+            cluster.Stars.MoveCenter(cluster.Stars.GetCenter());
+
+            SQL.addRows(cluster.Stars, 0, table);
 
             StarCluster rand = new StarCluster(table, table, 0, 1);
 

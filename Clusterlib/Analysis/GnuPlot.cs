@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Drawing;
     using System.IO;
     using System.Threading;
 
@@ -11,6 +12,7 @@
         public static string PathToGnuplot = @"C:\Program Files\gnuplot\bin";
         private static Process ExtPro;
         private static StreamWriter GnupStWr;
+        private static StreamReader GnupStRe;
         private static List<StoredPlot> PlotBuffer;
         private static List<StoredPlot> SPlotBuffer;
         private static bool ReplotWithSplot;
@@ -19,13 +21,21 @@
 
         static GnuPlot()
         {
+            Start();
+        }
+
+        public static void Start()
+        {
             if (PathToGnuplot[PathToGnuplot.Length - 1].ToString() != @"\")
                 PathToGnuplot += @"\";
             ExtPro = new Process();
             ExtPro.StartInfo.FileName = PathToGnuplot + "gnuplot.exe";
             ExtPro.StartInfo.UseShellExecute = false;
             ExtPro.StartInfo.RedirectStandardInput = true;
+            ExtPro.StartInfo.RedirectStandardOutput = true;
+            ExtPro.StartInfo.LoadUserProfile = true;
             ExtPro.Start();
+            GnupStRe = ExtPro.StandardOutput;
             GnupStWr = ExtPro.StandardInput;
             PlotBuffer = new List<StoredPlot>();
             SPlotBuffer = new List<StoredPlot>();
@@ -85,7 +95,7 @@
             return true;
         }
 
-        public static bool SaveData(double[] X, double[] Y, double[] Z,double[] I, string filename)
+        public static bool SaveData(double[] X, double[] Y, double[] Z, double[] I, string filename)
         {
             StreamWriter dataStream = new StreamWriter(filename, false);
             WriteData(X, Y, Z, I, dataStream);
@@ -132,6 +142,28 @@
             PlotBuffer.Add(new StoredPlot(y, options));
             Plot(PlotBuffer);
         }
+
+        public static void HPlot(double[] y, string options = "")
+        {
+            PlotBuffer.Add(new StoredPlot(y, options));
+        }
+
+        public static void HPlot(double[] x, double[] y, string options = "")
+        {
+            PlotBuffer.Add(new StoredPlot(x, y, options));
+            
+        }
+
+        public static void Plot()
+        {
+            Plot(PlotBuffer);
+        }
+
+        public static void ClearBuffer()
+        {
+            PlotBuffer.Clear();
+        }
+
         public static void Plot(double[] x, double[] y, string options = "")
         {
             if (!Hold) PlotBuffer.Clear();
@@ -217,10 +249,10 @@
             SPlot(SPlotBuffer);
         }
 
-        public static void SPlot(double[] x, double[] y, double[] z, double[] i, string options = "")
+        public static void SPlot(double[] x, double[] y, double[] z, double[] i, string label, string options = "")
         {
             if (!Hold) SPlotBuffer.Clear();
-            SPlotBuffer.Add(new StoredPlot(x, y, z, i, options));
+            SPlotBuffer.Add(new StoredPlot(x, y, z, i, label, options));
             SPlot(SPlotBuffer);
         }
 
@@ -300,6 +332,7 @@
             }
             GnupStWr.WriteLine(plotstring);
 
+            var lines = new List<string>();
             for (int i = 0; i < storedPlots.Count; i++)
             {
                 var p = storedPlots[i];
@@ -310,8 +343,8 @@
                         GnupStWr.WriteLine("e");
                         break;
                     case PlotTypes.PlotY:
-                        WriteData(p.Y, GnupStWr, false);
-                        GnupStWr.WriteLine("e");
+                        WriteData(p.Y, ref lines, false);
+                        lines.Add("e");
                         break;
                     case PlotTypes.ColorMapXYZ:
                         WriteData(p.X, p.Y, p.Z, GnupStWr, false);
@@ -328,6 +361,17 @@
                         break;
 
                 }
+            }
+            foreach (var line in lines)
+            {
+                while(!GnupStWr.BaseStream.CanWrite) Thread.Sleep(100);
+                //GnupStWr.BaseStream.WriteTimeout= 1000;
+                foreach (char c in line)
+                {
+                    GnupStWr.BaseStream.WriteByte(Convert.ToByte(c));
+                }
+                GnupStWr.BaseStream.WriteByte(Convert.ToByte('\n'));
+                //GnupStWr.WriteLine(line);
             }
             GnupStWr.Flush();
         }
@@ -356,7 +400,7 @@
                         plotstring += (splot + @"""-"" " + defopts + p.Options);
                         break;
                     case PlotTypes.SplotXYZc:
-                        plotstring += (splot + @"""-"" using 1:2:3:4 " + defopts + p.Options);
+                        plotstring += (splot + @"""-""" + $" using 1:2:3:4 title '{p.LabelAdditive}'" + defopts + p.Options);
                         break;
                     case PlotTypes.SplotZZ:
                         plotstring += (splot + @"""-"" matrix " + defopts + p.Options);
@@ -393,12 +437,25 @@
             GnupStWr.Flush();
         }
 
+
+        public static Bitmap GetImage()
+        {
+            GnupStRe.BaseStream.Flush();
+            return Image.FromStream(GnupStRe.BaseStream, false, true) as Bitmap;
+        }
+
         public static void WriteData(double[] y, StreamWriter stream, bool flush = true)
         {
             for (int i = 0; i < y.Length; i++)
-                stream.WriteLine(y[i].ToString());
+                stream.WriteLine(y[i].ToString().Replace(",", "."));
 
             if (flush) stream.Flush();
+        }
+
+        public static void WriteData(double[] y, ref List<string> stream, bool flush = true)
+        {
+            for (int i = 0; i < y.Length; i++)
+                stream.Add(y[i].ToString().Replace(",", "."));
         }
 
         public static void WriteData(double[] x, double[] y, StreamWriter stream, bool flush = true)
@@ -660,6 +717,7 @@
         public string Options;
         public PlotTypes PlotType;
         public bool LabelContours;
+        public string LabelAdditive = string.Empty;
 
         public StoredPlot()
         {
@@ -713,7 +771,7 @@
             this.PlotType = plotType;
         }
 
-        public StoredPlot(double[] x, double[] y, double[] z,double[] i, string options = "", PlotTypes plotType = PlotTypes.SplotXYZc)
+        public StoredPlot(double[] x, double[] y, double[] z, double[] i, string label, string options = "", PlotTypes plotType = PlotTypes.SplotXYZc)
         {
             if (x.Length < 2)
                 this.YSize = 1;
@@ -727,6 +785,7 @@
             this.I = i;
             this.Options = options;
             this.PlotType = plotType;
+            this.LabelAdditive = label;
         }
 
         public StoredPlot(double[,] zz, string options = "", PlotTypes plotType = PlotTypes.SplotZZ)

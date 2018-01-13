@@ -15,6 +15,8 @@ using ClusterSim.ClusterLib;
 
 namespace ClusterSim.Dataview
 {
+    using System.IO;
+    using System.Net.NetworkInformation;
     using System.Threading;
 
     using Accord.Video.FFMPEG;
@@ -30,7 +32,7 @@ namespace ClusterSim.Dataview
         Bitmap Canvas;
         int c = 0;
         //bool three = false;
-        bool trace = false;//trace the star position
+        bool trace, towD, threeD = false;//trace the star position
         double zoom = 10;
         public ViewForm()
         {
@@ -104,6 +106,14 @@ namespace ClusterSim.Dataview
                         trace = !trace;//switch trace state
                         break;
 
+                    case Keys.D2:
+                        towD = !towD;
+                        break;
+
+                    case Keys.D3:
+                        threeD = !threeD;
+                        break;
+
                     case Keys.G:
                         string inputstep = "step";
                         if (ShowInputDialog(ref inputstep) == DialogResult.OK)
@@ -111,35 +121,40 @@ namespace ClusterSim.Dataview
                         import(step);
                         break;
                     case Keys.P:
-                        this.ShowPlot();
+                        this.ShowPlot(Parameters.Mass);
                         break;
 
                     case Keys.S://speicherung eines Frames
-                        SaveFileDialog saveFileDialog1 = new SaveFileDialog();//savefile dialouge
-                        saveFileDialog1.InitialDirectory = @"C:\";
-                        saveFileDialog1.Title = "Save Screenshot";
-                        saveFileDialog1.FileName = table + "s" + step + "z" + zoom + "x" + Canvas.Width + "y" + Canvas.Height + ".jpg";
-                        saveFileDialog1.CheckPathExists = true;
-                        saveFileDialog1.DefaultExt = "jpg";
-                        saveFileDialog1.Filter = "Jpeg files (*.jpg)|*.jpg|Png files (*.png)|*.png|Bitmap files (*.bmp)|*.bmp|All files alle Bildformate unterstüzt (*.*)|*.*";
-                        saveFileDialog1.FilterIndex = 2;
-                        saveFileDialog1.RestoreDirectory = true;
-
-
-                        if (saveFileDialog1.ShowDialog() == DialogResult.OK && GetImageFormat(System.IO.Path.GetExtension(saveFileDialog1.FileName)) != null)
-                        {
-                            string filepath = saveFileDialog1.FileName;
-
-                            System.Drawing.Imaging.ImageFormat format = GetImageFormat(System.IO.Path.GetExtension(filepath).Replace(".", ""));
-                            if (format != null)
-                                Canvas.Save(filepath, format);
-                        }
+                        SavePicture();
                         break;
 
 
                 }
             draw();
 
+        }
+
+        private void SavePicture()
+        {
+            SaveFileDialog saveFileDialog1 = new SaveFileDialog();//savefile dialouge
+            saveFileDialog1.InitialDirectory = @"C:\";
+            saveFileDialog1.Title = "Save Screenshot";
+            saveFileDialog1.FileName = table + "s" + step + "z" + zoom + "x" + Canvas.Width + "y" + Canvas.Height + ".jpg";
+            saveFileDialog1.CheckPathExists = true;
+            saveFileDialog1.DefaultExt = "jpg";
+            saveFileDialog1.Filter = "Jpeg files (*.jpg)|*.jpg|Png files (*.png)|*.png|Bitmap files (*.bmp)|*.bmp|All files alle Bildformate unterstüzt (*.*)|*.*";
+            saveFileDialog1.FilterIndex = 2;
+            saveFileDialog1.RestoreDirectory = true;
+
+
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK && GetImageFormat(System.IO.Path.GetExtension(saveFileDialog1.FileName)) != null)
+            {
+                string filepath = saveFileDialog1.FileName;
+
+                System.Drawing.Imaging.ImageFormat format = GetImageFormat(System.IO.Path.GetExtension(filepath).Replace(".", ""));
+                if (format != null)
+                    Canvas.Save(filepath, format);
+            }
         }
 
         private static System.Drawing.Imaging.ImageFormat GetImageFormat(string format)
@@ -208,6 +223,16 @@ namespace ClusterSim.Dataview
                     c = SQL.lastStep(table);
             Text = String.Format("{0}   Schritt: {1} von {2}", table, step, c);//change caption
 
+            if (this.towD)
+            {
+                ViewPlot.Plot(this.Stars, "[0.000000000000000000000000000000000001: 0.00000000000000001]", 600000, 80);
+                //ViewPlot.PlotXY(this.Stars, "[0.000000000000000000000000000000000001: 0.00000000000000001]");
+            }
+
+            if (this.threeD)
+            {
+                ViewPlot.SPlot(this.Stars, Parameters.Kinetic, $"{this.table} step {this.step}");
+            }
             if (Stars != null)
                 return true;
             else
@@ -216,9 +241,134 @@ namespace ClusterSim.Dataview
             //Canvas.Save(@"C:\Users\Dennis\Documents\Clustersim\Pictures\file" + step + zoom+Canvas.Width+"x"+Canvas.Height + ".jpg",System.Drawing.Imaging.ImageFormat.Png);
         }
 
-        private void ShowPlot()
+        public void MetricsToVideo(string path, int start, int frames)
+        {
+            Statistics.SetLineStyles();
+            var x = new Accord.Video.FFMPEG.VideoFileWriter();
+            x.Open(path, this.Canvas.Width, this.Canvas.Height, 24, VideoCodec.H264, 1600000);
+            GnuPlot.WriteLine("set terminal pngcairo size 1920,1080 enhanced font 'Verdana,10'");
+            this.step = start;
+            try
+            {
+                for (int i = start; i < start + frames; i++) //add frames
+                {
+                    import(++step);
+                    Bitmap frame = null;
+                    try
+                    {
+                        GnuPlot.HoldOn();
+                        foreach (Parameters parameter in Enum.GetValues(typeof(Parameters)))
+                        {
+
+                            GnuPlot.Set(@"output 'C:\test\test.png'");
+
+                            Statistics.PlotMetric(this.table, i, parameter);
+                            GnuPlot.Set("output");
+
+                        }
+                        frame = Image.FromFile(@"C:\test\test.png") as Bitmap;
+                        GnuPlot.HoldOff();
+                        //GnuPlot.Replot();
+                        x.WriteVideoFrame(frame);
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBox.Show(e.Message);
+                        step--;
+                    }
+                    frame.Dispose();
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Speichern fehlgeschlagen");
+            }
+            x.Close();
+        }
+
+        public void MetricsToVideo(string path, int start, int frames, Parameters param)
+        {
+            Statistics.SetLineStyles();
+            var x = new Accord.Video.FFMPEG.VideoFileWriter();
+            x.Open(path, 1920, 1080, 24, VideoCodec.H264, 3200000);
+            GnuPlot.WriteLine("set terminal pngcairo size 1920,1080 enhanced font 'Verdana,10'");
+             try
+             {
+                 for (int i = start; i < start + frames; i++) //add frames
+                 {
+                     //import(++step);
+                     Bitmap frame;
+                     
+                     try
+                     {
+                        GnuPlot.HoldOn();
+                         //GnuPlot.Set(@"output 'C:\test\test.png'");
+                        foreach (Parameters parameter in Enum.GetValues(typeof(Parameters)))
+                        {
+                            GnuPlot.Set($@"output 'C:\test\{i}.png'");
+                            Statistics.PlotMetric(this.table, i, parameter);
+                            Thread.Sleep(100);
+                            GnuPlot.Set("output");
+                        }
+                        //frame = Image.FromFile(@"C:\test\test.png") as Bitmap;
+                        GnuPlot.ClearBuffer();
+                        GnuPlot.HoldOff();
+                         //x.WriteVideoFrame(frame);
+                         this.Text = i.ToString();
+                     }
+                     catch (Exception e)
+                     {
+                         MessageBox.Show(e.Message);
+                         step--;
+                     }
+                 }
+             }
+             catch
+             {
+                 MessageBox.Show("Speichern fehlgeschlagen");
+             }
+             GnuPlot.Close();
+             GnuPlot.Start();
+            try
+            {
+                var files = Directory.GetFiles(@"C:\test\");
+                files.OrderBy(s => Convert.ToInt32(s));
+                for (int i = 0; i < files.Length; i++)
+                {
+                    Bitmap frame;
+                    try
+                    {
+                        frame = Image.FromFile(files[i]) as Bitmap;
+                        x.WriteVideoFrame(frame);
+                        this.Text = files[i].ToString();
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBox.Show(e.Message);
+                        step--;
+                    }
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Speichern fehlgeschlagen");
+            }
+            x.Close();
+        }
+
+        private void ShowPlot(Parameters param)
         {
             var last = SQL.lastStep(table);
+
+            //import(last);
+
+            Statistics.SetLineStyles();
+
+            GnuPlot.Set(
+                "yrange [0.000000000000000000000000000000000001: 0.00000000000000001]");
+
+            ViewPlot.Plot(this.Stars, "[0.000000000000000000000000000000000001: 0.00000000000000001]", stepSize: 60000000, steps: 80, path: @"C:\test\neu");
+            return;
 
             GnuPlot.Set(
                 "xrange [-100000000:100000000]",
@@ -226,18 +376,28 @@ namespace ClusterSim.Dataview
                 "zrange [-50000000:50000000]",
                 "cbrange[0:255]");//"palette mode RGB");
 
-            double min = Math.Log(Stars.Min(x => x.mass));
-            double max = Math.Log(Stars.Max(x => x.mass));
-            double div = max - min;
 
-            for (int i = 0; i < last; i++)
+            
+            for (int i = step; i < last; i++)
             {
-                GnuPlot.SPlot(this.Stars.Select(x => x.pos.vec[0]).ToArray(),
+                this.Stars = SQL.readStars(this.table, i);
+                
+                
+                //Thread.Sleep(3000);
+                double min = Math.Log(Statistics.GetMin(this.Stars, param));
+                double max = Math.Log(Statistics.GetMax(this.Stars, param));
+                double div = max - min;
+                //GnuPlot.Set($"cbrange[{(int)min}:{(int)max}]");
+                GnuPlot.Set($"");
+
+                GnuPlot.SPlot(
+                    this.Stars.Select(x => x.pos.vec[0]).ToArray(),
                     this.Stars.Select(x => x.pos.vec[1]).ToArray(),
                     this.Stars.Select(x => x.pos.vec[2]).ToArray(),
-                    this.Stars.Select(x => 255 * ((Math.Log(x.mass) - min) / div)).ToArray(),
+                    this.Stars.Select(x => Math.Log(x.GetMetric(param))).ToArray(),
+                    $"{this.table} step {i}",
                     "with points palette pt 7");
-                Thread.Sleep(30);
+                Thread.Sleep(000);
 
                 this.Stars = SQL.readStars(this.table, i);
             }
@@ -278,7 +438,7 @@ namespace ClusterSim.Dataview
             saveFileDialog1.Title = "Save Video File";
             saveFileDialog1.CheckPathExists = true;
             saveFileDialog1.DefaultExt = "avi";
-            saveFileDialog1.Filter = "Avi files (*.avi)|*.avi|All files (*.*)|*.*";
+            saveFileDialog1.Filter = "MP4 files (*.mp4)|*.mp4|All files (*.*)|*.*";
             saveFileDialog1.FilterIndex = 2;
             saveFileDialog1.RestoreDirectory = true;
 
@@ -308,6 +468,7 @@ namespace ClusterSim.Dataview
                     MessageBox.Show("Speichern fehlgeschlagen");
                 }
                 aviManager.Close();/*/
+                //MetricsToVideo(path, step, frames, Parameters.Energy);
                 FfMpeg(path, frames);
             }
             else
@@ -325,15 +486,39 @@ namespace ClusterSim.Dataview
         private void FfMpeg(string path, int frames)
         {
             var x = new Accord.Video.FFMPEG.VideoFileWriter();
-            x.Open(path, this.Canvas.Width, this.Canvas.Height, 24, VideoCodec.H264, 1600000);
+            x.Open(path, 1920, 1080, 24, VideoCodec.H264, 3200000);
 
-            try
-            {
-                for (int i = 1; i < frames; i++) //add frames
+            /*try
+            {*/
+                for (int i = 0; i < frames; i++) //add frames
                 {
-                    import(++step);
-                    while (draw() == false) ;
-                    Bitmap frame = (Bitmap)new Bitmap(Canvas);
+                    Application.DoEvents();
+                    //import(++step);
+                    this.towD = true;
+                    this.Stars = SQL.readStars(this.table, ++step);
+                    Bitmap frame;
+                    if (towD)
+                    {
+                        var savePath = path.Replace(".mp4", string.Empty) + $@"\{step}";
+                        Directory.CreateDirectory(path.Replace(".mp4", string.Empty));
+                        ViewPlot.Plot(this.Stars, "[0.000000000000000000000000000000000001: 0.00000000000000001]", 800000, 80, savePath);
+                    
+                        do
+                            try
+                            {
+                                frame = Bitmap.FromFile(savePath + ".png", false) as Bitmap;
+                            }
+                            catch
+                            {
+                                frame = null;}
+                        while (frame == null);
+                    }
+                    else
+                    {
+                        while (draw() == false) ;
+                        frame = (Bitmap)new Bitmap(Canvas);
+                    }
+
                     try
                     {
                         x.WriteVideoFrame(frame);
@@ -345,11 +530,11 @@ namespace ClusterSim.Dataview
                     }
                     frame.Dispose();
                 }
-            }
-            catch
+            /*}
+            catch(Exception e)
             {
-                MessageBox.Show("Speichern fehlgeschlagen");
-            }
+                MessageBox.Show("Speichern fehlgeschlagen\n" + e.Message);
+            }*/
             x.Close();
         }
 

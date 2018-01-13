@@ -45,6 +45,7 @@
             this.Check = new System.Windows.Forms.Button();
             this.Download = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.Analysis = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.newTableContainer.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -211,12 +212,23 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Export";
             // 
+            // Analysis
+            // 
+            this.Analysis.Location = new System.Drawing.Point(13, 177);
+            this.Analysis.Name = "Analysis";
+            this.Analysis.Size = new System.Drawing.Size(69, 23);
+            this.Analysis.TabIndex = 17;
+            this.Analysis.Text = "Analyse";
+            this.Analysis.UseVisualStyleBackColor = true;
+            this.Analysis.Click += new System.EventHandler(this.ClusterAnalysis);
+            // 
             // DataManager
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.DimGray;
             this.ClientSize = new System.Drawing.Size(342, 266);
+            this.Controls.Add(this.Analysis);
             this.Controls.Add(this.Download);
             this.Controls.Add(this.Check);
             this.Controls.Add(this.progressBar);
@@ -255,6 +267,7 @@
         private System.Windows.Forms.Button Check;
         private System.Windows.Forms.Button Download;
         private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.Button Analysis;
     }
 }
 

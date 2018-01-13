@@ -1,0 +1,59 @@
+﻿
+
+//using Newtonsoft.Json.Converters; 
+namespace ClusterSim.ClusterLib
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    public static class EnumerableExtension
+    {
+        public static Vector GetCenter(this IEnumerable<IMassive> list)
+        {
+            double mass = 0;
+            Vector center = new Vector().init();
+
+            if (list == null) throw new ArgumentNullException();
+
+            list = list.ToList();
+
+            if (list.Count() != 0)
+            {
+                
+
+                foreach (IMassive x in list)
+                {
+                    mass += x.mass;
+                }
+
+                foreach (IMassive m in list)
+                {
+                    if (m.mass == 0)
+                        continue;
+                    center += (m.mass / mass) * (m.pos);
+                }
+                return center;
+                //if (mass!=0)
+                //  pos.div(mass);
+            }
+            return null;
+        }
+
+        public static IEnumerable<IMassive> MoveCenter(this IEnumerable<IMassive> list, Vector pos)
+        {
+            
+            list = list.ToList();
+
+            if (list.Count() != 0)
+            {
+                foreach (IMassive x in list)
+                {
+                    x.pos -= pos;
+                }
+                return list;
+            }
+            return null;
+        }
+    } 
+}

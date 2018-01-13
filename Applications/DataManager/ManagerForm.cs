@@ -16,6 +16,8 @@ using XDMessaging;
 
 namespace ClusterSim.DataManager
 {
+    using ClusterSim.ClusterLib.Analysis;
+
     public partial class DataManager : Form
     {
         string table; // current selected table
@@ -28,14 +30,75 @@ namespace ClusterSim.DataManager
             ListRefresh_Tick(new object(), new EventArgs());
         }
 
+        private static DialogResult
+            ShowInputDialog(
+                ref string input)
+        {
+            // http://stackoverflow.com/questions/97097/what-is-the-c-sharp-version-of-vb-nets-inputdialog
+            Size size = new System.Drawing.Size(200, 70);
+            Form inputBox = new Form();
+
+            inputBox.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            inputBox.ClientSize = size;
+            inputBox.Text = "Name";
+
+            TextBox textBox = new TextBox();
+            textBox.Size = new System.Drawing.Size(size.Width - 10, 23);
+            textBox.Location = new System.Drawing.Point(5, 5);
+            textBox.Text = input;
+            inputBox.Controls.Add(textBox);
+
+            Button okButton = new Button();
+            okButton.DialogResult = System.Windows.Forms.DialogResult.OK;
+            okButton.Name = "okButton";
+            okButton.Size = new System.Drawing.Size(75, 23);
+            okButton.Text = "&OK";
+            okButton.Location = new System.Drawing.Point(size.Width - 80 - 80, 39);
+            inputBox.Controls.Add(okButton);
+
+            Button cancelButton = new Button();
+            cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            cancelButton.Name = "cancelButton";
+            cancelButton.Size = new System.Drawing.Size(75, 23);
+            cancelButton.Text = "&Cancel";
+            cancelButton.Location = new System.Drawing.Point(size.Width - 80, 39);
+            inputBox.Controls.Add(cancelButton);
+
+            inputBox.AcceptButton = okButton;
+            inputBox.CancelButton = cancelButton;
+
+            DialogResult result = inputBox.ShowDialog();
+            input = textBox.Text;
+            return result;
+        }
+
+        private bool tableWorking(string name)
+        {
+            progressBar.Maximum = SQL.lastStep(name);
+            progressBar.Visible = true;
+            int count = SQL.starsCount(name);
+
+            for (int i = SQL.firstStep(name); i <= SQL.lastStep(name); i++) // check if every step has the same amount of stars
+            {
+                if (count != SQL.starsCount(name, i))
+                    return false;
+                else
+                    progressBar.Value = i;
+                Application.DoEvents();
+            }
+            progressBar.Visible = false;
+            return true;
+        }
+
         private void ListRefresh_Tick(object sender, EventArgs e)
         {
             // show tables
             List<string> list = SQL.readTables();
+            list.Sort();
             if (list != null)
             {
                 ServerList.Items.Clear();
-                foreach (string s in list) ServerList.Items.Add(s);
+                foreach (string s in list.OrderBy(x=>x)) ServerList.Items.Add(s);
             }
 
             ServerList.SetSelected(index, true);
@@ -120,7 +183,7 @@ namespace ClusterSim.DataManager
 
         private void DataView_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process.Start(@"DataView.exe", table); // start Dataview with table as parameter
+            System.Diagnostics.Process.Start(@"..\..\..\Dataview\bin\Debug\DataView.exe", table); // start Dataview with table as parameter
         }
 
         private void randomTable_Click(object sender, EventArgs e)
@@ -200,25 +263,7 @@ namespace ClusterSim.DataManager
                 };
             System.Diagnostics.Process.Start(@"ClusterSim.exe", table);
         }
-
-        private bool tableWorking(string name)
-        {
-            progressBar.Maximum = SQL.lastStep(name);
-            progressBar.Visible = true;
-            int count = SQL.starsCount(name);
-
-            for (int i = SQL.firstStep(name); i <= SQL.lastStep(name); i++) // check if every step has the same amount of stars
-            {
-                if (count != SQL.starsCount(name, i))
-                    return false;
-                else
-                    progressBar.Value = i;
-                Application.DoEvents();
-            }
-            progressBar.Visible = false;
-            return true;
-        }
-
+        
         private void Check_Click(object sender, EventArgs e)
         {
             if (tableWorking(table)) MessageBox.Show("Fehlerfrei");
@@ -283,47 +328,11 @@ namespace ClusterSim.DataManager
                 }
             }
         }
-
-        private static DialogResult
-            ShowInputDialog(
-                ref string input)
+        
+        private void ClusterAnalysis(object sender, EventArgs e)
         {
-            // http://stackoverflow.com/questions/97097/what-is-the-c-sharp-version-of-vb-nets-inputdialog
-            Size size = new System.Drawing.Size(200, 70);
-            Form inputBox = new Form();
-
-            inputBox.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            inputBox.ClientSize = size;
-            inputBox.Text = "Name";
-
-            TextBox textBox = new TextBox();
-            textBox.Size = new System.Drawing.Size(size.Width - 10, 23);
-            textBox.Location = new System.Drawing.Point(5, 5);
-            textBox.Text = input;
-            inputBox.Controls.Add(textBox);
-
-            Button okButton = new Button();
-            okButton.DialogResult = System.Windows.Forms.DialogResult.OK;
-            okButton.Name = "okButton";
-            okButton.Size = new System.Drawing.Size(75, 23);
-            okButton.Text = "&OK";
-            okButton.Location = new System.Drawing.Point(size.Width - 80 - 80, 39);
-            inputBox.Controls.Add(okButton);
-
-            Button cancelButton = new Button();
-            cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            cancelButton.Name = "cancelButton";
-            cancelButton.Size = new System.Drawing.Size(75, 23);
-            cancelButton.Text = "&Cancel";
-            cancelButton.Location = new System.Drawing.Point(size.Width - 80, 39);
-            inputBox.Controls.Add(cancelButton);
-
-            inputBox.AcceptButton = okButton;
-            inputBox.CancelButton = cancelButton;
-
-            DialogResult result = inputBox.ShowDialog();
-            input = textBox.Text;
-            return result;
+            var ana = new Analysis(this.table);
+            ana.Show();
         }
     }
 }

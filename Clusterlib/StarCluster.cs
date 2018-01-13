@@ -7,6 +7,7 @@ namespace ClusterSim.ClusterLib
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
     using System.Threading;
 
     public class StarCluster
@@ -14,7 +15,7 @@ namespace ClusterSim.ClusterLib
         private const int BoxLevels = 4;
 
         // fields
-        private const double Gravitation = 0.0002959122083
+        public const double Gravitation = 0.0002959122083
             ; // 0.0000000000667384;//gravitation constant in AE^3 /Sunmass*Day^2
 
         public List<Thread> savethreads = new List<Thread>();
@@ -62,8 +63,8 @@ namespace ClusterSim.ClusterLib
         {
             // constructor 
             this.dt = dt;
-            this.Stars = new List<Star>();
-
+            this.Stars = new List<Star>(count);
+            
             this.Stars = null; // initialize
         }
 
@@ -147,7 +148,7 @@ namespace ClusterSim.ClusterLib
             this.Instructions = new List<int>[this.Stars.Count];
             this.starCount = this.Stars.Count;
 
-            Console.WriteLine("Calc Forces");
+            //Console.WriteLine("Calc Forces");
 
             if (this.Stars == null) return null;
             foreach (var s in this.Stars) // reset computation status
@@ -362,7 +363,7 @@ namespace ClusterSim.ClusterLib
 
         private void CalcBoxes()
         {
-            Console.WriteLine("Calc Boxes");
+            //Console.WriteLine("Calc Boxes");
             this.BoxSize = (this.Stars.Max(x => x.pos.vec.Max()) - this.Stars.Min(x => x.pos.vec.Min()));
 
             this.MassLayer.Clear();
@@ -423,7 +424,7 @@ namespace ClusterSim.ClusterLib
 
         private void GenerateInstructions()
         {
-            Console.WriteLine("Generate Instructions");
+            //Console.WriteLine("Generate Instructions");
             this.Instructions = new List<int>[this.Stars.Count];
             foreach (Star s in this.Stars)
             {

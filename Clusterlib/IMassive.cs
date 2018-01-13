@@ -1,6 +1,6 @@
 ﻿namespace ClusterSim.ClusterLib
 {
-    interface IMassive
+    public interface IMassive
     {
         Vector pos { get; set; }
         double mass { get; set; }

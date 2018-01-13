@@ -48,11 +48,13 @@ namespace ClusterSim.Standalone
             Console.WriteLine("\nLeer lassen, für gleiche Liste, oder Speichern nach: ");
             string wtable = Console.ReadLine();
 
+
             if (wtable == "")
             {
                 wtable = rtable;
                 last = SQL.lastStep(rtable);//get last step of given table
             }
+            
 
             Console.WriteLine("\nDelta t in Tagen: ");
 
@@ -71,15 +73,18 @@ namespace ClusterSim.Standalone
             Thread Key = new Thread(listen);
             Key.Start();
             StarCluster cluster = new StarCluster(rtable, wtable, last, dt);     //instatiate Starcluster
-            for (int i = (last*120)+1; (i <= n||true) && !abort; Console.WriteLine(i++))//for steps
+            for (int i = (last*600)+1; (i <= n||true) && !abort; i++)//for steps
             {
                 cluster.doStep(i, 0, cluster.Stars.Count - 1, Misc.Method.RK5);
-                broadcaster.SendToChannel("steps", "i" + i);//send "i"+step in channel steps
-                Console.WriteLine("\n");//+ i + "\n ");
-                if (i % 120 == 0)
+                broadcaster.SendToChannel("steps", $"i{i}");//send "i"+step in channel steps
+                //Console.WriteLine("\n");//+ i + "\n ");
+
+                cluster.Stars.MoveCenter(cluster.Stars.GetCenter());
+
+                if (i % 600 == 0)
                 {
-                    Console.WriteLine("Exportiere Daten... \n");
-                    while(!SQL.addRows(cluster.Stars, i / 120, wtable)) Thread.Sleep(10000);
+                    Console.WriteLine($"Exportiere Daten... Jahr: {i*dt/365}  \n");
+                    while(!SQL.addRows(cluster.Stars, i / 600 , wtable)) Thread.Sleep(10000);
                 } //foreach (Star s in cluster.Stars)
                 //  if (!s.dead)
                         //    while (SQL.addRow(s, i/120, wtable) == false) ;//do until succesfull
