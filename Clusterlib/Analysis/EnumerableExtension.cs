@@ -25,5 +25,16 @@ namespace ClusterSim.ClusterLib.Analysis
             }
             throw new Exception("bestimmen des Radius fehlgeschlagen");
         }
+
+        public static double GetRelax(this IEnumerable<Star> cluster)
+        {
+            var stars = cluster.ToList();
+            var radius = stars.GetRadius();
+            stars = stars.Where(x => x.pos.distance2() < Math.Pow(radius * 4, 2)).ToList();
+            var mass = stars.Sum(x => x.mass) / stars.Count;
+            var n = stars.Count;
+            var relax = 890000 * Math.Sqrt(n) * Math.Sqrt(Math.Pow(radius * 4.8481e-6, 3)) / (Math.Sqrt(mass) * Math.Log(n));
+            return relax;
+        }
     }
 }

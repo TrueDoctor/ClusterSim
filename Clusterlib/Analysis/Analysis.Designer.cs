@@ -30,6 +30,8 @@
         {
             this.ClusterName = new System.Windows.Forms.Label();
             this.Energy = new System.Windows.Forms.Button();
+            this.Density = new System.Windows.Forms.Button();
+            this.Relaxation = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // ClusterName
@@ -52,11 +54,33 @@
             this.Energy.UseVisualStyleBackColor = true;
             this.Energy.Click += new System.EventHandler(this.EnergyAnalysis);
             // 
+            // Density
+            // 
+            this.Density.Location = new System.Drawing.Point(28, 119);
+            this.Density.Name = "Density";
+            this.Density.Size = new System.Drawing.Size(101, 23);
+            this.Density.TabIndex = 2;
+            this.Density.Text = "Dichte";
+            this.Density.UseVisualStyleBackColor = true;
+            this.Density.Click += new System.EventHandler(this.DensityAnalysis);
+            // 
+            // Relaxation
+            // 
+            this.Relaxation.Location = new System.Drawing.Point(161, 78);
+            this.Relaxation.Name = "Relaxation";
+            this.Relaxation.Size = new System.Drawing.Size(75, 23);
+            this.Relaxation.TabIndex = 3;
+            this.Relaxation.Text = "Relaxation";
+            this.Relaxation.UseVisualStyleBackColor = true;
+            this.Relaxation.Click += new System.EventHandler(this.RelaxationTime);
+            // 
             // Analysis
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(284, 261);
+            this.Controls.Add(this.Relaxation);
+            this.Controls.Add(this.Density);
             this.Controls.Add(this.Energy);
             this.Controls.Add(this.ClusterName);
             this.Name = "Analysis";
@@ -70,5 +94,7 @@
 
         private System.Windows.Forms.Label ClusterName;
         private System.Windows.Forms.Button Energy;
+        private System.Windows.Forms.Button Density;
+        private System.Windows.Forms.Button Relaxation;
     }
 }

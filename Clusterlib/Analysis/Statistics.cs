@@ -94,18 +94,14 @@
             return values;
         }
 
-        public static void RadialCloud(List<double> x, List<double> y, IEnumerable<Star> estars, Parameters param)
+        public static void RadialCloud(List<double> x, List<double> y, IEnumerable<Star> estars, Parameters param, double mass = 0)
         {
             List<Star> stars = estars.ToList();
-            double radius = stars.GetRadius();
-            var center = MassCenter(stars);
+            
             foreach (Star star in stars)
             {
-                if (star.pos.distance() < radius * 2)
-                {
-                    x.Add((star.pos - center).distance());
-                    y.Add(star.GetMetric(param));
-                }
+                    x.Add((star.pos).distance());
+                    y.Add(star.GetMetric(mass, param));
             }
         }
 

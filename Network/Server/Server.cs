@@ -246,7 +246,7 @@
                 tempClient = listener.AcceptTcpClient();
                 this.newClients.Add(new ClientHandler());
                 Console.Beep();
-                Console.WriteLine(" >> Client {0} connected", this.newClients.Last().id);
+                Console.WriteLine(@"Warte auf die Beendigung von {0} Speicher Threads", this.newClients.Last().id);
                 this.newClients.Last().Subscribe(this);
                 this.newClients.Last().StarClient(tempClient);
             }

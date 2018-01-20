@@ -461,7 +461,7 @@
         public static void WriteData(double[] x, double[] y, StreamWriter stream, bool flush = true)
         {
             for (int i = 0; i < y.Length; i++)
-                stream.WriteLine(x[i].ToString() + " " + y[i].ToString());
+                stream.WriteLine(x[i].ToString().Replace(",", ".") + " " + y[i].ToString().Replace(",", "."));
 
             if (flush) stream.Flush();
         }

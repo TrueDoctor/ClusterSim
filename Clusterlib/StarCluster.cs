@@ -449,7 +449,7 @@ namespace ClusterSim.ClusterLib
                 }
                     
 
-            if (box.size * box.size / (sPos - box.pos).distance2() < 0.4)
+            if (box.size * box.size / (sPos - box.pos).distance2() < 0.16)
             {
                 ids.Push(box.id);
                 return;

@@ -29,13 +29,10 @@ namespace ClusterSim.Standalone
                     {
                         if (list.Contains(s))//check if argument is a valid table name
                             rtable = s;
-
-
+                        
                         Console.WriteLine(rtable);
                     }
-
                 }
-
             }
 
             if (rtable == "")//if argument handover failed or was not  given
@@ -44,7 +41,7 @@ namespace ClusterSim.Standalone
                 rtable = Console.ReadLine();
             }
             int last = 0;
-
+            int year = 0;
             Console.WriteLine("\nLeer lassen, für gleiche Liste, oder Speichern nach: ");
             string wtable = Console.ReadLine();
 
@@ -60,12 +57,12 @@ namespace ClusterSim.Standalone
 
             double dt = Convert.ToDouble(Console.ReadLine());
 
-            Console.WriteLine("\nSchritte: ");
+            //Console.WriteLine("\nSchritte: ");
 
-            int n = Convert.ToInt32(Console.ReadLine());
+            int n = 2;//Convert.ToInt32(Console.ReadLine());
+            
 
-
-            Console.WriteLine("Der simulierte Zeitraum entspricht einem Äquivalent von {0} Jahren.\n 'X' jederzeit zum Abbrechen drücken", Math.Round((dt * n) / 365, 2));
+            Console.WriteLine(@"Warte auf die Beendigung von {0} Speicher Threads", Math.Round((dt * n) / 365, 2));
             Thread.Sleep(2000);
             broadcaster.SendToChannel("steps", "s" + n);// send max step to steps channel
 
@@ -81,19 +78,27 @@ namespace ClusterSim.Standalone
 
                 cluster.Stars.MoveCenter(cluster.Stars.GetCenter());
 
-                if (i % 600 == 0)
+                if (Math.Ceiling((i - 1) * dt / 365) < Math.Ceiling(i * dt / 365))
                 {
-                    Console.WriteLine($"Exportiere Daten... Jahr: {i*dt/365}  \n");
-                    while(!SQL.addRows(cluster.Stars, i / 600 , wtable)) Thread.Sleep(10000);
-                } //foreach (Star s in cluster.Stars)
-                //  if (!s.dead)
-                        //    while (SQL.addRow(s, i/120, wtable) == false) ;//do until succesfull
+                    year++;
+                }
+
+                if (year % 100 == 0)
+                {
+                    Console.WriteLine($@"Exportiere Daten... Jahr: {i * dt / 365}");
+                    while (!SQL.addRows(cluster.Stars, year / 100, wtable))
+                    {
+                        Thread.Sleep(100);
+                    }
+                } 
             }
 
             Key.Abort();
 
             while (cluster.savethreads.FindAll(x => x.IsAlive).Count > 1)
-                Console.WriteLine("Warte auf die Beendigung von {0} Speicher Threads", cluster.savethreads.FindAll(x => x.IsAlive).Count);
+                Console.WriteLine(
+                    @"Warte auf die Beendigung von {0} Speicher Threads",
+                    cluster.savethreads.FindAll(x => x.IsAlive).Count);
             Thread t = cluster.savethreads.Find(x => x.IsAlive);
             try
             {

@@ -30,7 +30,7 @@
                     return star.mass * vel * vel * 0.5;
                 case Parameters.Potential:
                     var r = star.pos.distance();
-                    return star.mass * mass * -StarCluster.Gravitation  / r;
+                    return star.mass * mass * 1 * -StarCluster.Gravitation  / r;
                 case Parameters.Mass:
                     return star.mass;
                 case Parameters.Pulse:

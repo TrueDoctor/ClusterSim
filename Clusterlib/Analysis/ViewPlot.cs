@@ -49,16 +49,23 @@ namespace ClusterSim.ClusterLib.Analysis
             GnuPlot.HoldOff();
         }
 
-        public static void PlotXY(IEnumerable<Star> stars, string range)
+        public static void PlotXY(IEnumerable<Star> stars, string range, double radius = 0)
         {
             GnuPlot.HoldOn();
-            GnuPlot.Set("logscale y 100", "yrange ");//+ range);
+            if (radius == 0) radius = stars.GetRadius() * 4;
+
+            GnuPlot.Set("logscale y 100", "yrange "+ range, $"xrange [0:{(int)radius}]");
+
+            stars.MoveCenter(stars.GetCenter());
+            //stars = stars.Where(s => s.pos.distance() < 4 * stars.GetRadius()).ToList();
+            var mass = stars.Sum(x => x.mass);
+
             foreach (Parameters parameter in Enum.GetValues(typeof(Parameters)))
             {
                 var x = new List<double>();
                 var y = new List<double>();
 
-                Statistics.RadialCloud(x, y, stars, parameter);
+                Statistics.RadialCloud(x, y, stars, parameter, mass);
 
                 GnuPlot.HPlot(x.ToArray(), y.ToArray(), $"title '{parameter.ToString()}' ");//w linespoints ls {(int)parameter + 1}
             }
@@ -77,13 +84,13 @@ namespace ClusterSim.ClusterLib.Analysis
             GnuPlot.Set("output");
         }
 
-        public static void PlotXY(IEnumerable<Star> stars, string range, string path)
+        public static void PlotXY(IEnumerable<Star> stars, string range, double radius, string path)
         {
             GnuPlot.WriteLine("set terminal pngcairo size 1920,1080 enhanced font 'Verdana,10'");
             GnuPlot.Set("logscale y 10", "yrange " + range);
 
             GnuPlot.Set($@"output '{path}.png'");
-            PlotXY(stars, range);
+            PlotXY(stars, range, radius);
 
             GnuPlot.Set("output");
         }
