@@ -60,8 +60,8 @@ namespace ClusterSim.Standalone
             //Console.WriteLine("\nSchritte: ");
 
             int n = 2;//Convert.ToInt32(Console.ReadLine());
-            
 
+            year = (last);
             Console.WriteLine(@"Warte auf die Beendigung von {0} Speicher Threads", Math.Round((dt * n) / 365, 2));
             Thread.Sleep(2000);
             broadcaster.SendToChannel("steps", "s" + n);// send max step to steps channel
@@ -77,11 +77,10 @@ namespace ClusterSim.Standalone
                 //Console.WriteLine("\n");//+ i + "\n ");
 
                 cluster.Stars.MoveCenter(cluster.Stars.GetCenter());
-
                 
                 if (Math.Ceiling((i - 1) * dt / 365) < Math.Ceiling(i * dt / 365) && ++year % 100 == 0)
                 {
-                    Console.WriteLine($@"Exportiere Daten... Jahr: {(int)i * dt / 365}");
+                    Console.WriteLine($@"Exportiere Daten... Jahr: {(int)i * dt / 365} = {year}");
                     while (!SQL.addRows(cluster.Stars, year / 100, wtable))
                     {
                         Thread.Sleep(100);
