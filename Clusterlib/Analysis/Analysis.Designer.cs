@@ -32,6 +32,7 @@
             this.Energy = new System.Windows.Forms.Button();
             this.Density = new System.Windows.Forms.Button();
             this.Relaxation = new System.Windows.Forms.Button();
+            this.Efficiency = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // ClusterName
@@ -74,11 +75,22 @@
             this.Relaxation.UseVisualStyleBackColor = true;
             this.Relaxation.Click += new System.EventHandler(this.RelaxationTime);
             // 
+            // Efficiency
+            // 
+            this.Efficiency.Location = new System.Drawing.Point(161, 118);
+            this.Efficiency.Name = "Efficiency";
+            this.Efficiency.Size = new System.Drawing.Size(75, 23);
+            this.Efficiency.TabIndex = 4;
+            this.Efficiency.Text = "Efficiency";
+            this.Efficiency.UseVisualStyleBackColor = true;
+            this.Efficiency.Click += new System.EventHandler(this.EfficiencyAnalysis);
+            // 
             // Analysis
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(284, 261);
+            this.Controls.Add(this.Efficiency);
             this.Controls.Add(this.Relaxation);
             this.Controls.Add(this.Density);
             this.Controls.Add(this.Energy);
@@ -96,5 +108,6 @@
         private System.Windows.Forms.Button Energy;
         private System.Windows.Forms.Button Density;
         private System.Windows.Forms.Button Relaxation;
+        private System.Windows.Forms.Button Efficiency;
     }
 }

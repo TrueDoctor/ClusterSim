@@ -13,6 +13,7 @@ namespace ClusterSim.ClusterLib
     public class StarCluster
     {
         private const int BoxLevels = 4;
+        private double boxCoefficient;
 
         // fields
         public const double Gravitation = 0.0002959122083
@@ -44,10 +45,11 @@ namespace ClusterSim.ClusterLib
 
         private readonly string wtable; // table to write at
 
-        public StarCluster(string rtable, string wtable, int start, double dt = 1)
+        public StarCluster(string rtable, string wtable, int start, double dt = 1, double coe = 0.4)
         {
             // constructor 
             this.starCount = SQL.starsCount(rtable);
+            this.boxCoefficient = coe;
             this.rtable = rtable;
             this.wtable = wtable;
             this.start = start;
@@ -59,13 +61,14 @@ namespace ClusterSim.ClusterLib
                            / Math.Pow(2, BoxLevels); // calc low level box sizes
         }
 
-        public StarCluster(int count, double dt = 1)
+        public StarCluster(int count, double dt = 1, double coe = 0.4)
         {
             // constructor 
             this.dt = dt;
+            this.boxCoefficient = coe;
             this.Stars = new List<Star>(count);
             
-            this.Stars = null; // initialize
+            //this.Stars = null; // initialize
         }
 
         public Star[] doStep(int step, Misc.Method m)
@@ -275,6 +278,9 @@ namespace ClusterSim.ClusterLib
             // cstart = 0;
             for (int i = cstart; i <= end; i++)
             {
+                if (end == this.Stars.Count)
+                return;
+
                 var s = this.Stars[i];
                 if (!s.computed)
                 {
@@ -449,7 +455,7 @@ namespace ClusterSim.ClusterLib
                 }
                     
 
-            if (box.size * box.size / (sPos - box.pos).distance2() < 0.16)
+            if (box.size * box.size / (sPos - box.pos).distance2() < this.boxCoefficient || box.root)
             {
                 ids.Push(box.id);
                 return;

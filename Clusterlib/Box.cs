@@ -71,6 +71,4 @@ namespace ClusterSim.ClusterLib
             #endregion
         }
     }
-
-    
 }

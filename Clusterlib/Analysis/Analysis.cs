@@ -5,6 +5,8 @@ using System.Windows.Forms;
 
 namespace ClusterSim.ClusterLib.Analysis
 {
+    using System.Threading.Tasks;
+
     public partial class Analysis : Form
     {
         public Analysis(string table)
@@ -121,6 +123,40 @@ namespace ClusterSim.ClusterLib.Analysis
             Statistics.SetLineStyles();
 
             GnuPlot.Plot(data, "title 'Relaxationszeit' w linespoints");
+        }
+
+        private async void EfficiencyAnalysis(object sender, EventArgs e)
+        {
+            Statistics.SetLineStyles();
+            GnuPlot.HoldOn();
+
+            GnuPlot.Plot(await Task.Run(() => this.GetTimes(0)), "title 'Rechenzeit n^2' w linespoints");
+            GnuPlot.Plot(await Task.Run(() => this.GetTimes(0.5)), "title 'Rechenzeit nlog(n)' w linespoints");
+
+            GnuPlot.HoldOff();
+        }
+
+        private double[] GetTimes(double coe)
+        {
+            var times = new List<double>();
+            var watch = new System.Diagnostics.Stopwatch();
+
+            for (int i = 2; i < 800; i++)
+            {
+                //Application.DoEvents();
+                var cluster = new StarCluster(i, 1, coe);
+
+                for (int j = 0; j < i; j++)
+                {
+                    cluster.Stars.Add(Misc.randomize(10, 10, 10, 10, j));
+                }
+                watch.Start();
+                cluster.doStep(1, 0, i-1, Misc.Method.RK5);
+                watch.Stop();
+                times.Add(watch.ElapsedMilliseconds);
+                watch.Reset();
+            }
+            return times.ToArray();
         }
     }
 }
