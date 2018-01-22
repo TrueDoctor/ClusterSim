@@ -41,7 +41,7 @@ namespace ClusterSim.Standalone
                 rtable = Console.ReadLine();
             }
             int last = 0;
-            int year = 0;
+            int year = 1;
             Console.WriteLine("\nLeer lassen, für gleiche Liste, oder Speichern nach: ");
             string wtable = Console.ReadLine();
 
@@ -70,7 +70,7 @@ namespace ClusterSim.Standalone
             Thread Key = new Thread(listen);
             Key.Start();
             StarCluster cluster = new StarCluster(rtable, wtable, last, dt);     //instatiate Starcluster
-            for (int i = (last*600)+1; (i <= n||true) && !abort; i++)//for steps
+            for (int i = (last*100*365)+1; (i <= n||true) && !abort; i++)//for steps
             {
                 cluster.doStep(i, 0, cluster.Stars.Count - 1, Misc.Method.RK5);
                 broadcaster.SendToChannel("steps", $"i{i}");//send "i"+step in channel steps
@@ -78,14 +78,10 @@ namespace ClusterSim.Standalone
 
                 cluster.Stars.MoveCenter(cluster.Stars.GetCenter());
 
-                if (Math.Ceiling((i - 1) * dt / 365) < Math.Ceiling(i * dt / 365))
+                
+                if (Math.Ceiling((i - 1) * dt / 365) < Math.Ceiling(i * dt / 365) && ++year % 100 == 0)
                 {
-                    year++;
-                }
-
-                if (year % 100 == 0)
-                {
-                    Console.WriteLine($@"Exportiere Daten... Jahr: {i * dt / 365}");
+                    Console.WriteLine($@"Exportiere Daten... Jahr: {(int)i * dt / 365}");
                     while (!SQL.addRows(cluster.Stars, year / 100, wtable))
                     {
                         Thread.Sleep(100);
