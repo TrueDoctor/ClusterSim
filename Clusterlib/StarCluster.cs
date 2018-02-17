@@ -29,19 +29,17 @@ namespace ClusterSim.ClusterLib
 
         public double Dt; // delta time
 
-        private List<int>[] instructions;
+        public List<int>[] Instructions { get; private set; }
 
         private readonly List<IMassive> massLayer = new List<IMassive>();
 
-        private List<Star> oldStars; // While calculating a step the same values have to be used
+        public List<Star> OldStars { get; private set; }
 
         private readonly string rtable; // table to read from
 
         private int starCount;
 
         private int start; // starting step
-
-        private readonly List<List<Star>> steps = new List<List<Star>>(); // list of Clusters stored in ram
 
         private readonly string wtable; // table to write at
 
@@ -74,7 +72,7 @@ namespace ClusterSim.ClusterLib
         public Star[] DoStep(int step, int min, int max, Misc.Method m)
         {
             this.CalcBoxes();
-            this.instructions = new List<int>[this.Stars.Count];
+            this.Instructions = new List<int>[this.Stars.Count];
             this.starCount = this.Stars.Count;
 
             //Console.WriteLine("Calc Forces");
@@ -89,9 +87,9 @@ namespace ClusterSim.ClusterLib
             int left = (max - min + 1) % processors; // calc remainder
             var threads = new List<Thread>();
 
-            this.oldStars = new List<Star>(); // save the current values
+            this.OldStars = new List<Star>(); // save the current values
             foreach (var s in this.Stars) // clone each to prevent shallow copys
-                this.oldStars.Add(s.Clone());
+                this.OldStars.Add(s.Clone());
 
 
             int end;
@@ -106,14 +104,14 @@ namespace ClusterSim.ClusterLib
                 }
 
                 int test = this.start;
-
+                
                 Console.WriteLine($"start: {this.start}");
 
                 threads.Add(
                     new Thread(
                         delegate()
                             {
-                                this.Integrate(start, this.starCount - 1, m);
+                                this.Integrate(test, end - 1, m);
                             })); 
 
                 threads.Last().Priority = ThreadPriority.Highest;
@@ -201,7 +199,7 @@ namespace ClusterSim.ClusterLib
                         {
                             var tempInst = new ConcurrentStack<int>();
                             GetInstruction(s.Pos, s.id, this.boxes[0], ref tempInst);
-                            this.instructions[s.id] = tempInst.ToList();
+                            this.Instructions[s.id] = tempInst.ToList();
 
                             switch (method)
                             {
@@ -226,7 +224,7 @@ namespace ClusterSim.ClusterLib
 
         private Star Rk4(ref Star s)
         {
-            var star = new Vec6(this.oldStars[s.id].Pos, this.oldStars[s.id].Vel); // convert star to vec6
+            var star = new Vec6(this.OldStars[s.id].Pos, this.OldStars[s.id].Vel); // convert star to vec6
             var ka = this.F(star, s.id); // calculate help values
             var kb = this.F(star + this.Dt / 2 * ka, s.id);
             var kc = this.F(star + this.Dt / 2 * kb, s.id);
@@ -240,7 +238,7 @@ namespace ClusterSim.ClusterLib
 
         private Star Rk5(ref Star s)
         {
-            var star = new Vec6(this.oldStars[s.id].Pos, this.oldStars[s.id].Vel);
+            var star = new Vec6(this.OldStars[s.id].Pos, this.OldStars[s.id].Vel);
             var ka = this.Dt * this.F(star, s.id);
             var ff = this.Dt * this.F(ka, s.id);
             var kb = this.Dt * this.F(star + 1.0 / 3 * ka + 1.0 / 18 * ff, s.id);
@@ -258,7 +256,7 @@ namespace ClusterSim.ClusterLib
 
         private Star Euler(ref Star s)
         {
-            var star = new Vec6(this.oldStars[s.id].Pos, this.oldStars[s.id].Vel);
+            var star = new Vec6(this.OldStars[s.id].Pos, this.OldStars[s.id].Vel);
             var f = this.Dt * this.F(star, s.id);
             s.Pos += f.ToVector(0);
             s.Vel += f.ToVector(1);
@@ -272,9 +270,9 @@ namespace ClusterSim.ClusterLib
                 if (id != Stars[j].id && !Stars[j].dead)//no self intersection to prevent dividing by 0
                     acc.add(calcacc(Star.ToVector(0), Stars[j], id));//add all acceleration vectors
                                                                      //*/
-            for (var j = 0; j < this.instructions[id].Count; j++)
+            for (var j = 0; j < this.Instructions[id].Count; j++)
             {
-                int temp = this.instructions[id][j];
+                int temp = this.Instructions[id][j];
                 if (!this.massLayer[temp].dead && !this.massLayer[id].dead && this.massLayer[temp].mass != 0
                     && temp != id)
                 {
