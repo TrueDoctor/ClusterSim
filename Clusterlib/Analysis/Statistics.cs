@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Dynamic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
     using System.Security.Cryptography.X509Certificates;
 
     public enum Parameters
@@ -39,15 +40,46 @@
 
         public static Vector MassCenter(IEnumerable<Star> stars)
         {
+            stars = stars.ToList();
             var temp = new Vector();
-            var mass = stars.Sum(x => x.mass);
+            var mass = stars.Sum(x => x.Mass);
 
-            foreach (IMassive m in stars)
+            return stars.Cast<IMassive>().Aggregate(temp, (current, m) => current + m.mass / mass * m.pos);
+
+        }
+
+        public static int GetLifeTime(string table)
+        {
+            var steps = SQL.lastStep(table);
+            return ApproximateLifetime(table, 0, steps);
+        }
+
+        private static int ApproximateLifetime(string table, int start, int end)
+        {
+            int step = (end - start) / 10;
+
+            step = step < 1 ? 1 : step; 
+            
+            for (int i = 0; i <= 10; i++)
             {
-                temp += m.mass / mass * m.pos;
-            }
-            return temp;
+                var stars = SQL.readStars(table, i * step);
 
+                stars.MoveCenter(stars.GetCenter());
+
+                if (stars.GetPercentEscaped() <= 47)
+                {
+                    continue;
+                }
+
+                if (step >= 1)
+                {
+                    return ApproximateLifetime(table, (i - 1) * step, i * step);
+                }
+
+                return i * step;
+            }
+
+            return -1;
         }
 
         public static IEnumerable<double> RadialAverage(IEnumerable<Star> estars, Parameters param, double stepSize)
@@ -60,7 +92,7 @@
             stepSize = stars.GetRadius() * 4 / 30;
             for (double s = stepSize*2; processed < 0.90 * count; s += stepSize)
             {
-                var temp = stars.Where(x => (x.pos-center).distance() < s).ToList();
+                var temp = stars.Where(x => (x.Pos-center).distance() < s).ToList();
                 processed += temp.Count;
                 stars = stars.Except(temp).ToList();
                 double res = temp.Sum(star => star.GetMetric(param));
@@ -80,7 +112,7 @@
             var values = new List<double>();
             for (double s = stepSize * 2; s < steps * stepSize; s += stepSize)
             {
-                var temp = stars.Where(x => (x.pos - center).distance2() < s*s).ToList();
+                var temp = stars.Where(x => (x.Pos - center).distance2() < s*s).ToList();
                 processed += temp.Count;
                 stars = stars.Except(temp).ToList();
 
@@ -100,7 +132,7 @@
             
             foreach (Star star in stars)
             {
-                    x.Add((star.pos).distance());
+                    x.Add(star.Pos.distance());
                     y.Add(star.GetMetric(mass, param));
             }
         }

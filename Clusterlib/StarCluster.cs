@@ -57,7 +57,7 @@ namespace ClusterSim.ClusterLib
             this.Stars = new List<Star>();
 
             this.Stars = SQL.readStars(rtable, start); // initialize
-            this.BoxSize = (this.Stars.Max(x => x.pos.vec.Max()) - this.Stars.Min(x => x.pos.vec.Min()))
+            this.BoxSize = (this.Stars.Max(x => x.Pos.vec.Max()) - this.Stars.Min(x => x.Pos.vec.Min()))
                            / Math.Pow(2, BoxLevels); // calc low level box sizes
         }
 
@@ -238,19 +238,19 @@ namespace ClusterSim.ClusterLib
             // }
         }
 
-        public void initialvel(int id)
+        public void initialvel(int id, double mass)
         {
             var rand = new Random();
             var acc = new Vector();
-
+            
             foreach (var s in this.Stars)
                 if (s.id != this.Stars[id].id)
-                    acc.add(this.Calcacc(this.Stars[id].pos, s, id)); // add all acceleration vectors
+                    acc.add(this.Calcacc(this.Stars[id].Pos, s, id)); // add all acceleration vectors
 
             double Bacc = acc.distance(); // magnitude|x| of the vector
             double V = Math.Sqrt(
                 Bacc * Math.Sqrt(
-                    Gravitation * this.Stars[id].getMass()
+                    Gravitation * this.Stars[id].GetMass()
                     / Bacc)); // Velocity=Squareroot(|acc|*r) r=Squareroot((G*m)/|acc|)
 
             double x1 = 2 * rand.NextDouble() - 1; // x1 = random -1,1
@@ -261,7 +261,7 @@ namespace ClusterSim.ClusterLib
 
             var vel = new Vector(x1, x2, x3);
             double skalar = vel.skalar(acc);
-            this.Stars[id].vel.add(vel.scale(V)); // scale vector to match the V magnitude and add to the random variance
+            this.Stars[id].Vel.add(vel.scale(V)); // scale vector to match the V magnitude and add to the random variance
         }
 
         public void RK5(int step, int cstart, int end)
@@ -289,10 +289,10 @@ namespace ClusterSim.ClusterLib
                         try
                         {
                             var tempInst = new ConcurrentStack<int>();
-                            GetInstruction(s.pos, s.id, this.Boxes[0], ref tempInst);
+                            GetInstruction(s.Pos, s.id, this.Boxes[0], ref tempInst);
                             Instructions[s.id] = tempInst.ToList();
 
-                            var Star = new Vec6(this.OldStars[i].pos, this.OldStars[i].vel);
+                            var Star = new Vec6(this.OldStars[i].Pos, this.OldStars[i].Vel);
                             var KA = this.dt * this.f(Star, s.id);
                             var FF = this.dt * this.f(KA, s.id);
                             var KB = this.dt * this.f(Star + 1.0 / 3 * KA + 1.0 / 18 * FF, s.id);
@@ -302,8 +302,8 @@ namespace ClusterSim.ClusterLib
                                          s.id);
                             var F = 5.0 / 48 * KA + 27.0 / 56 * KB + 125.0 / 336 * KC + 1.0 / 24 * KD;
 
-                            s.pos += F.ToVector(0);
-                            s.vel += F.ToVector(1);
+                            s.Pos += F.ToVector(0);
+                            s.Vel += F.ToVector(1);
                             //s.print();
                         }
                         catch (DivideByZeroException)
@@ -342,11 +342,9 @@ namespace ClusterSim.ClusterLib
             return new Vec6(Star.ToVector(1), acc);
         }
 
-        private Vector Calcacc(Vector a, IMassive b, int id = -1, int bid = -1)
+        public Vector Calcacc(Vector a, IMassive b, int id = -1, int bid = -1, double mass = 0)
         {
-            Vector tempDirection;
-
-            tempDirection = a - b.pos; // direction vector to the other star
+            var tempDirection = a - b.pos;
 
             if (a == b.pos)
             {
@@ -359,7 +357,12 @@ namespace ClusterSim.ClusterLib
             double D = 1 / tempDirection.distance(); // Sterne und Weltraum Grundlagen der Himmelsmechanik S.91
 
             double acceleration = b.mass * Gravitation * Math.Pow(D, 3);
-            acceleration = b.mass / this.Stars[id].mass * acceleration;
+            if(mass == 0)
+            {
+                mass = this.Stars[id].GetMass();
+            }
+
+            acceleration = b.mass / mass * acceleration;
             var AccVec = b.pos - a;
             /*if (Double.IsNaN(acceleration))
                 ;*/
@@ -370,7 +373,7 @@ namespace ClusterSim.ClusterLib
         private void CalcBoxes()
         {
             //Console.WriteLine("Calc Boxes");
-            this.BoxSize = (this.Stars.Max(x => x.pos.vec.Max()) - this.Stars.Min(x => x.pos.vec.Min()));
+            this.BoxSize = (this.Stars.Max(x => x.Pos.vec.Max()) - this.Stars.Min(x => x.Pos.vec.Min()));
 
             this.MassLayer.Clear();
             this.Boxes.Clear();
@@ -389,6 +392,7 @@ namespace ClusterSim.ClusterLib
 
         private int AddBox(ref List<Box> boxes, ref int boxId, Vector pos, double size, IEnumerable<IMassive> stars)
         {
+            stars = stars.ToList();
             if (stars.Count() == 1)
             {
                 int tempID = boxId++;
@@ -408,7 +412,10 @@ namespace ClusterSim.ClusterLib
                         for (int k = 0; k < 2 && y.Count() != 0; k++)
                         {
                             if (z.Count() != 0)
+                            {
                                 tbox.ids.Add(this.AddBox(ref boxes, ref boxId, pos + size / 2 * new Vector(i, j, k), size / 2, z));
+                            }
+                                
                             z = y.Except(z).ToList();
                         }
                         y = x.Except(y).ToList();
@@ -490,18 +497,18 @@ namespace ClusterSim.ClusterLib
                     s.computed = true;
                     
                     var tempInst = new ConcurrentStack<int>();
-                    GetInstruction(s.pos, s.id, this.Boxes[0],ref tempInst);
+                    GetInstruction(s.Pos, s.id, this.Boxes[0], ref tempInst);
                     Instructions[s.id] = tempInst.ToList();
 
-                    var Star = new Vec6(this.OldStars[i].pos, this.OldStars[i].vel); // convert star to vec6
+                    var Star = new Vec6(this.OldStars[i].Pos, this.OldStars[i].Vel); // convert star to vec6
                     var KA = this.f(Star, s.id); // calculate help values
                     var KB = this.f(Star + this.dt / 2 * KA, s.id);
                     var KC = this.f(Star + this.dt / 2 * KB, s.id);
                     var KD = this.f(Star + KC, s.id);
                     var F = this.dt / 6 * (KA + 2 * KB + 2 * KC + KD); // calculate resulting Vector
-                    s.pos = s.pos + F.ToVector(0);
-                    s.vel = s.vel + F.ToVector(1);
-                    s.print();
+                    s.Pos = s.Pos + F.ToVector(0);
+                    s.Vel = s.Vel + F.ToVector(1);
+                    s.Print();
                 }
                 else
                 {

@@ -1,141 +1,200 @@
-﻿using System;
-
-namespace ClusterSim.ClusterLib
+﻿namespace ClusterSim.ClusterLib
 {
+    using System;
+
     [Serializable]
     public class Star : IMassive
     {
-
-        //declare fields/members
-        public Vector pos = new Vector();
-        public Vector vel = new Vector();
-        public double mass { get; set; }
-        private int Id;
         public bool computed = false;
+
+        private Vector acc = new Vector();
+
+        private int Id;
+
+        // declare fields/members
+        private Vector pos = new Vector();
+
+        private Vector vel = new Vector();
+
+        public Star()
+        {
+        }
+ // empty constructor
+
+        public Star(int id)
+        {
+            this.id = id;
+            this.Pos.init();
+            this.Vel.init();
+            this.Mass = 0;
+        }
+ // constructor Create a initialized star from id
+
+        public Star(
+            double[] pos,
+            double[] vel, // constructor 
+            double mass,
+            int id = -1,
+            bool dead = false)
+        {
+            this.Pos.vec = pos;
+            this.Vel.vec = vel;
+            this.Mass = mass;
+            this.id = id;
+            this.dead = dead;
+        }
+
+        public Star(
+            Vector pos,
+            Vector vel, // constructor
+            double mass,
+            int id,
+            bool dead = false,
+            double dt = 2)
+        {
+            this.Pos = pos;
+            this.Vel = vel;
+            this.Mass = mass;
+            this.id = id;
+            this.dead = dead;
+        }
+
+        public Star(Star s)
+        {
+            // constructor from given Star
+            this.Pos = s.Pos;
+            this.Vel = s.Vel;
+            this.id = s.id;
+            this.Mass = s.Mass;
+        }
+
+        public Star(Vec6 vec, double mass, int id = -1)
+        {
+            // create Star from Vec6
+            this.Pos = new Vector(vec, 0);
+            this.Vel = new Vector(vec, 1);
+            this.id = id;
+            this.Mass = mass;
+        }
+
         public bool dead { get; set; }
 
         public int id
         {
-            get { return Id; }
+            get => this.Id;
             set
             {
                 if (value < 0)
-                { dead = true; Id = -(value+1); }
+                {
+                    this.dead = true;
+                    this.Id = -(value + 1);
+                }
                 else
-                    Id = value;
-
+                {
+                    this.Id = value;
+                }
             }
         }
 
-        Vector IMassive.pos { get { return pos; } set { pos = value; } }
-        double IMassive.mass { get { return mass; } set { mass = value; } }
-
-        public Star() { }//empty constructor
-
-        public Star(int id) { this.id = id; pos.init();vel.init(); mass = 0; } //constructor Create a initialized star from id
-
-        public Star(double[] pos, double[] vel,   //constructor 
-            double mass,int id=-1,bool dead = false)
+        double IMassive.mass
         {
-            this.pos.vec = pos;
-            this.vel.vec = vel;            
-            this.mass = mass;
-            this.id = id;
-            this.dead = dead;
+            get => this.Mass;
+            set => this.Mass = value;
         }
 
-        public Star(Vector pos, Vector vel,   //constructor
-            double mass, int id, bool dead = false, double dt = 2)
+        Vector IMassive.pos
         {
-            this.pos = pos;
-            this.vel = vel;
-            this.mass = mass;
-            this.id = id;
-            this.dead = dead;
+            get => this.Pos;
+            set => this.Pos = value;
         }
-
-        public Star(Star s)//constructor from given Star
-        {
-            pos = s.pos;
-            vel = s.vel;
-            id = s.id;
-            mass = s.mass;
-        }
-
-        public Star(Vec6 vec,double mass,int id=-1)//create Star from Vec6
-        {
-            pos = new Vector(vec,0);
-            vel = new Vector(vec,1);
-            this.id = id;
-            this.mass = mass;
-        }
-
         
-        public double getMass() //return mass
+        public double Mass { get; set; }
+
+        public Vector Pos
         {
-            return mass;
+            get => this.pos;
+            set => this.pos = value;
         }
 
-        public double getRelativMass() //return mass
+        public Vector Vel
         {
-            try
-            {
-                return Math.Sqrt(Convert.ToDouble(mass) / (1.0 - Math.Pow(vel.distance() / Misc.c, 2)));
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine("\n\n\n\n\n\nGeschwingkeit von Stern {0} größer als Lichtgeschwindigkeit.\n kleinere Zeitschritte wählen!\n\n\n\n\n\n\n{1}\n\n",id,e.Message);
-                return 7922816251426433;
-            }
+            get => this.vel;
+            set => this.vel = value;
         }
 
-        public string toCsv() //print all fields of the star in the console
+        public Star Clone()
         {
-            return pos.vec[0] + ";" + pos.vec[1] + ";" + pos.vec[2];
-        }
+            // clone method to prevent shallow copys
+            var clone = new Star(this.Pos, this.Vel, this.Mass, this.id, this.dead);
 
-        public string toTsv() //print all fields of the star in the console
-        {
-            return pos.vec[0] + "   " + pos.vec[1] + "  " + pos.vec[2];
-        }
-
-        public void print() //print all fields of the star in the console
-        {
-            Console.Write(id+", ");
-            //Console.WriteLine("pos: " + pos.toString());
-            //Console.WriteLine("vel: " + vel.toString());
-            //Console.WriteLine("mass: " + mass);
-        }
-
-        public Star Clone()//clone method to prevent shallow copys
-        {
-
-            Star clone = new Star(pos, vel, mass, id,dead);
-            
             return clone;
-        }
-
-        public byte[] Serialize()
-        {
-            var temp = new byte[60];
-            Array.Copy(pos.Serialize(), 0, temp, 0, 24);
-            Array.Copy(vel.Serialize(), 0, temp, 24, 24);
-            Array.Copy(BitConverter.GetBytes(mass), 0, temp, 48, 8);
-            Array.Copy(BitConverter.GetBytes(dead?-(id+1):id), 0, temp, 56, 4);
-            return temp;
         }
 
         public Star Deserialize(byte[] input)
         {
             var vec = new byte[24];
             Array.Copy(input, vec, 24);
-            pos.Deserialize(vec);
-            Array.Copy(input,24, vec,0, 24);
-            vel.Deserialize(vec);
-            mass = BitConverter.ToDouble(input, 48);
-            id = BitConverter.ToInt32(input, 56);
-            return this; 
+            this.Pos.Deserialize(vec);
+            Array.Copy(input, 24, vec, 0, 24);
+            this.Vel.Deserialize(vec);
+            this.Mass = BitConverter.ToDouble(input, 48);
+            this.id = BitConverter.ToInt32(input, 56);
+            return this;
         }
-        
+
+        public double GetMass()
+        {
+            // return mass
+            return this.Mass;
+        }
+
+        public double GetRelativeMass()
+        {
+            // return mass
+            try
+            {
+                return Math.Sqrt(Convert.ToDouble(this.Mass) / (1.0 - Math.Pow(this.Vel.distance() / Misc.c, 2)));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(
+                    "\n\n\n\n\n\nGeschwingkeit von Stern {0} größer als Lichtgeschwindigkeit.\n kleinere Zeitschritte wählen!\n\n\n\n\n\n\n{1}\n\n",
+                    this.id,
+                    e.Message);
+                return 7922816251426433;
+            }
+        }
+
+        public void Print()
+        {
+            // print all fields of the star in the console
+            Console.Write(this.id + ", ");
+
+            // Console.WriteLine("pos: " + pos.toString());
+            // Console.WriteLine("vel: " + vel.toString());
+            // Console.WriteLine("mass: " + mass);
+        }
+
+        public byte[] Serialize()
+        {
+            var temp = new byte[60];
+            Array.Copy(this.Pos.Serialize(), 0, temp, 0, 24);
+            Array.Copy(this.Vel.Serialize(), 0, temp, 24, 24);
+            Array.Copy(BitConverter.GetBytes(this.Mass), 0, temp, 48, 8);
+            Array.Copy(BitConverter.GetBytes(this.dead ? -(this.id + 1) : this.id), 0, temp, 56, 4);
+            return temp;
+        }
+
+        public string ToCsv()
+        {
+            // print all fields of the star in the console
+            return this.Pos.vec[0] + ";" + this.Pos.vec[1] + ";" + this.Pos.vec[2];
+        }
+
+        public string ToTsv()
+        {
+            // print all fields of the star in the console
+            return this.Pos.vec[0] + "   " + this.Pos.vec[1] + "  " + this.Pos.vec[2];
+        }
     }
 }

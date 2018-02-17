@@ -22,7 +22,10 @@ namespace ClusterSim.ClusterLib
             }
         }
 
-        public Vector() { }         //blank constructor
+        public Vector()
+        {
+            this.Vec.Initialize();
+        }         //blank constructor
 
         public Vector(double[] vec) //double[3] overload
         {
@@ -245,6 +248,10 @@ namespace ClusterSim.ClusterLib
                 vec[i] = BitConverter.ToDouble(input, i * 8);
         }
 
+        public bool IsNull()
+        {
+            return this.Vec.All(d => !(Math.Abs(d) < 0.000000000001));
+        }
 
 
     }

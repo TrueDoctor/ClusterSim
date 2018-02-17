@@ -9,7 +9,9 @@ using XDMessaging;
 
 namespace ClusterSim.Standalone
 {
-    class Program
+    using ClusterSim.ClusterLib.Analysis;
+
+    public class Program
     {
         private static bool abort = false;
         static void Main(string[] args)
@@ -41,7 +43,7 @@ namespace ClusterSim.Standalone
                 rtable = Console.ReadLine();
             }
             int last = 0;
-            int year = 1;
+            int year, saveInterval = 100;
             Console.WriteLine("\nLeer lassen, für gleiche Liste, oder Speichern nach: ");
             string wtable = Console.ReadLine();
 
@@ -61,7 +63,7 @@ namespace ClusterSim.Standalone
 
             int n = 2;//Convert.ToInt32(Console.ReadLine());
 
-            year = (last);
+            year = (last*saveInterval);
             Console.WriteLine(@"Warte auf die Beendigung von {0} Speicher Threads", Math.Round((dt * n) / 365, 2));
             Thread.Sleep(2000);
             broadcaster.SendToChannel("steps", "s" + n);// send max step to steps channel
@@ -69,19 +71,22 @@ namespace ClusterSim.Standalone
 
             Thread Key = new Thread(listen);
             Key.Start();
-            StarCluster cluster = new StarCluster(rtable, wtable, last, dt);     //instatiate Starcluster
-            for (int i = (last*100*365)+1; (i <= n||true) && !abort; i++)//for steps
+            StarCluster cluster = new StarCluster(rtable, wtable, last, dt); // instatiate Starcluster
+
+            for (int i = (last * saveInterval * 365) + 1;
+                 !abort; i++) 
             {
                 cluster.doStep(i, 0, cluster.Stars.Count - 1, Misc.Method.RK5);
-                broadcaster.SendToChannel("steps", $"i{i}");//send "i"+step in channel steps
-                //Console.WriteLine("\n");//+ i + "\n ");
+                broadcaster.SendToChannel("steps", $"i{i}");
 
+                // send "i"+step in channel steps
+                // Console.WriteLine("\n");//+ i + "\n ");
                 cluster.Stars.MoveCenter(cluster.Stars.GetCenter());
                 
-                if (Math.Ceiling((i - 1) * dt / 365) < Math.Ceiling(i * dt / 365) && ++year % 100 == 0)
+                if (Math.Ceiling((i - 1) * dt / 365) < Math.Ceiling(i * dt / 365) && ++year % saveInterval == 0)
                 {
                     Console.WriteLine($@"Exportiere Daten... Jahr: {(int)i * dt / 365} = {year}");
-                    while (!SQL.addRows(cluster.Stars, year / 100, wtable))
+                    while (!SQL.addRows(cluster.Stars, year / saveInterval, wtable))
                     {
                         Thread.Sleep(100);
                     }

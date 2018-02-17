@@ -58,6 +58,8 @@ namespace ClusterSim.Net.Server
 
         public int Step { get; set; }
 
+        private Server Serv {get; set; }
+
         private static int Id { get; set; }
 
         private List<Star> OldStars { get; set; } = new List<Star>();
@@ -83,6 +85,17 @@ namespace ClusterSim.Net.Server
         public void Subscribe(Server s)
         {
             s.SendData += this.OnSend;
+            this.Serv = s;
+        }
+
+        public void Unsubscribe()
+        {
+            this.Unsubscribe(this.Serv);
+        }
+
+        public void Unsubscribe(Server s)
+        {
+            s.SendData -= this.OnSend;
         }
 
         private void ConnectionLoop()
@@ -141,6 +154,7 @@ namespace ClusterSim.Net.Server
                 }
                 catch (Exception e)
                 {
+                    this.Unsubscribe();
                     Console.Clear();
                     Console.WriteLine(" >> Client {0} disconnected\n\n{1}", this.id, e);
                     return;

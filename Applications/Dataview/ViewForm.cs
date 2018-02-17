@@ -7,7 +7,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using AviFile; //https://www.codeproject.com/Articles/7388/A-Simple-C-Wrapper-for-the-AviFile-Library
 using Accord;
 using Accord.IO;
 using ClusterSim.ClusterLib;
@@ -15,6 +14,7 @@ using ClusterSim.ClusterLib;
 
 namespace ClusterSim.Dataview
 {
+    using System.Drawing.Imaging;
     using System.IO;
     using System.Net.NetworkInformation;
     using System.Threading;
@@ -22,6 +22,9 @@ namespace ClusterSim.Dataview
     using Accord.Video.FFMPEG;
 
     using ClusterSim.ClusterLib.Analysis;
+    using ClusterSim.ClusterLib.Visualization;
+
+    using Point = System.Drawing.Point;
 
     public partial class ViewForm : Form
     {
@@ -32,7 +35,7 @@ namespace ClusterSim.Dataview
         Bitmap Canvas;
         int c = 0;
         //bool three = false;
-        bool trace, towD, threeD = false;//trace the star position
+        bool trace, towD, threeD, fancy = false;//trace the star position
         double zoom = 10;
         public ViewForm()
         {
@@ -87,11 +90,11 @@ namespace ClusterSim.Dataview
 
                     case Keys.Up:
                         zoom *= 2;
-                        Canvas = new Bitmap(Box.Width - this.Box.Width % 2, Box.Height - this.Box.Height % 2);
+                        Canvas = new Bitmap(Box.Width - this.Box.Width % 2, Box.Height - this.Box.Height % 2, PixelFormat.Format32bppPArgb);
                         break;
 
                     case Keys.Down:
-                        Canvas = new Bitmap(Box.Width - this.Box.Width % 2, Box.Height - this.Box.Height % 2);
+                        Canvas = new Bitmap(Box.Width - this.Box.Width % 2, Box.Height - this.Box.Height % 2, PixelFormat.Format32bppPArgb);
                         zoom /= 2;
                         break;
                     case Keys.Enter:
@@ -103,7 +106,14 @@ namespace ClusterSim.Dataview
                         break;
 
                     case Keys.T:
-                        trace = !trace;//switch trace state
+                        trace = !trace;  //switch trace state
+                        break;
+
+                    case Keys.F:
+                        fancy = !fancy;  //switch Fancy graphic mode
+                        this.towD = false;
+                        //this.Box.Width = 16000;
+                        //this.Box.Height = 9000;
                         break;
 
                     case Keys.D2:
@@ -137,7 +147,7 @@ namespace ClusterSim.Dataview
             SaveFileDialog saveFileDialog1 = new SaveFileDialog();//savefile dialouge
             saveFileDialog1.InitialDirectory = @"C:\";
             saveFileDialog1.Title = "Save Screenshot";
-            saveFileDialog1.FileName = table + "s" + step + "z" + zoom + "x" + Canvas.Width + "y" + Canvas.Height + ".jpg";
+            saveFileDialog1.FileName = table + "s" + step + "z" + zoom + "x" + Canvas.Width + "y" + Canvas.Height + ".png";
             saveFileDialog1.CheckPathExists = true;
             saveFileDialog1.DefaultExt = "jpg";
             saveFileDialog1.Filter = "Jpeg files (*.jpg)|*.jpg|Png files (*.png)|*.png|Bitmap files (*.bmp)|*.bmp|All files alle Bildformate unterstüzt (*.*)|*.*";
@@ -198,26 +208,39 @@ namespace ClusterSim.Dataview
             if (trace == true)//if trace = false reset bitmap
                 Canvas = new Bitmap(Canvas, Box.Width - this.Box.Width % 2, Box.Height - this.Box.Height % 2);
             else
-                Canvas = new Bitmap(Box.Width - this.Box.Width % 2, Box.Height - this.Box.Height % 2);
+                Canvas = new Bitmap((Box.Width - this.Box.Width % 2)*1, (Box.Height - this.Box.Height % 2)*1, PixelFormat.Format24bppRgb);
+
+            var fCanvas = Graphics.FromImage(this.Canvas);
 
 
             if (Stars != null)
                 foreach (Star s in Stars)
                 {
-                    System.Drawing.Point p;
-                    /*if (three == true)
-                        p = mapAngle(s.pos.polar());      //Color new = (Color)ColorConverter.ConnvertFormString("#FFFFF");
-                    else*/
-                    p = MapKoord(s.pos);//translate koordinates
+                    if (fancy)
+                    {
+                        var bit = s.CratePic();
 
-                    if (p != new System.Drawing.Point(-1, -1))//if point in range
-                        Canvas.SetPixel(p.X, p.Y, Color.White);//draw point
+                        var p = this.MapKoord(s.Pos);
+                         p = new Point(p.X - bit.Height / 2, p.Y - bit.Width / 2);
+                        fCanvas.DrawImage(bit, p);
+                    }
+
+                    else
+                    {
+                        System.Drawing.Point p;
+                        
+                        p = MapKoord(s.Pos); //translate koordinates
+
+                        if (p != new System.Drawing.Point(-1, -1)) //if point in range
+                            Canvas.SetPixel(p.X, p.Y, Color.White); //draw point
+                    }
                 }
+            
             Box.Image = Canvas;
             Box.Refresh();
             Box.Cursor = Cursors.Cross;
             if (Stars != null)
-                if (Stars.Count <= 10000)
+                if (Stars.Count <= 1000)
                     c = SQL.lastStep(table);
             Text = String.Format("{0}   Schritt: {1} von {2}", table, step, c);//change caption
 
@@ -323,7 +346,11 @@ namespace ClusterSim.Dataview
         private void FfMpeg(string path, int frames)
         {
             var x = new Accord.Video.FFMPEG.VideoFileWriter();
-            x.Open(path, 1920, 1080, 24, VideoCodec.H264, 7200000);
+            if (this.towD) x.Open(path, 1920, 1080, 24, VideoCodec.H264, 7200000);
+            else
+            {
+                x.Open(path, this.Canvas.Width, this.Canvas.Height, 24, VideoCodec.H264, 50000000);
+            }
 
             /*try
             {*/
@@ -334,8 +361,9 @@ namespace ClusterSim.Dataview
             {
                 Application.DoEvents();
                 //import(++step);
-                this.towD = true;
+                //this.towD = true;
                 this.Stars = SQL.readStars(this.table, ++step);
+                this.Stars.MoveCenter(this.Stars.GetCenter());
                 Bitmap frame;
                 if (towD)
                 {
@@ -358,8 +386,8 @@ namespace ClusterSim.Dataview
                 }
                 else
                 {
-                    while (draw() == false) ;
-                    frame = (Bitmap)new Bitmap(Canvas);
+                    while (draw() == false);
+                    frame = (Bitmap)new Bitmap(this.Box.Image);
                 }
 
                 try

@@ -114,7 +114,7 @@ namespace ClusterSim.DataManager
             for (int i = 0; i < StarCount.Value; i++)
             {
                 Application.DoEvents();
-                rand.initialvel(i);//initial velocity for each star
+                rand.initialvel(i,0);//initial velocity for each star
                 progressBar.Increment(1);
             }
             SQL.dropTable(table);

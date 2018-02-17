@@ -59,6 +59,7 @@
     <Compile Include="Analysis\Statistics.cs" />
     <Compile Include="Box.cs" />
     <Compile Include="EnumerableExtension.cs" />
+    <Compile Include="Visualization\EnumerableExtension.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Analysis\GnuPlot.cs" />
     <Compile Include="IMassive.cs" />
@@ -74,6 +75,7 @@
     <Compile Include="Star.cs" />
     <Compile Include="StarCluster.cs" />
     <Compile Include="Vector.cs" />
+    <Compile Include="Visualization\StarExtension.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

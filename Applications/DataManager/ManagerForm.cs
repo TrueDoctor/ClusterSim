@@ -94,12 +94,14 @@ namespace ClusterSim.DataManager
         {
             // show tables
             List<string> list = SQL.readTables();
-            list.Sort();
+            
             if (list != null)
             {
+                list.Sort();
                 ServerList.Items.Clear();
                 foreach (string s in list.OrderBy(x=>x)) ServerList.Items.Add(s);
             }
+            
 
             ServerList.SetSelected(index, true);
         }
@@ -306,8 +308,8 @@ namespace ClusterSim.DataManager
 
                     progressBar.Value = 0;
                     progressBar.Maximum = list.Count;
-                    double min = Math.Log(list.Min(x => x.mass));
-                    double max = Math.Log(list.Max(x => x.mass));
+                    double min = Math.Log(list.Min(x => x.Mass));
+                    double max = Math.Log(list.Max(x => x.Mass));
 
                     List<string> lines = new List<string>();
                     /*List<int> colors = new List<int>();
@@ -317,7 +319,7 @@ namespace ClusterSim.DataManager
 
                     foreach (Star s in list)
                     {
-                        lines.Add(s.toTsv().Replace(',', '.') + "    " + 255*((Math.Log(s.mass)-min)/(max-min)));
+                        lines.Add(s.ToTsv().Replace(',', '.') + "    " + 255*((Math.Log(s.Mass)-min)/(max-min)));
                         progressBar.Increment(1);
                         Application.DoEvents();
                     }

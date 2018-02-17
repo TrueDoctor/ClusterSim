@@ -39,13 +39,13 @@ namespace ClusterSim.ClusterLib
                 DataRow row = myTvpTable.NewRow();
                 row["step"] = step;
                 row["id"] = s.dead ? -s.id : s.id;
-                row["posx"] = s.pos.vec[0];
-                row["posy"] = s.pos.vec[1];
-                row["posz"] = s.pos.vec[2];
-                row["velx"] = s.vel.vec[0];
-                row["vely"] = s.vel.vec[1];
-                row["velz"] = s.vel.vec[2];
-                row["mass"] = s.getMass();
+                row["posx"] = s.Pos.vec[0];
+                row["posy"] = s.Pos.vec[1];
+                row["posz"] = s.Pos.vec[2];
+                row["velx"] = s.Vel.vec[0];
+                row["vely"] = s.Vel.vec[1];
+                row["velz"] = s.Vel.vec[2];
+                row["mass"] = s.GetMass();
                 myTvpTable.Rows.Add(row);
             }
             return myTvpTable;
@@ -196,13 +196,13 @@ namespace ClusterSim.ClusterLib
             {
                 cmd.Parameters.Add(new SqlParameter("@step", step));//Parameterized Command: the @ string gets replaced by valus
                 cmd.Parameters.Add(new SqlParameter("@id", s.dead ? -s.id : s.id));
-                cmd.Parameters.Add(new SqlParameter("@posx", s.pos.vec[0]));
-                cmd.Parameters.Add(new SqlParameter("@posy", s.pos.vec[1]));
-                cmd.Parameters.Add(new SqlParameter("@posz", s.pos.vec[2]));
-                cmd.Parameters.Add(new SqlParameter("@velx", s.vel.vec[0]));
-                cmd.Parameters.Add(new SqlParameter("@vely", s.vel.vec[1]));
-                cmd.Parameters.Add(new SqlParameter("@velz", s.vel.vec[2]));
-                cmd.Parameters.Add(new SqlParameter("@mass", s.getMass()));
+                cmd.Parameters.Add(new SqlParameter("@posx", s.Pos.vec[0]));
+                cmd.Parameters.Add(new SqlParameter("@posy", s.Pos.vec[1]));
+                cmd.Parameters.Add(new SqlParameter("@posz", s.Pos.vec[2]));
+                cmd.Parameters.Add(new SqlParameter("@velx", s.Vel.vec[0]));
+                cmd.Parameters.Add(new SqlParameter("@vely", s.Vel.vec[1]));
+                cmd.Parameters.Add(new SqlParameter("@velz", s.Vel.vec[2]));
+                cmd.Parameters.Add(new SqlParameter("@mass", s.GetMass()));
 
 
                 try
@@ -310,6 +310,7 @@ namespace ClusterSim.ClusterLib
             {
                 try
                 {
+                    cmd.CommandTimeout = 5;
                     con.Open();//open connection
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -342,6 +343,7 @@ namespace ClusterSim.ClusterLib
             {
                 try
                 {
+                    cmd.CommandTimeout = 5;
                     con.Open();//open connection
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {

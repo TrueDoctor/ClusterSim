@@ -20,9 +20,9 @@ namespace ClusterSim.ClusterLib.Analysis
 
             GnuPlot.Set($"cbrange[{(int)min}:{(int)max}]");
             GnuPlot.SPlot(
-                stars.Select(x => x.pos.vec[0]).ToArray(),
-                stars.Select(x => x.pos.vec[1]).ToArray(),
-                stars.Select(x => x.pos.vec[2]).ToArray(),
+                stars.Select(x => x.Pos.vec[0]).ToArray(),
+                stars.Select(x => x.Pos.vec[1]).ToArray(),
+                stars.Select(x => x.Pos.vec[2]).ToArray(),
                 stars.Select(x => Math.Log(x.GetMetric(param))).ToArray(),
                 name,
                 "with points palette pt 7");
@@ -58,7 +58,7 @@ namespace ClusterSim.ClusterLib.Analysis
 
             stars.MoveCenter(stars.GetCenter());
             //stars = stars.Where(s => s.pos.distance() < 4 * stars.GetRadius()).ToList();
-            var mass = stars.Sum(x => x.mass);
+            var mass = stars.Sum(x => x.Mass);
 
             foreach (Parameters parameter in Enum.GetValues(typeof(Parameters)))
             {
