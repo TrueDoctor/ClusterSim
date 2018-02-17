@@ -76,7 +76,7 @@ namespace ClusterSim.Standalone
             for (int i = (last * saveInterval * 365) + 1;
                  !abort; i++) 
             {
-                cluster.doStep(i, 0, cluster.Stars.Count - 1, Misc.Method.RK5);
+                cluster.DoStep(i, 0, cluster.Stars.Count - 1, Misc.Method.Rk5);
                 broadcaster.SendToChannel("steps", $"i{i}");
 
                 // send "i"+step in channel steps
@@ -95,11 +95,11 @@ namespace ClusterSim.Standalone
 
             Key.Abort();
 
-            while (cluster.savethreads.FindAll(x => x.IsAlive).Count > 1)
+            while (cluster.Savethreads.FindAll(x => x.IsAlive).Count > 1)
                 Console.WriteLine(
                     @"Warte auf die Beendigung von {0} Speicher Threads",
-                    cluster.savethreads.FindAll(x => x.IsAlive).Count);
-            Thread t = cluster.savethreads.Find(x => x.IsAlive);
+                    cluster.Savethreads.FindAll(x => x.IsAlive).Count);
+            Thread t = cluster.Savethreads.Find(x => x.IsAlive);
             try
             {
                 Console.WriteLine(t.ThreadState.ToString());

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2005
+VisualStudioVersion = 15.0.27130.2003
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClusterSim", "Applications\ClusterSim\ClusterSim.csproj", "{CCFCB65F-D68C-47FB-BF06-3A7A1D1C674E}"
 EndProject
@@ -22,9 +22,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Network\Client\Client.csproj", "{631D9E7E-1C12-4C7D-BFC8-89EAAA3D71D3}"
 EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|ARM = Debug|ARM
@@ -60,8 +57,8 @@ Global
 		{A7C910A8-50B9-4B50-AD05-AAD0EEC231F6}.Debug|x64.Build.0 = Debug|Any CPU
 		{A7C910A8-50B9-4B50-AD05-AAD0EEC231F6}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{A7C910A8-50B9-4B50-AD05-AAD0EEC231F6}.Debug|x86.Build.0 = Debug|Any CPU
-		{A7C910A8-50B9-4B50-AD05-AAD0EEC231F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A7C910A8-50B9-4B50-AD05-AAD0EEC231F6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7C910A8-50B9-4B50-AD05-AAD0EEC231F6}.Release|Any CPU.ActiveCfg = Release|x86
+		{A7C910A8-50B9-4B50-AD05-AAD0EEC231F6}.Release|Any CPU.Build.0 = Release|x86
 		{A7C910A8-50B9-4B50-AD05-AAD0EEC231F6}.Release|ARM.ActiveCfg = Release|Any CPU
 		{A7C910A8-50B9-4B50-AD05-AAD0EEC231F6}.Release|ARM.Build.0 = Release|Any CPU
 		{A7C910A8-50B9-4B50-AD05-AAD0EEC231F6}.Release|x64.ActiveCfg = Release|Any CPU
@@ -162,6 +159,9 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {608F8E85-0EBD-4502-B890-8A0322C51625}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true

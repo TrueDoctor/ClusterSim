@@ -9,7 +9,6 @@ namespace ClusterSim.ClusterLib
         Vector Position,  AvgPos;
         public Vector PosId, Dimension;
         public List<IMassive> objects = new List<IMassive>();
-        public List<int> Calcids;
         public List<Box> Neighbours { get; set; }= new List<Box>();
         public List<int> ids;
         public int id { get; set; }

@@ -103,6 +103,27 @@ namespace ClusterSim.ClusterLib
             return (Math.Abs(a.vec[0] - b.vec[0]) < 0.000000001 && Math.Abs(a.vec[1] - b.vec[1]) < 0.000000001 && Math.Abs(a.vec[2] - b.vec[2]) < 0.000000001) ? true : false;
         }
 
+        public override bool Equals(System.Object obj)
+        {
+            var a = obj as Vector;
+            if (a == null)
+            {
+                return false;
+            }
+
+            return this == a;
+        }
+
+        protected bool Equals(Vector other)
+        {
+            return Equals(this.Vec, other.Vec);
+        }
+
+        public override int GetHashCode()
+        {
+            return (this.Vec != null ? this.Vec.GetHashCode() : 0);
+        }
+
         public static bool operator !=(Vector a, Vector b)
         {
             return (a.vec[0] != b.vec[0] && a.vec[1] != b.vec[1] && a.vec[2] != b.vec[2]) ? true : false;

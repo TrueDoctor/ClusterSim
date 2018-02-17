@@ -165,7 +165,7 @@ namespace ClusterSim.ClusterLib.Analysis
                 }
 
                 watch.Start();
-                cluster.doStep(1, 0, i - 1, Misc.Method.RK5);
+                cluster.DoStep(1, 0, i - 1, Misc.Method.Rk5);
                 watch.Stop();
                 times.Add(watch.ElapsedTicks);
                 watch.Reset();

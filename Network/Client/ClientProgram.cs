@@ -107,11 +107,11 @@ namespace Client
 
                     ready = false;
                     Cluster.Stars = msg.Stars.ToList();
-                    Cluster.dt = msg.dt;
+                    Cluster.Dt = msg.dt;
                     step = msg.step;
                     min = msg.min;
                     max = msg.max;
-                    var NewStars = Cluster.doStep(++step, min, max, Misc.Method.RK5);
+                    var NewStars = Cluster.DoStep(++step, min, max, Misc.Method.Rk5);
 
                     // if(NewStars.Count)
                     Console.WriteLine(step);
@@ -119,7 +119,7 @@ namespace Client
                     // if (Cluster.Stars.Count != 120)
                     // return;
                     var message = new Message(step, 0, min, max, NewStars).Serialize(NewStars.Length);
-                    serverStream.Write(message,0,NewStars.Length * 60 + 20);
+                    serverStream.Write(message, 0, NewStars.Length * 60 + 20);
                     serverStream.Flush();
                 }
             }
