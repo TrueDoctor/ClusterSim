@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using ClusterSim.ClusterLib;
+
 using XDMessaging;
 
 namespace ClusterSim.Standalone
 {
-    using ClusterSim.ClusterLib.Analysis;
+    using ClusterSim.ClusterLib.Calculation.Cluster;
+    using ClusterSim.ClusterLib.Utility;
 
     public class Program
     {
@@ -71,7 +70,7 @@ namespace ClusterSim.Standalone
 
             Thread Key = new Thread(listen);
             Key.Start();
-            StarCluster cluster = new StarCluster(rtable, wtable, last, dt); // instatiate Starcluster
+            var cluster = new Cluster(SQL.readStars(rtable, 0), dt); // instatiate Starcluster
 
 
             var time = 0d;
@@ -79,12 +78,13 @@ namespace ClusterSim.Standalone
                  !abort; i++)
             {
                 cluster.Dt = dt;
-                cluster.DoStep(i, 0, cluster.Stars.Count - 1, Misc.Method.Rk5);
+                cluster.DoStep(0, cluster.Stars.Count - 1, Misc.Method.Rk5);
                 var maxDAcc = cluster.Stars.Max(x => x.DAcc);
                 if (maxDAcc > 0)
                 {
                     dt += ((dt * 0.00004 / maxDAcc) - dt) / 2;
                 }
+
                 time += dt;
                 //Console.WriteLine(maxDAcc);
 
@@ -94,6 +94,7 @@ namespace ClusterSim.Standalone
                 // Console.WriteLine("\n");//+ i + "\n ");
                 cluster.Stars.MoveCenter(cluster.Stars.GetCenter());
                 
+
                 if (Math.Ceiling((time - dt) / 365) < Math.Ceiling(time / 365) && ++year % saveInterval == 0)
                 {
                     Console.WriteLine($@"Exportiere Daten... Jahr: {(int)i * dt / 365} = {year}");

@@ -8,14 +8,12 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-using System.CodeDom.Compiler;
-using System.Configuration;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-
 namespace ClusterSim.ClusterLib.Properties {
-    
-    
+    using System.CodeDom.Compiler;
+    using System.Configuration;
+    using System.Diagnostics;
+    using System.Runtime.CompilerServices;
+
     [CompilerGenerated()]
     [GeneratedCode("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.1.0.0")]
     internal sealed partial class Settings : ApplicationSettingsBase {

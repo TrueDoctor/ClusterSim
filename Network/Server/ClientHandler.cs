@@ -17,7 +17,7 @@ namespace ClusterSim.Net.Server
     using System.Net.Sockets;
     using System.Threading;
 
-    using ClusterSim.ClusterLib;
+    using ClusterSim.ClusterLib.Calculation;
     using ClusterSim.Net.Lib;
 
     /// <summary>
@@ -64,7 +64,7 @@ namespace ClusterSim.Net.Server
 
         private List<Star> OldStars { get; set; } = new List<Star>();
 
-        public void OnSend(object o, SendEventArgs e)
+        public void OnSend(object o, Lib.SendEventArgs e)
         {
             this.Step = e.Step;
             this.min = e.Orders.Find(x => x[0] == this.id)[1];

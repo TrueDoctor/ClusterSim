@@ -1,9 +1,9 @@
 ﻿namespace ClusterSim.ClusterLib.Visualization
 {
-    using System;
     using System.Collections.Generic;
     using System.Drawing;
-    using System.Runtime.CompilerServices;
+
+    using ClusterSim.ClusterLib.Calculation;
 
     static class EnumerableExtension
     {

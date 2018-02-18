@@ -1,13 +1,15 @@
 ﻿
 
 //using Newtonsoft.Json.Converters; 
-namespace ClusterSim.ClusterLib
+namespace ClusterSim.ClusterLib.Utility
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
 
-    public static class EnumerableExtension
+    using ClusterSim.ClusterLib.Calculation;
+
+    public static class CenterEnumerableExtension
     {
         public static Vector GetCenter(this IEnumerable<IMassive> list)
         {

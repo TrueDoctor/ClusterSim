@@ -1,9 +1,10 @@
-﻿using System;
-
-namespace ClusterSim.ClusterLib.Visualization
+﻿namespace ClusterSim.ClusterLib.Visualization
 {
+    using System;
     using System.Drawing;
     using System.Drawing.Imaging;
+
+    using ClusterSim.ClusterLib.Calculation;
 
     public static class StarExtension
     {

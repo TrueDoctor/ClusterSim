@@ -15,7 +15,7 @@ namespace ClusterSim.Net.Lib
     using System.Collections.Generic;
     using System.Linq;
 
-    using ClusterSim.ClusterLib;
+    using ClusterSim.ClusterLib.Calculation;
 
     #endregion
 

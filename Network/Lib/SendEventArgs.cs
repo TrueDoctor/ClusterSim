@@ -1,10 +1,10 @@
-﻿namespace ClusterSim.Net.Server
+﻿namespace ClusterSim.Net.Lib
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
 
-    using ClusterSim.ClusterLib;
+    using ClusterSim.ClusterLib.Calculation;
 
     public class SendEventArgs : EventArgs
     {

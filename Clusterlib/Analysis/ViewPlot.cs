@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ClusterSim.ClusterLib.Analysis
+﻿namespace ClusterSim.ClusterLib.Analysis
 {
-    using System.Runtime.CompilerServices;
-    using System.Security.Policy;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
 
-    using Microsoft.Win32.SafeHandles;
+    using ClusterSim.ClusterLib.Calculation;
+    using ClusterSim.ClusterLib.Utility;
 
     public static class ViewPlot
     {

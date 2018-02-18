@@ -1,27 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using Accord;
-using Accord.IO;
-using ClusterSim.ClusterLib;
+
+using ClusterSim.ClusterLib.Calculation;
 
 
 namespace ClusterSim.Dataview
 {
     using System.Drawing.Imaging;
     using System.IO;
-    using System.Net.NetworkInformation;
-    using System.Threading;
 
     using Accord.Video.FFMPEG;
 
+    using ClusterSim.ClusterLib;
     using ClusterSim.ClusterLib.Analysis;
+    using ClusterSim.ClusterLib.Utility;
     using ClusterSim.ClusterLib.Visualization;
 
     using Point = System.Drawing.Point;
@@ -31,7 +25,7 @@ namespace ClusterSim.Dataview
         string table = null;
         int step = 1;
         //List<List<Star>> Steps = new List<List<Star>>();
-        List<Star> Stars = new List<ClusterLib.Star>();
+        List<Star> Stars = new List<ClusterLib.Calculation.Star>();
         Bitmap Canvas;
         int c = 0;
         //bool three = false;

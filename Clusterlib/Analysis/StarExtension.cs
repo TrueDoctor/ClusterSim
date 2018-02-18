@@ -1,6 +1,7 @@
 ﻿namespace ClusterSim.ClusterLib.Analysis
 {
-    using System;
+    using ClusterSim.ClusterLib.Calculation;
+    using ClusterSim.ClusterLib.Calculation.Cluster;
 
     public static class StarExtension
     {

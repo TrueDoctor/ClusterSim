@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 
-namespace ClusterSim.ClusterLib
+namespace ClusterSim.ClusterLib.Calculation
 {
     using System.Linq;
 
-    class Box : IMassive
+    public class Box : IMassive
     {
         Vector Position,  AvgPos;
         public Vector PosId, Dimension;

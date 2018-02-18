@@ -11,7 +11,9 @@
     using System.Text;
     using System.Threading;
 
-    using ClusterSim.ClusterLib;
+    using ClusterSim.ClusterLib.Calculation;
+    using ClusterSim.ClusterLib.Calculation.Cluster;
+    using ClusterSim.ClusterLib.Utility;
     using ClusterSim.Net.Server.Properties;
 
     #endregion
@@ -26,7 +28,7 @@
 
         public string wtable { get; set; } = "n1000dt3";
 
-        public delegate void SendHandler(Server s, SendEventArgs e);
+        public delegate void SendHandler(Server s, Lib.SendEventArgs e);
 
         public event SendHandler SendData;
 
@@ -42,7 +44,7 @@
             double ovrper = 1;
 
             Console.WriteLine("Load Stars...");
-            var Cluster = new StarCluster(rtable, wtable, step - 1, dt);
+            var Cluster = new StarCluster(rtable, step - 1, dt);
             Console.WriteLine("Loading finished");
             listenThread.Start();
 
@@ -125,7 +127,7 @@
                         start = end;
                     }
 
-                    var send = new SendEventArgs(step, dt, orders, Cluster.Stars.ToArray());
+                    var send = new Lib.SendEventArgs(step, dt, orders, Cluster.Stars.ToArray());
                     this.SendData(this, send);
 
                     Console.WriteLine(step);

@@ -19,7 +19,8 @@ namespace Client
 
     using Client.Properties;
 
-    using ClusterSim.ClusterLib;
+    using ClusterSim.ClusterLib.Calculation.Cluster;
+    using ClusterSim.ClusterLib.Utility;
     using ClusterSim.Net.Lib;
 
     #endregion

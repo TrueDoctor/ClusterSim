@@ -1,22 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
-using ClusterSim.ClusterLib;
+using ClusterSim.ClusterLib.Calculation;
 
 using XDMessaging;
 
 namespace ClusterSim.DataManager
 {
     using ClusterSim.ClusterLib.Analysis;
+    using ClusterSim.ClusterLib.Utility;
 
     public partial class DataManager : Form
     {

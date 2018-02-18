@@ -1,6 +1,8 @@
-﻿namespace ClusterSim.ClusterLib
+﻿namespace ClusterSim.ClusterLib.Calculation
 {
     using System;
+
+    using ClusterSim.ClusterLib.Utility;
 
     [Serializable]
     public class Star : IMassive

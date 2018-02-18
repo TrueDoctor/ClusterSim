@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ClusterSim.ClusterLib.Analysis
+﻿namespace ClusterSim.ClusterLib.Analysis
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    using ClusterSim.ClusterLib.Calculation;
+    using ClusterSim.ClusterLib.Calculation.Cluster;
+
     public static class EnumerableExtension
     {
         public static double GetRadius(this IEnumerable<Star> cluster)
@@ -41,7 +42,7 @@ namespace ClusterSim.ClusterLib.Analysis
         {
             var stars = cluster.ToList();
             var radius2 = Math.Pow(stars.GetRadius() * 4,2);
-            var starCluster = new StarCluster(stars.Count);
+            var starCluster = new Cluster();
             var mass = stars.Where(y => y.Pos.distance2() < radius2).Sum(x => x.Mass);
             var zero = new Vector();
             zero.init();
@@ -51,7 +52,7 @@ namespace ClusterSim.ClusterLib.Analysis
 
             foreach (Star s in stars)
             {
-                var acc = StarCluster.Calcacc(s.pos, center);
+                var acc = StarCluster.CalcAcc(s.pos, center);
                 var vel2 = Math.Sqrt(2 * acc.distance() * s.pos.distance());
                 if (vel2 > s.vel.distance())
                 {
@@ -60,7 +61,7 @@ namespace ClusterSim.ClusterLib.Analysis
             }*/ // =>
 
             int count = stars.Count(x => 
-                Math.Sqrt(1.5 * starCluster.Calcacc(x.Pos, center, mass: x.Mass).distance() * x.Pos.distance()) 
+                Math.Sqrt(1.5 * starCluster.CalcAcc(x.Pos, center, mass: x.Mass).distance() * x.Pos.distance()) 
                 < x.Vel.distance());
 
             return (double)count;

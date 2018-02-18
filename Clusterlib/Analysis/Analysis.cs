@@ -1,11 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Forms;
-
-namespace ClusterSim.ClusterLib.Analysis
+﻿namespace ClusterSim.ClusterLib.Analysis
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
+    using System.Windows.Forms;
+
+    using ClusterSim.ClusterLib.Calculation.Cluster;
+    using ClusterSim.ClusterLib.Utility;
 
     public partial class Analysis : Form
     {
@@ -156,8 +158,7 @@ namespace ClusterSim.ClusterLib.Analysis
 
             for (int i = 5; i < 805; i++)
             {
-                //Application.DoEvents();
-                var cluster = new StarCluster(i, 1, coe);
+                var cluster = new StarCluster(coe: coe);
 
                 for (int j = 0; j < i; j++)
                 {

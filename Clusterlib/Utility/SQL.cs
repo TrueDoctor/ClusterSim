@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.Data;
-
-namespace ClusterSim.ClusterLib
+﻿namespace ClusterSim.ClusterLib.Utility
 {
-    using System.Linq.Expressions;
+    using System;
+    using System.Collections.Generic;
+    using System.Data;
+    using System.Data.SqlClient;
+
+    using ClusterSim.ClusterLib.Calculation;
 
     public class SQL
     {
