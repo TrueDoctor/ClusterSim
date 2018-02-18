@@ -93,13 +93,13 @@ namespace Client
                     if (serverStream.Read(header, 0, 20) != 20) throw new Exception("header zu kurz");
                     int size = BitConverter.ToInt32(header, 4);
                     var read = 0;
-                    var data = new byte[size * 60 + 20];
+                    var data = new byte[size * 92 + 20];
 
                     do
                     {
-                        read += serverStream.Read(data, read + 20, size * 60 - read);
+                        read += serverStream.Read(data, read + 20, size * 92 - read);
                     }
-                    while (read < size * 60);
+                    while (read < size * 92);
                     Array.Copy(header, data, 20);
 
                     var msg = new Message(size);
@@ -119,7 +119,7 @@ namespace Client
                     // if (Cluster.Stars.Count != 120)
                     // return;
                     var message = new Message(step, 0, min, max, NewStars).Serialize(NewStars.Length);
-                    serverStream.Write(message, 0, NewStars.Length * 60 + 20);
+                    serverStream.Write(message, 0, NewStars.Length * 92 + 20);
                     serverStream.Flush();
                 }
             }

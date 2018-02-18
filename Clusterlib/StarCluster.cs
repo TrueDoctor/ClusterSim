@@ -12,74 +12,70 @@ namespace ClusterSim.ClusterLib
 
     public class StarCluster
     {
-        private const int BoxLevels = 4;
-        private double boxCoefficient;
 
         // fields
-        public const double Gravitation = 0.0002959122083
-            ; // 0.0000000000667384;//gravitation constant in AE^3 /Sunmass*Day^2
+        public const double Gravitation = 0.0002959122083; // 0.0000000000667384;//gravitation constant in AE^3 /Sunmass*Day^2
 
-        public List<Thread> Savethreads = new List<Thread>();
+        private readonly List<IMassive> massLayer = new List<IMassive>();
 
-        public List<Star> Stars; // Array of Stars
+        private readonly double boxCoefficient;
 
         private List<Box> boxes = new List<Box>();
 
         private double boxSize;
 
-        public double Dt; // delta time
-
         public List<int>[] Instructions { get; private set; }
-
-        private readonly List<IMassive> massLayer = new List<IMassive>();
-
+        
         public List<Star> OldStars { get; private set; }
 
-        private readonly string rtable; // table to read from
+        public List<Star> Stars { get; set; }
 
-        private int starCount;
+        public double Dt { get; set; } // delta time
 
-        private int start; // starting step
-
-        private readonly string wtable; // table to write at
-
-        public StarCluster(string rtable, string wtable, int start, double dt = 1, double coe = 0.4)
+        public StarCluster(string rtable, string wtable, int start, double dt = 1, double coe = 0.4) : this(dt, coe)
         {
-            // constructor 
-            this.starCount = SQL.starsCount(rtable);
             this.boxCoefficient = coe;
-            this.rtable = rtable;
-            this.wtable = wtable;
-            this.start = start;
-            this.Dt = dt;
-            this.Stars = new List<Star>();
 
             this.Stars = SQL.readStars(rtable, start); // initialize
-            this.boxSize = (this.Stars.Max(x => x.Pos.vec.Max()) - this.Stars.Min(x => x.Pos.vec.Min()))
-                           / Math.Pow(2, BoxLevels); // calc low level box sizes
+            if (this.Stars == null)
+            {
+                throw new Exception("Laden der Sterne Fehlgeschlagen!");
+            }
         }
 
-        public StarCluster(int count, double dt = 1, double coe = 0.4)
+        public StarCluster(int count, double dt = 1, double coe = 0.4) : this (dt, coe)
+        {
+            // constructor 
+            this.Stars = new List<Star>(count);
+        }
+
+        public StarCluster(List<Star> stars, double dt = 1, double coe = 0.4) : this (dt, coe)
+        {
+            this.Stars = stars;
+
+            if (this.Stars == null)
+            {
+                throw new NotImplementedException("Sternliste null");
+            }
+        }
+
+        public StarCluster(double dt = 1, double coe = 0.4)
         {
             // constructor 
             this.Dt = dt;
             this.boxCoefficient = coe;
-            this.Stars = new List<Star>(count);
-
-            //this.Stars = null; // initialize
         }
-        
+
         public Star[] DoStep(int step, int min, int max, Misc.Method m)
         {
             this.CalcBoxes();
             this.Instructions = new List<int>[this.Stars.Count];
-            this.starCount = this.Stars.Count;
 
             //Console.WriteLine("Calc Forces");
 
             if (this.Stars == null) return null;
             foreach (var s in this.Stars) // reset computation status
-                s.computed = false;
+                s.Computed = false;
 
 
             int processors = Environment.ProcessorCount; // get number of processors
@@ -93,43 +89,42 @@ namespace ClusterSim.ClusterLib
 
 
             int end;
-            this.start = min;
+            int start = min;
             for (var i = 0; i < (processors < max - min ? processors : max - min + 1); i++)
             {
-                end = this.start + perCore;
+                end = start + perCore;
                 if (left > 0)
                 {
                     end++;
                     left--;
                 }
 
-                int test = this.start;
+                int test = start;
                 
-                Console.WriteLine($"start: {this.start}");
 
                 threads.Add(
                     new Thread(
                         delegate()
                             {
-                                this.Integrate(test, end - 1, m);
+                                this.Integrate(min, max, m);
                             })); 
 
                 threads.Last().Priority = ThreadPriority.Highest;
-                threads.Last().Name = string.Format("Calc{0}-{1}", this.start, end - 1);
+                threads.Last().Name = string.Format("Calc{0}-{1}", test, end - 1);
                 threads.Last().Start();
 
                 // while (true) { }
-                this.start = end;
+                start = end;
             }
 
             // Merge Results
-            while (threads.Exists(x => x.IsAlive) || this.Stars.Exists(x => !x.computed && x.id >= min && x.id <= max))
+            while (threads.Exists(x => x.IsAlive) || this.Stars.Exists(x => !x.Computed && x.id >= min && x.id <= max))
                 Thread.Sleep(10);
 
             //foreach (var s in this.Stars.Where(c => c.computed))
             //if (this.OldStars.Exists(x => x.pos == s.pos && s.id != x.id)) throw new NotImplementedException();
 
-            return this.Stars.Where(x => x.computed && x.id >= min && x.id <= max)
+            return this.Stars.Where(x => x.Computed && x.id >= min && x.id <= max)
                 .OrderBy(x => x.id).ToArray();
         }
 
@@ -150,6 +145,7 @@ namespace ClusterSim.ClusterLib
         {
             var rand = new Random();
             var acc = new Vector();
+            
 
             foreach (var s in this.Stars)
                 if (s.id != this.Stars[id].id)
@@ -157,9 +153,9 @@ namespace ClusterSim.ClusterLib
 
             double bacc = acc.distance(); // magnitude|x| of the vector
             double v = Math.Sqrt(
-                bacc * Math.Sqrt(
-                    Gravitation * this.Stars[id].GetMass()
-                    / bacc)); // Velocity=Squareroot(|acc|*r) r=Squareroot((G*m)/|acc|)
+                bacc * this.Stars[id].Pos.distance());/*Math.Sqrt(
+                    Gravitation * (mass - this.Stars[id].Mass)
+                    / bacc)); // Velocity=Squareroot(|acc|*r) r=Squareroot((G*m)/|acc|)*/
 
             double x1 = 2 * rand.NextDouble() - 1; // x1 = random -1,1
             double x2 = 2 * rand.NextDouble() - 1; // x2 = random -1,1
@@ -174,32 +170,23 @@ namespace ClusterSim.ClusterLib
 
         private void Integrate(int cstart, int end, Misc.Method method)
         {
-            // as RK4
-            //Thread.CurrentThread.Name = "working";
-            /*int i = 0;
-            try
-            {
-                bool ready;
-                //do
-                //{*/
-            // while (!(cstart < Stars.Count && cstart < OldStars.Count))
-            // cstart = 0;
-            Console.WriteLine($"cstart: {cstart}");
-
+            
             for (int i = cstart; i <= end; i++)
             {
                 if (end == this.Stars.Count) return;
 
                 var s = this.Stars[i];
-                if (!s.computed)
+                if (!s.Computed)
                 {
-                    s.computed = true;
+                    s.Computed = true;
                     if (!s.dead)
                         try
                         {
                             var tempInst = new ConcurrentStack<int>();
                             GetInstruction(s.Pos, s.id, this.boxes[0], ref tempInst);
                             this.Instructions[s.id] = tempInst.ToList();
+
+                            var oldAcc = s.Acc;
 
                             switch (method)
                             {
@@ -210,9 +197,18 @@ namespace ClusterSim.ClusterLib
                                 case Misc.Method.Rk5:
                                     this.Rk5(ref s);
                                     break;
+                                case Misc.Method.Euler:
+                                    this.Euler(ref s);
+                                    break;
+                            }
+                            if (!oldAcc.IsNull())
+                            {
+                                var change = (oldAcc - s.Acc).distance();
+                                var old = s.Acc.distance();
+                                s.DAcc = change / old;
                             }
 
-                            s.Print();
+                            //s.Print();
                         }
                         catch (DivideByZeroException)
                         {
@@ -232,6 +228,7 @@ namespace ClusterSim.ClusterLib
             var f = this.Dt / 6 * (ka + 2 * kb + 2 * kc + kd); // calculate resulting Vector
             s.Pos = s.Pos + f.ToVector(0);
             s.Vel = s.Vel + f.ToVector(1);
+            s.Acc = ka.ToVector(1) / this.Dt;
             s.Print();
             return s;
         }
@@ -248,7 +245,7 @@ namespace ClusterSim.ClusterLib
                          s.id);
 
             var f = 5.0 / 48 * ka + 27.0 / 56 * kb + 125.0 / 336 * kc + 1.0 / 24 * kd;
-
+            s.Acc = ka.ToVector(1) / this.Dt;
             s.Pos += f.ToVector(0);
             s.Vel += f.ToVector(1);
             return s;
@@ -260,6 +257,7 @@ namespace ClusterSim.ClusterLib
             var f = this.Dt * this.F(star, s.id);
             s.Pos += f.ToVector(0);
             s.Vel += f.ToVector(1);
+            s.Acc = f.ToVector(1) / this.Dt;
             return s;
         }
 

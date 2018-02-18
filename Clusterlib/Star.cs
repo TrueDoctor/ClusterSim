@@ -5,8 +5,6 @@
     [Serializable]
     public class Star : IMassive
     {
-        public bool computed = false;
-
         private Vector acc = new Vector();
 
         private int Id;
@@ -18,8 +16,7 @@
 
         public Star()
         {
-        }
- // empty constructor
+        } // empty constructor
 
         public Star(int id)
         {
@@ -27,8 +24,7 @@
             this.Pos.init();
             this.Vel.init();
             this.Mass = 0;
-        }
- // constructor Create a initialized star from id
+        } // constructor Create a initialized star from id
 
         public Star(
             double[] pos,
@@ -79,6 +75,12 @@
 
         public bool dead { get; set; }
 
+        public bool Computed { get; set; } = false;
+
+        public Vector Acc { get; set; } = new Vector();
+
+        public double DAcc { get; set; } = 0;
+
         public int id
         {
             get => this.Id;
@@ -125,23 +127,11 @@
         public Star Clone()
         {
             // clone method to prevent shallow copys
-            var clone = new Star(this.Pos, this.Vel, this.Mass, this.id, this.dead);
+            var clone = new Star(this.Pos, this.Vel, this.Mass, this.id, this.dead) {DAcc = this.DAcc, Acc = this.Acc};
 
             return clone;
         }
-
-        public Star Deserialize(byte[] input)
-        {
-            var vec = new byte[24];
-            Array.Copy(input, vec, 24);
-            this.Pos.Deserialize(vec);
-            Array.Copy(input, 24, vec, 0, 24);
-            this.Vel.Deserialize(vec);
-            this.Mass = BitConverter.ToDouble(input, 48);
-            this.id = BitConverter.ToInt32(input, 56);
-            return this;
-        }
-
+        
         public double GetMass()
         {
             // return mass
@@ -177,12 +167,29 @@
 
         public byte[] Serialize()
         {
-            var temp = new byte[60];
+            var temp = new byte[92];
             Array.Copy(this.Pos.Serialize(), 0, temp, 0, 24);
             Array.Copy(this.Vel.Serialize(), 0, temp, 24, 24);
-            Array.Copy(BitConverter.GetBytes(this.Mass), 0, temp, 48, 8);
-            Array.Copy(BitConverter.GetBytes(this.dead ? -(this.id + 1) : this.id), 0, temp, 56, 4);
+            Array.Copy(this.Acc.Serialize(), 0, temp, 48, 24);
+            Array.Copy(BitConverter.GetBytes(this.Mass), 0, temp, 72, 8);
+            Array.Copy(BitConverter.GetBytes(this.DAcc), 0, temp, 80, 8);
+            Array.Copy(BitConverter.GetBytes(this.dead ? -(this.id + 1) : this.id), 0, temp, 88, 4);
             return temp;
+        }
+
+        public Star Deserialize(byte[] input)
+        {
+            var vec = new byte[24];
+            Array.Copy(input, vec, 24);
+            this.Pos.Deserialize(vec);
+            Array.Copy(input, 24, vec, 0, 24);
+            this.Vel.Deserialize(vec);
+            Array.Copy(input, 48, vec, 0, 24);
+            this.Vel.Deserialize(vec);
+            this.Mass = BitConverter.ToDouble(input, 72);
+            this.DAcc = BitConverter.ToDouble(input, 80);
+            this.id = BitConverter.ToInt32(input, 88);
+            return this;
         }
 
         public string ToCsv()

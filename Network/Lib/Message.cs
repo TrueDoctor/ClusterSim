@@ -67,11 +67,11 @@ namespace ClusterSim.Net.Lib
             this.min = BitConverter.ToInt32(input, 8);
             this.max = BitConverter.ToInt32(input, 12);
             this.dt = BitConverter.ToInt32(input, 16);
-            var star = new byte[60];
+            var star = new byte[92];
 
             for (var i = 0; i < this.count; i++)
             {
-                Array.Copy(input, i * 60 + 20, star, 0, 60);
+                Array.Copy(input, i * 92 + 20, star, 0, 92);
                 var s = new Star().Deserialize(star);
                 this.Stars[s.id] = s.Clone();
                 DStars.Add(this.Stars[s.id]);
@@ -82,13 +82,13 @@ namespace ClusterSim.Net.Lib
         public byte[] Serialize(int count)
         {
             this.count = count;
-            var output = new byte[count * 60 + 20];
+            var output = new byte[count * 92 + 20];
             Array.Copy(BitConverter.GetBytes(this.step), 0, output, 0, 4);
             Array.Copy(BitConverter.GetBytes(count), 0, output, 4, 4);
             Array.Copy(BitConverter.GetBytes(this.min), 0, output, 8, 4);
             Array.Copy(BitConverter.GetBytes(this.max), 0, output, 12, 4);
             Array.Copy(BitConverter.GetBytes(this.dt), 0, output, 16, 4);
-            for (var i = 0; i < count; i++) Array.Copy(this.Stars[i].Serialize(), 0, output, i * 60 + 20, 60);
+            for (var i = 0; i < count; i++) Array.Copy(this.Stars[i].Serialize(), 0, output, i * 92 + 20, 92);
             return output;
         }
     }

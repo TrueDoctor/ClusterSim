@@ -34,7 +34,7 @@ namespace Client.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("192.168.2.102")]
+        [global::System.Configuration.DefaultSettingValueAttribute("192.168.2.42")]
         public string IP {
             get {
                 return ((string)(this["IP"]));

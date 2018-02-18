@@ -59,6 +59,7 @@
     <Compile Include="Analysis\Statistics.cs" />
     <Compile Include="Box.cs" />
     <Compile Include="EnumerableExtension.cs" />
+    <Compile Include="SubCluster.cs" />
     <Compile Include="Visualization\EnumerableExtension.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Analysis\GnuPlot.cs" />

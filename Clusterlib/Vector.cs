@@ -3,7 +3,8 @@ using System.Linq;
 
 namespace ClusterSim.ClusterLib
 {
-    [Serializable]
+    using System.Windows.Forms;
+
     public class Vector
     {
         public double[] Vec = new double[3];
@@ -100,7 +101,8 @@ namespace ClusterSim.ClusterLib
 
         public static bool operator ==(Vector a, Vector b)
         {
-            return (Math.Abs(a.vec[0] - b.vec[0]) < 0.000000001 && Math.Abs(a.vec[1] - b.vec[1]) < 0.000000001 && Math.Abs(a.vec[2] - b.vec[2]) < 0.000000001) ? true : false;
+            return Math.Abs(a.vec[0] - b.vec[0]) < 1e-200 && Math.Abs(a.vec[1] - b.vec[1]) < 1e-200 && Math.Abs(a.vec[2] - b.vec[2]) < 1e-200;
+            //return (a-b).Vec.All(d => !(Math.Abs(d) < 1e-15));
         }
 
         public override bool Equals(System.Object obj)
@@ -271,7 +273,7 @@ namespace ClusterSim.ClusterLib
 
         public bool IsNull()
         {
-            return this.Vec.All(d => !(Math.Abs(d) < 0.000000000001));
+            return this.Vec.All(d => Math.Abs(d) < 1e-200);
         }
 
 

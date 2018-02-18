@@ -43,7 +43,7 @@ namespace ClusterSim.Standalone
                 rtable = Console.ReadLine();
             }
             int last = 0;
-            int year, saveInterval = 100;
+            int year, saveInterval = 1;
             Console.WriteLine("\nLeer lassen, für gleiche Liste, oder Speichern nach: ");
             string wtable = Console.ReadLine();
 
@@ -73,17 +73,28 @@ namespace ClusterSim.Standalone
             Key.Start();
             StarCluster cluster = new StarCluster(rtable, wtable, last, dt); // instatiate Starcluster
 
+
+            var time = 0d;
             for (int i = (last * saveInterval * 365) + 1;
-                 !abort; i++) 
+                 !abort; i++)
             {
+                cluster.Dt = dt;
                 cluster.DoStep(i, 0, cluster.Stars.Count - 1, Misc.Method.Rk5);
+                var maxDAcc = cluster.Stars.Max(x => x.DAcc);
+                if (maxDAcc > 0)
+                {
+                    dt += ((dt * 0.00004 / maxDAcc) - dt) / 2;
+                }
+                time += dt;
+                //Console.WriteLine(maxDAcc);
+
                 broadcaster.SendToChannel("steps", $"i{i}");
 
                 // send "i"+step in channel steps
                 // Console.WriteLine("\n");//+ i + "\n ");
                 cluster.Stars.MoveCenter(cluster.Stars.GetCenter());
                 
-                if (Math.Ceiling((i - 1) * dt / 365) < Math.Ceiling(i * dt / 365) && ++year % saveInterval == 0)
+                if (Math.Ceiling((time - dt) / 365) < Math.Ceiling(time / 365) && ++year % saveInterval == 0)
                 {
                     Console.WriteLine($@"Exportiere Daten... Jahr: {(int)i * dt / 365} = {year}");
                     while (!SQL.addRows(cluster.Stars, year / saveInterval, wtable))
@@ -94,20 +105,7 @@ namespace ClusterSim.Standalone
             }
 
             Key.Abort();
-
-            while (cluster.Savethreads.FindAll(x => x.IsAlive).Count > 1)
-                Console.WriteLine(
-                    @"Warte auf die Beendigung von {0} Speicher Threads",
-                    cluster.Savethreads.FindAll(x => x.IsAlive).Count);
-            Thread t = cluster.Savethreads.Find(x => x.IsAlive);
-            try
-            {
-                Console.WriteLine(t.ThreadState.ToString());
-                Console.WriteLine(t.Name);
-                while (t.IsAlive) ;
-                Thread.Sleep(10);
-            }
-            catch { }
+            
             SQL.order(wtable);
             broadcaster.SendToChannel("steps", "abort");
 
