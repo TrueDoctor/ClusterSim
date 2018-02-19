@@ -13,11 +13,16 @@ namespace ClusterSim.Standalone
     public class Program
     {
         private static bool abort = false;
-        static void Main(string[] args)
+
+        public static int SaveInterval { get; set; } = 1;
+
+        public static double MinDAcc { get; set; } = 0.0003;
+
+        public static void Main(string[] args)
         {
-            XDMessagingClient client = new XDMessagingClient(); //https://github.com/TheCodeKing/XDMessaging.Net
+            XDMessagingClient client = new XDMessagingClient(); // https://github.com/TheCodeKing/XDMessaging.Net
             IXDBroadcaster broadcaster = client.Broadcasters.GetBroadcasterForMode(XDTransportMode.HighPerformanceUI);
-            string rtable = "";
+            string rTable = string.Empty;
             Console.ForegroundColor = ConsoleColor.DarkRed;
 
             if (args.Length > 0)//if the program gets called with arguments
@@ -29,28 +34,28 @@ namespace ClusterSim.Standalone
                     foreach (string s in args)
                     {
                         if (list.Contains(s))//check if argument is a valid table name
-                            rtable = s;
+                            rTable = s;
                         
-                        Console.WriteLine(rtable);
+                        Console.WriteLine(rTable);
                     }
                 }
             }
 
-            if (rtable == "")//if argument handover failed or was not  given
+            if (rTable == "")//if argument handover failed or was not  given
             {
                 Console.WriteLine("Auswahltabelle: ");//input name maualy 
-                rtable = Console.ReadLine();
+                rTable = Console.ReadLine();
             }
+
             int last = 0;
-            int year, saveInterval = 1;
             Console.WriteLine("\nLeer lassen, für gleiche Liste, oder Speichern nach: ");
-            string wtable = Console.ReadLine();
+            string wTable = Console.ReadLine();
 
 
-            if (wtable == "")
+            if (wTable == "")
             {
-                wtable = rtable;
-                last = SQL.lastStep(rtable);//get last step of given table
+                wTable = rTable;
+                last = SQL.lastStep(rTable);//get last step of given table
             }
             
 
@@ -62,7 +67,7 @@ namespace ClusterSim.Standalone
 
             int n = 2;//Convert.ToInt32(Console.ReadLine());
 
-            year = (last*saveInterval);
+            int year = (last * SaveInterval);
             Console.WriteLine(@"Warte auf die Beendigung von {0} Speicher Threads", Math.Round((dt * n) / 365, 2));
             Thread.Sleep(2000);
             broadcaster.SendToChannel("steps", "s" + n);// send max step to steps channel
@@ -70,35 +75,36 @@ namespace ClusterSim.Standalone
 
             Thread Key = new Thread(listen);
             Key.Start();
-            var cluster = new StarCluster(SQL.readStars(rtable, 0), dt); // instatiate Starcluster
+            var cluster = new StarCluster(SQL.readStars(rTable, 0), dt); // instatiate Starcluster
 
 
             var time = 0d;
-            for (int i = (last * saveInterval * 365) + 1;
+            for (int i = (last * SaveInterval * 365) + 1;
                  !abort; i++)
             {
                 cluster.Dt = dt;
-                cluster.DoStep(0, 0, cluster.Stars.Count - 1, Misc.Method.Rk5);
+                cluster.DoStep(Misc.Method.Rk5, 0);
                 var maxDAcc = cluster.Stars.Max(x => x.DAcc);
                 if (maxDAcc > 0)
                 {
-                    dt += ((dt * 0.0006 / maxDAcc) - dt) / 2;
+                    dt += ((dt * MinDAcc / maxDAcc) - dt) / 2;
+
+                    //dt = dt * 0.0003 / maxDAcc;
                 }
 
                 time += dt;
-                //Console.WriteLine(maxDAcc);
 
-                broadcaster.SendToChannel("steps", $"i{i}");
+                //broadcaster.SendToChannel("steps", $"i{i}");
 
                 // send "i"+step in channel steps
                 // Console.WriteLine("\n");//+ i + "\n ");
                 cluster.Stars.MoveCenter(cluster.Stars.GetCenter());
                 
 
-                if (Math.Ceiling((time - dt) / 365) < Math.Ceiling(time / 365) && ++year % saveInterval == 0)
+                if (Math.Ceiling((time - dt) / 365) < Math.Ceiling(time / 365) && ++year % SaveInterval == 0)
                 {
                     Console.WriteLine($@"Exportiere Daten... Jahr: {(int)i * dt / 365} = {year}");
-                    while (!SQL.addRows(cluster.Stars, year / saveInterval, wtable))
+                    while (!SQL.addRows(cluster.Stars, year / SaveInterval, wTable))
                     {
                         Thread.Sleep(100);
                     }
@@ -107,13 +113,13 @@ namespace ClusterSim.Standalone
 
             Key.Abort();
             
-            SQL.order(wtable);
+            SQL.order(wTable);
             broadcaster.SendToChannel("steps", "abort");
 
             Console.WriteLine("Direkt in Dataview öffnen? (y/n)");
             string view = Console.ReadLine();                         //wait for input
             if (view == "y" || view == "Y")
-                System.Diagnostics.Process.Start(@"DataView.exe", wtable);
+                System.Diagnostics.Process.Start(@"DataView.exe", wTable);
         }
 
         private static void listen()

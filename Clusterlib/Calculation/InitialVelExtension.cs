@@ -31,7 +31,7 @@
                 x3 = (x1 * acc.vec[0] + x2 * acc.vec[1])
                      / -acc.vec[2]; // x3= (x1*acc1)/-acc3 + (x2*acc2)/acc3 generate orthogonal vector by using the dot product
 
-            var vel = new Vector(x1, x2, x3);
+            var vel = new Vector(new double[] { x1, x2, x3});
             cluster.Stars[id].Vel.add(vel.scale(v)); // scale vector to match the V magnitude and add to the random variance
         }
     }

@@ -145,30 +145,33 @@
             GnuPlot.HoldOn();
             //GnuPlot.Set("logscale y 10");
 
-            GnuPlot.Plot(await Task.Run(() => this.GetTimes(0)), "title 'Rechenzeit n^2' w linespoints");
-            GnuPlot.Plot(await Task.Run(() => this.GetTimes(0.5)), "title 'Rechenzeit nlog(n)' w linespoints");
+            GnuPlot.Plot(await Task.Run(() => this.GetTimes(new ThreadCluster())), "title 'Rechenzeit normal 1 core' w linespoints");
+            GnuPlot.Plot(await Task.Run(() => this.GetTimes(new ThreadCluster(), 4)), "title 'Rechenzeit normal 4 core' w linespoints");
+            GnuPlot.Plot(await Task.Run(() => this.GetTimes(new StarCluster())), "title 'Rechenzeit Box 1 core' w linespoints");
+            GnuPlot.Plot(await Task.Run(() => this.GetTimes(new StarCluster(), 4)), "title 'Rechenzeit Box 4 core' w linespoints");
+            //GnuPlot.Plot(await Task.Run(() => this.GetTimes(0.5)), "title 'Rechenzeit nlog(n)' w linespoints");
 
             GnuPlot.HoldOff();
         }
 
-        private double[] GetTimes(double coe)
+        private double[] GetTimes(ThreadCluster cluster, int processors = 1)
         {
             var times = new List<double>();
             var watch = new System.Diagnostics.Stopwatch();
+            cluster.Stars.Add(Misc.randomize(10, 10, 10, 10, 0));
 
-            for (int i = 5; i < 805; i++)
+            for (int i = 1; i < 500; i++)
             {
-                var cluster = new StarCluster(coe: coe);
-
-                for (int j = 0; j < i; j++)
-                {
-                    cluster.Stars.Add(Misc.randomize(10, 10, 10, 10, j));
-                }
-
+                cluster.Stars.Add(Misc.randomize(10, 10, 10, 10, i));
+                
                 watch.Start();
-                cluster.DoStep(1, 0, i - 1, Misc.Method.Rk5);
+                for (int j = 0; j < 10; j++)
+                {
+                    cluster.DoStep(Misc.Method.Rk5, processors);
+                }
+                
                 watch.Stop();
-                times.Add(watch.ElapsedTicks);
+                times.Add(watch.ElapsedMilliseconds / 10.0);
                 watch.Reset();
             }
             return times.ToArray();

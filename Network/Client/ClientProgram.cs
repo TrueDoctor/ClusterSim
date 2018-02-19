@@ -113,7 +113,7 @@ namespace Client
                     min = msg.min;
                     max = msg.max;
                     
-                    var NewStars = Cluster.DoStep(Environment.ProcessorCount, min, max, Misc.Method.Rk5);
+                    var NewStars = Cluster.DoStep(Misc.Method.Rk5, Environment.ProcessorCount, min, max);
 
                     // if(NewStars.Count)
                     Console.WriteLine(step);

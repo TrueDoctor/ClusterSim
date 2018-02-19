@@ -82,7 +82,7 @@
                     {
                         if (z.Count() != 0)
                         {
-                            tBox.ids.Add(this.AddBox(ref workBoxes, ref boxId, pos + size / 2 * new Vector(i, j, k), size / 2, z));
+                            tBox.ids.Add(this.AddBox(ref workBoxes, ref boxId, pos + size / 2 * new Vector(new double[] {i, j, k}), size / 2, z));
                         }
 
                         z = y.Except(z).ToList();

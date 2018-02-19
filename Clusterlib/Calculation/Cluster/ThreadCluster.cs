@@ -5,6 +5,7 @@ using System.Linq;
 namespace ClusterSim.ClusterLib.Calculation.Cluster
 {
     using System.Threading;
+    using System.Threading.Tasks;
 
     using global::ClusterSim.ClusterLib.Utility;
 
@@ -20,60 +21,64 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
         {
         }
 
-        public Star[] DoStep(int processors, int min, int max, Misc.Method m)
+        public Star[] DoStep(Misc.Method m, int processors, int min = 0, int max = 0)
         {
             this.Instructions = new List<int>[this.Stars.Count];
             this.MassLayer.Clear();
-            
-            foreach (var s in this.Stars) 
+
+            foreach (var s in this.Stars)
             {
                 s.Computed = false; // reset computation status
                 this.MassLayer.Add(s);
             }
 
+            max = max == 0 ? this.Stars.Count - 1 : max;
+
             this.CalcBoxes();
 
-            if (processors > 1)
-            {
-                int perCore = (max - min + 1) / processors; // divide the cluster in equal parts
-                int left = (max - min + 1) % processors; // calc remainder
-                var threads = new List<Thread>();
+            Parallel.For(min, max, i => Integrate(i, Misc.Method.Rk5));
 
-                int start = min;
-                for (var i = 0; i < (processors < max - min ? processors : max - min + 1); i++)
-                {
-                    int end = start + perCore;
-                    if (left > 0)
-                    {
-                        end++;
-                        left--;
-                    }
+            //this.Integrate(min, max, m);
 
-                    threads.Add(
-                        new Thread(
-                            delegate()
-                                {
-                                    this.Integrate(min, max, m);
-                                }));
-
-                    threads.Last().Priority = ThreadPriority.Highest;
-                    threads.Last().Name = $"Calc{start}-{end - 1}";
-                    threads.Last().Start();
-
-                    start = end;
-                }
-
-                while (threads.Exists(x => x.IsAlive) || this.Stars.Exists(x => !x.Computed && x.id >= min && x.id <= max))
-                {
-                    Thread.Sleep(10);
-                }
-            }
-            else
-            {
-                this.Integrate(min, max, m);
-            }
             return this.Stars.Where(x => x.Computed && x.id >= min && x.id <= max)
                 .OrderBy(x => x.id).ToArray();
+        }
+
+        protected virtual void Integrate(int id, Misc.Method method)
+        {
+            var s = this.Stars[id];
+
+            try
+            {
+                this.GetInstruction(s);
+
+                var oldAcc = s.Acc;
+
+                switch (method)
+                {
+                    case Misc.Method.Rk4:
+                        this.Rk4(ref s);
+                        break;
+
+                    case Misc.Method.Rk5:
+                        this.Rk5(ref s);
+                        break;
+                    case Misc.Method.Euler:
+                        this.Euler(ref s);
+                        break;
+                }
+
+                if (!oldAcc.IsNull())
+                {
+                    var change = (oldAcc - s.Acc).distance();
+                    var old = s.Acc.distance();
+                    s.DAcc = change / old;
+                }
+            }
+            catch (DivideByZeroException)
+            {
+                s.dead = true;
+            }
         }
     }
 }

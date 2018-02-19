@@ -29,7 +29,7 @@ namespace ClusterSim.Dataview
         Bitmap Canvas;
         int c = 0;
         //bool three = false;
-        bool trace, towD, threeD, fancy = false;//trace the star position
+        bool trace, towD, threeD, fancy, refresh = true;//trace the star position
         double zoom = 10;
         public ViewForm()
         {
@@ -57,6 +57,7 @@ namespace ClusterSim.Dataview
                 while (res == DialogResult.OK && !(list.Contains(name)));
                 table = name;//table = result
             }
+
             step = SQL.firstStep(table);//initialize step
 
         }
@@ -106,8 +107,10 @@ namespace ClusterSim.Dataview
                     case Keys.F:
                         fancy = !fancy;  //switch Fancy graphic mode
                         this.towD = false;
-                        //this.Box.Width = 16000;
-                        //this.Box.Height = 9000;
+                        break;
+
+                    case Keys.R:
+                        this.refresh = !this.refresh;  //switch refreshing of max step
                         break;
 
                     case Keys.D2:
@@ -124,8 +127,7 @@ namespace ClusterSim.Dataview
                             step = Convert.ToInt32(inputstep);
                         import(step);
                         break;
-
-
+                        
                     case Keys.S://speicherung eines Frames
                         SavePicture();
                         break;
@@ -234,7 +236,7 @@ namespace ClusterSim.Dataview
             Box.Refresh();
             Box.Cursor = Cursors.Cross;
             if (Stars != null)
-                if (Stars.Count <= 1000)
+                if (Stars.Count <= 1000 && this.refresh)
                     c = SQL.lastStep(table);
             Text = String.Format("{0}   Schritt: {1} von {2}", table, step, c);//change caption
 

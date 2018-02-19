@@ -1,6 +1,7 @@
 ﻿namespace ClusterSim.ClusterLib.Calculation.Cluster
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
     
@@ -27,6 +28,10 @@
         {
             // constructor 
             this.Dt = dt;
+            if (this.Stars == null)
+            {
+                this.Stars = new List<Star>();
+            }
         }
 
         public List<int>[] Instructions { get; set; }
@@ -35,12 +40,14 @@
 
         public double Dt { get; set; } // delta time
 
-        public Star[] DoStep(int min, int max, Misc.Method m)
+        public virtual Star[] DoStep(Misc.Method m, int min = 0, int max = 0)
         {
             if (this.Stars == null)
             {
                 return null;
             }
+
+            max = max == 0 ? this.Stars.Count - 1 : max;
 
             this.Instructions = new List<int>[this.Stars.Count];
 
@@ -63,10 +70,10 @@
         {
             var tempDirection = a - b.pos;
 
-            if (a == b.pos)
+            /*if (a == b.pos)
             {
                 throw new DivideByZeroException();
-            }
+            }*/
 
             double d = 1 / tempDirection.distance(); // Sterne und Weltraum Grundlagen der Himmelsmechanik S.91
 
@@ -132,14 +139,16 @@
 
         protected virtual void GetInstruction(Star s)
         {
-            this.Instructions[s.id] = new List<int>();
+            var tempInst = new ConcurrentStack<int>();
             for (int i = 0; i < this.Stars.Count; i++)
             {
                 if (i != s.id)
                 {
-                    this.Instructions[s.id].Add(i);
+                    tempInst.Push(i);
                 }
             }
+
+            this.Instructions[s.id] = tempInst.ToList();
         }
 
         protected virtual void CalcBoxes()
