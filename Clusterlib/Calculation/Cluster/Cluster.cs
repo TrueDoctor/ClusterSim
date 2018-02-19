@@ -59,7 +59,7 @@
                 .OrderBy(x => x.id).ToArray();
         }
         
-        public Vector CalcAcc(Vector a, IMassive b, int id = -1, double mass = 0)
+        public Vector CalcAcc(Vector a, IMassive b,  double mass)
         {
             var tempDirection = a - b.pos;
 
@@ -71,11 +71,7 @@
             double d = 1 / tempDirection.distance(); // Sterne und Weltraum Grundlagen der Himmelsmechanik S.91
 
             double acceleration = b.mass * Gravitation * Math.Pow(d, 3);
-            if (mass == 0)
-            {
-                mass = this.Stars[id].GetMass();
-            }
-
+            
             acceleration = b.mass / mass * acceleration;
             var accVec = b.pos - a;
 
@@ -198,7 +194,7 @@
                 int temp = this.Instructions[id][j];
                 if (!this.MassLayer[temp].dead && !this.MassLayer[id].dead && temp != id)
                 {
-                    acc.add(this.CalcAcc(star.ToVector(0), this.MassLayer[temp], id, temp)); // add all acceleration vectors
+                    acc.add(this.CalcAcc(star.ToVector(0), this.MassLayer[temp], this.MassLayer[id].mass)); // add all acceleration vectors
                 }
             }
 

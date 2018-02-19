@@ -70,7 +70,7 @@ namespace ClusterSim.Standalone
 
             Thread Key = new Thread(listen);
             Key.Start();
-            var cluster = new Cluster(SQL.readStars(rtable, 0), dt); // instatiate Starcluster
+            var cluster = new StarCluster(SQL.readStars(rtable, 0), dt); // instatiate Starcluster
 
 
             var time = 0d;
@@ -78,11 +78,11 @@ namespace ClusterSim.Standalone
                  !abort; i++)
             {
                 cluster.Dt = dt;
-                cluster.DoStep(0, cluster.Stars.Count - 1, Misc.Method.Rk5);
+                cluster.DoStep(0, 0, cluster.Stars.Count - 1, Misc.Method.Rk5);
                 var maxDAcc = cluster.Stars.Max(x => x.DAcc);
                 if (maxDAcc > 0)
                 {
-                    dt += ((dt * 0.00004 / maxDAcc) - dt) / 2;
+                    dt += ((dt * 0.0006 / maxDAcc) - dt) / 2;
                 }
 
                 time += dt;
