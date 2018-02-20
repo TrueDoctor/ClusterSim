@@ -91,7 +91,11 @@ namespace Client
                     ready = true;
 
                     var header = new byte[20];
-                    if (serverStream.Read(header, 0, 20) != 20) throw new Exception("header zu kurz");
+                    if (serverStream.Read(header, 0, 20) != 20)
+                    {
+                        throw new Exception("header zu kurz");
+                    }
+
                     int size = BitConverter.ToInt32(header, 4);
                     var read = 0;
                     var data = new byte[size * 92 + 20];
@@ -113,15 +117,15 @@ namespace Client
                     min = msg.min;
                     max = msg.max;
                     
-                    var NewStars = Cluster.DoStep(Misc.Method.Rk5, Environment.ProcessorCount, min, max);
+                    var newStars = Cluster.DoStep(Misc.Method.Rk5, multiThreading: true, min: min, max: max);
 
                     // if(NewStars.Count)
                     Console.WriteLine(step);
 
                     // if (Cluster.Stars.Count != 120)
                     // return;
-                    var message = new Message(step, 0, min, max, NewStars).Serialize(NewStars.Length);
-                    serverStream.Write(message, 0, NewStars.Length * 92 + 20);
+                    var message = new Message(step, 0, min, max, newStars).Serialize(newStars.Length);
+                    serverStream.Write(message, 0, newStars.Length * 92 + 20);
                     serverStream.Flush();
                 }
             }

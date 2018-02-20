@@ -35,9 +35,6 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
-    <Reference Include="System.Numerics.Vectors, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Numerics.Vectors.4.3.0\lib\portable-net45+win8+wp8+wpa81\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -63,8 +60,8 @@
     <Compile Include="Calculation\Box.cs" />
     <Compile Include="Calculation\Cluster\BoxCluster.cs" />
     <Compile Include="Calculation\Cluster\Cluster.cs" />
+    <Compile Include="Calculation\Cluster\ICluster.cs" />
     <Compile Include="Calculation\InitialVelExtension.cs" />
-    <Compile Include="Calculation\Cluster\ThreadCluster.cs" />
     <Compile Include="Utility\CenterEnumerableExtension.cs" />
     <Compile Include="Calculation\Cluster\SubCluster.cs" />
     <Compile Include="Visualization\EnumerableExtension.cs" />

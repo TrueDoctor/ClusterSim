@@ -4,15 +4,14 @@
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
-    
+    using System.Threading.Tasks;
+
     using global::ClusterSim.ClusterLib.Utility;
 
-    public class Cluster
+    public class Cluster : ICluster
     {
         // fields
         public const double Gravitation = 0.0002959122083; // 0.0000000000667384;//gravitation constant in AE^3 / Sun-mass * Day^2
-
-        protected readonly List<IMassive> MassLayer = new List<IMassive>();
 
         public Cluster(List<Star> stars, double dt = 1) : this(dt)
         {
@@ -40,32 +39,38 @@
 
         public double Dt { get; set; } // delta time
 
-        public virtual Star[] DoStep(Misc.Method m, int min = 0, int max = 0)
+        public List<IMassive> MassLayer { get; set; } = new List<IMassive>();
+
+        public Star[] DoStep(Misc.Method m, bool multiThreading, int min = 0, int max = 0)
         {
-            if (this.Stars == null)
+            this.Instructions = new List<int>[this.Stars.Count];
+            this.MassLayer.Clear();
+
+            foreach (var s in this.Stars)
             {
-                return null;
+                s.Computed = false; // reset computation status
+                this.MassLayer.Add(s);
             }
 
             max = max == 0 ? this.Stars.Count - 1 : max;
 
-            this.Instructions = new List<int>[this.Stars.Count];
-
-            this.MassLayer.Clear();
-            foreach (var s in this.Stars)
-            {
-                this.MassLayer.Add(s);
-                s.Computed = false;
-            }
-            
             this.CalcBoxes();
+            if (multiThreading)
+            {
+                Parallel.For(min, max + 1, i => this.Integrate(i, Misc.Method.Rk5));
+            }
+            else
+            {
+                for (int i = 0; i < max + 1; i++)
+                {
+                    this.Integrate(i, Misc.Method.Rk5);
+                }
+            }
 
-            this.Integrate(min, max, m);
-            
             return this.Stars.Where(x => x.Computed && x.id >= min && x.id <= max)
                 .OrderBy(x => x.id).ToArray();
         }
-        
+
         public Vector CalcAcc(Vector a, IMassive b,  double mass)
         {
             var tempDirection = a - b.pos;
@@ -86,58 +91,45 @@
             return accVec;
         }
 
-        protected virtual void Integrate(int cStart, int end, Misc.Method method)
+        protected virtual void Integrate(int id, Misc.Method method)
         {
-            for (int i = cStart; i <= end; i++)
+            var s = this.Stars[id];
+
+            try
             {
-                var s = this.Stars[i];
+                this.GetInstruction(s);
 
-                if (s.Computed)
+                var oldAcc = s.Acc;
+
+                switch (method)
                 {
-                    continue;
+                    case Misc.Method.Rk4:
+                        this.Rk4(ref s);
+                        break;
+
+                    case Misc.Method.Rk5:
+                        this.Rk5(ref s);
+                        break;
+                    case Misc.Method.Euler:
+                        this.Euler(ref s);
+                        break;
                 }
 
-                s.Computed = true;
-                if (s.dead)
+                if (!oldAcc.IsNull())
                 {
-                    continue;
-                }
-
-                try
-                {
-                    this.GetInstruction(s);
-
-                    var oldAcc = s.Acc;
-
-                    switch (method)
-                    {
-                        case Misc.Method.Rk4:
-                            this.Rk4(ref s);
-                            break;
-
-                        case Misc.Method.Rk5:
-                            this.Rk5(ref s);
-                            break;
-                        case Misc.Method.Euler:
-                            this.Euler(ref s);
-                            break;
-                    }
-
-                    if (!oldAcc.IsNull())
-                    {
-                        var change = (oldAcc - s.Acc).distance();
-                        var old = s.Acc.distance();
-                        s.DAcc = change / old;
-                    }
-                }
-                catch (DivideByZeroException)
-                {
-                    s.dead = true;
+                    var change = (oldAcc - s.Acc).distance();
+                    var old = s.Acc.distance();
+                    s.DAcc = change / old;
                 }
             }
+            catch (DivideByZeroException)
+            {
+                s.dead = true;
+            }
         }
+    
 
-        protected virtual void GetInstruction(Star s)
+    protected virtual void GetInstruction(Star s)
         {
             var tempInst = new ConcurrentStack<int>();
             for (int i = 0; i < this.Stars.Count; i++)

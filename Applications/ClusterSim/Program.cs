@@ -7,13 +7,14 @@ using XDMessaging;
 
 namespace ClusterSim.Standalone
 {
+    using ClusterSim.ClusterLib.Analysis;
     using ClusterSim.ClusterLib.Calculation.Cluster;
     using ClusterSim.ClusterLib.Utility;
 
     public class Program
     {
         private static bool abort = false;
-
+        
         public static int SaveInterval { get; set; } = 1;
 
         public static double MinDAcc { get; set; } = 0.0003;
@@ -41,11 +42,15 @@ namespace ClusterSim.Standalone
                 }
             }
 
+            var ana = new Analysis("initial");
+            ana.EfficiencyAnalysis(null, EventArgs.Empty);
+
             if (rTable == "")//if argument handover failed or was not  given
             {
                 Console.WriteLine("Auswahltabelle: ");//input name maualy 
                 rTable = Console.ReadLine();
             }
+            
 
             int last = 0;
             Console.WriteLine("\nLeer lassen, für gleiche Liste, oder Speichern nach: ");
@@ -83,7 +88,7 @@ namespace ClusterSim.Standalone
                  !abort; i++)
             {
                 cluster.Dt = dt;
-                cluster.DoStep(Misc.Method.Rk5, 0);
+                cluster.DoStep(Misc.Method.Rk5, true);
                 var maxDAcc = cluster.Stars.Max(x => x.DAcc);
                 if (maxDAcc > 0)
                 {

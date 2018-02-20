@@ -3,7 +3,6 @@
     using System;
     using System.Linq;
     using ClusterSim.ClusterLib.Utility;
-    using System.Numerics
 
     public class Vector
     {

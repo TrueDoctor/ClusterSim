@@ -7,7 +7,7 @@
 
     using ClusterSim.ClusterLib.Utility;
 
-    public class BoxCluster : ThreadCluster
+    public class BoxCluster : Cluster, ICluster
     {
         // fields
         protected readonly double BoxCoefficient;
@@ -24,10 +24,11 @@
             }
         }
 
-        public BoxCluster(double boxCoefficient, double dt) : base(dt)
+        public BoxCluster(double boxCoefficient  = 0.4, double dt = 1) : base(dt)
         {
             this.BoxCoefficient = boxCoefficient;
         }
+
 
         protected double BoxSize { get; set; }
 
