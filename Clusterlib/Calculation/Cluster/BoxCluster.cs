@@ -4,7 +4,8 @@
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
-    
+
+    using ClusterSim.ClusterLib.Utility;
 
     public class BoxCluster : Cluster, ICluster
     {
