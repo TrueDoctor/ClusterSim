@@ -7,6 +7,8 @@ using XDMessaging;
 
 namespace ClusterSim.Standalone
 {
+    using System.Diagnostics;
+
     using ClusterSim.ClusterLib.Analysis;
     using ClusterSim.ClusterLib.Calculation.Cluster;
     using ClusterSim.ClusterLib.Utility;
@@ -14,8 +16,8 @@ namespace ClusterSim.Standalone
     public class Program
     {
         private static bool abort = false;
-        
-        public static int SaveInterval { get; set; } = 1;
+
+        public static int SaveInterval { get; set; } = 100;
 
         public static double MinDAcc { get; set; } = 0.0003;
 
@@ -26,7 +28,7 @@ namespace ClusterSim.Standalone
             string rTable = string.Empty;
             Console.ForegroundColor = ConsoleColor.DarkRed;
 
-            if (args.Length > 0)//if the program gets called with arguments
+            if (args.Length > 0) // if the program gets called with arguments
             {
                 List<String> list = SQL.readTables();
                 if (list != null)
@@ -36,21 +38,18 @@ namespace ClusterSim.Standalone
                     {
                         if (list.Contains(s))//check if argument is a valid table name
                             rTable = s;
-                        
+
                         Console.WriteLine(rTable);
                     }
                 }
             }
-
-            var ana = new Analysis("initial");
-            ana.EfficiencyAnalysis(null, EventArgs.Empty);
 
             if (rTable == "")//if argument handover failed or was not  given
             {
                 Console.WriteLine("Auswahltabelle: ");//input name maualy 
                 rTable = Console.ReadLine();
             }
-            
+
 
             int last = 0;
             Console.WriteLine("\nLeer lassen, für gleiche Liste, oder Speichern nach: ");
@@ -62,7 +61,7 @@ namespace ClusterSim.Standalone
                 wTable = rTable;
                 last = SQL.lastStep(rTable);//get last step of given table
             }
-            
+
 
             Console.WriteLine("\nDelta t in Tagen: ");
 
@@ -80,7 +79,7 @@ namespace ClusterSim.Standalone
 
             Thread Key = new Thread(listen);
             Key.Start();
-            var cluster = new StarCluster(SQL.readStars(rTable, 0), dt); // instatiate Starcluster
+            var cluster = new SubCluster(SQL.readStars(rTable, last - 1), dt); // instatiate Starcluster
 
 
             var time = 0d;
@@ -92,9 +91,20 @@ namespace ClusterSim.Standalone
                 var maxDAcc = cluster.Stars.Max(x => x.DAcc);
                 if (maxDAcc > 0)
                 {
-                    dt += ((dt * MinDAcc / maxDAcc) - dt) / 2;
-
+                    dt += (dt * MinDAcc / maxDAcc - dt) / 2;
                     //dt = dt * 0.0003 / maxDAcc;
+                    Stopwatch watch = Stopwatch.StartNew();
+
+                    for (int j = 0; j < 10; j++)
+                    {
+                        cluster.FormSubs(cluster.GetSubsetSeeds());
+                    }
+
+                    watch.Stop();
+                    Console.WriteLine(watch.ElapsedMilliseconds / 10.0 /1000.0);
+
+                    // sub.CalcDt();
+                    // sub.GetSubsetSeeds().ForEach(s => Console.Write($"{s}, "));
                 }
 
                 time += dt;
@@ -104,20 +114,20 @@ namespace ClusterSim.Standalone
                 // send "i"+step in channel steps
                 // Console.WriteLine("\n");//+ i + "\n ");
                 cluster.Stars.MoveCenter(cluster.Stars.GetCenter());
-                
+
 
                 if (Math.Ceiling((time - dt) / 365) < Math.Ceiling(time / 365) && ++year % SaveInterval == 0)
                 {
                     Console.WriteLine($@"Exportiere Daten... Jahr: {(int)i * dt / 365} = {year}");
-                    while (!SQL.addRows(cluster.Stars, year / SaveInterval, wTable))
+                    /*while (!SQL.addRows(cluster.Stars, year / SaveInterval, wTable))
                     {
                         Thread.Sleep(100);
-                    }
-                } 
+                    }*/
+                }
             }
 
             Key.Abort();
-            
+
             SQL.order(wTable);
             broadcaster.SendToChannel("steps", "abort");
 

@@ -5,14 +5,15 @@
     using System.Collections.Generic;
     using System.Linq;
     
-
     public class BoxCluster : Cluster, ICluster
     {
         // fields
+        protected const int BoxPivot = 110;
+
         protected readonly double BoxCoefficient;
 
         private List<Box> boxes = new List<Box>();
-        
+
         public BoxCluster(List<Star> stars, double dt = 1, double coe = 0.4) : this(dt, coe)
         {
             this.Stars = stars;
@@ -23,18 +24,23 @@
             }
         }
 
-        public BoxCluster(double boxCoefficient  = 0.4, double dt = 1) : base(dt)
+        public BoxCluster(double boxCoefficient = 0.4, double dt = 1) : base(dt)
         {
             this.BoxCoefficient = boxCoefficient;
         }
-
-
+        
         protected double BoxSize { get; set; }
 
         protected List<Box> Boxes { get => this.boxes; set => this.boxes = value; }
 
         protected override void CalcBoxes()
         {
+            if (this.Stars.Count < BoxPivot)
+            {
+                base.CalcBoxes();
+                return;
+            }
+
             this.BoxSize = this.Stars.Max(x => x.Pos.vec.Max()) - this.Stars.Min(x => x.Pos.vec.Min());
 
             this.Boxes.Clear();
@@ -51,11 +57,16 @@
             this.Boxes = this.Boxes.OrderBy(x => x.id).ToList();
             this.MassLayer.AddRange(this.Boxes);
         }
-
-
+        
         protected override void GetInstruction(Star s)
         {
-            var tempInst = new ConcurrentStack<int>();
+            if (this.Stars.Count < BoxPivot)
+            {
+                base.GetInstruction(s);
+                return;
+            }
+
+            var tempInst = new ConcurrentBag<int>();
             this.GenerateInstruction(s.Pos, s.id, this.Boxes[0], ref tempInst);
             this.Instructions[s.id] = tempInst.ToList();
         }
@@ -82,7 +93,7 @@
                     {
                         if (z.Count() != 0)
                         {
-                            tBox.ids.Add(this.AddBox(ref workBoxes, ref boxId, pos + size / 2 * new Vector(new double[] {i, j, k}), size / 2, z));
+                            tBox.ids.Add(this.AddBox(ref workBoxes, ref boxId, pos + size / 2 * new Vector(new double[] { i, j, k }), size / 2, z));
                         }
 
                         z = y.Except(z).ToList();
@@ -102,8 +113,8 @@
             workBoxes.Add(tBox);
             return tBox.id;
         }
-        
-        private void GenerateInstruction(Vector sPos, int sid, Box box, ref ConcurrentStack<int> ids)
+
+        private void GenerateInstruction(Vector sPos, int sid, Box box, ref ConcurrentBag<int> ids)
         {
             switch (box.ids.Count)
             {
@@ -117,7 +128,7 @@
 
                     if (box.root)
                     {
-                        ids.Push(box.id);
+                        ids.Add(box.id);
                         return;
                     }
 
@@ -126,7 +137,7 @@
 
             if (box.size * box.size / (sPos - box.pos).distance2() < this.BoxCoefficient || box.root)
             {
-                ids.Push(box.id);
+                ids.Add(box.id);
                 return;
             }
 
