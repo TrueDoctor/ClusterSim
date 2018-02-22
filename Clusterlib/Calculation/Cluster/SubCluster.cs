@@ -86,8 +86,20 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
 
             foreach (var list in cluster)
             {
-                bool added = finalClusters.Any(finalCluster => !list.All(x => !finalCluster.Add(x)));
-                if (added)
+                bool added = false;
+                foreach (var finalCluster in finalClusters)
+                {
+                    var workSet = new HashSet<int>();
+                    finalCluster.ToList().ForEach(x => workSet.Add(x));
+                    if (list.Any(x => !workSet.Add(x)))
+                    {
+                        added = true;
+                        list.ForEach(x => finalCluster.Add(x));
+                        break;
+                    }
+                }
+
+                if (added || list.Count == 0)
                 {
                     continue;
                 }
