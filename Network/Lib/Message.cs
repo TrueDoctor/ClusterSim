@@ -27,7 +27,7 @@ namespace ClusterSim.Net.Lib
         
         public int min;
         
-        public int max;
+        public int max; //testchange
 
         public int dt;
         
