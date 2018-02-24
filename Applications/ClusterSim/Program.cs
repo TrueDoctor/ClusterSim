@@ -95,15 +95,15 @@ namespace ClusterSim.Standalone
                     //dt = dt * 0.0003 / maxDAcc;
                     Stopwatch watch = Stopwatch.StartNew();
 
-                    for (int j = 0; j < 10; j++)
+                    for (int j = 0; j < 1; j++)
                     {
-                        cluster.FormSubs(cluster.GetSubsetSeeds());
+                        var test = cluster.DivideIntoSubclusters();
                     }
 
                     watch.Stop();
                     Console.WriteLine(watch.ElapsedMilliseconds / 10.0 /1000.0);
 
-                    // sub.CalcDt();
+                     cluster.CalcDt();
                     // sub.GetSubsetSeeds().ForEach(s => Console.Write($"{s}, "));
                 }
 

@@ -39,12 +39,48 @@
 
         public double Dt { get; set; } // delta time
 
+        public double CalculationComplexity { get; set; } // delta time
+
         public List<IMassive> MassLayer { get; set; } = new List<IMassive>();
 
-        public Star[] DoStep(Misc.Method m, bool multiThreading, int min = 0, int max = 0)
+        public Star[] DoStep(Misc.Method m, bool multiThreading)
+        {
+            
+            var ids = new List<int>();
+
+            foreach (var star in this.Stars)
+            {
+                if (star.toCompute)
+                {
+                    ids.Add(star.id);
+                }
+            }
+            
+        };
+
+            return this.DoStep(m, multiThreading, ids);
+        }
+
+        public Star[] DoStep(Misc.Method m, bool multiThreading, int min, int max)
+        {
+
+            max = max == 0 ? this.Stars.Count - 1 : max;
+            var ids = new List<int>();
+            for (int i = min; i < max + 1; i++)
+            {
+                ids.Add(i);
+            }
+
+            return this.DoStep(m, multiThreading, ids);
+        }
+
+        public Star[] DoStep(Misc.Method m, bool multiThreading, IEnumerable<int> ids)
         {
             this.Instructions = new List<int>[this.Stars.Count];
             this.MassLayer.Clear();
+
+
+            var enumerable = ids as IList<int> ?? ids.ToList();
 
             foreach (var s in this.Stars)
             {
@@ -52,22 +88,22 @@
                 this.MassLayer.Add(s);
             }
 
-            max = max == 0 ? this.Stars.Count - 1 : max;
 
             this.CalcBoxes();
             if (multiThreading)
             {
-                Parallel.For(min, max + 1, i => this.Integrate(i, Misc.Method.Rk5));
+                Parallel.ForEach(enumerable, i => this.Integrate(i, Misc.Method.Rk5));
             }
             else
             {
-                for (int i = 0; i < max + 1; i++)
+                foreach (int id in enumerable)
                 {
-                    this.Integrate(i, Misc.Method.Rk5);
+
+                    this.Integrate(id, Misc.Method.Rk5);
                 }
             }
 
-            return this.Stars.Where(x => x.Computed && x.id >= min && x.id <= max)
+            return this.Stars.Where(x => x.Computed && enumerable.Contains(x.id))
                 .OrderBy(x => x.id).ToArray();
         }
 
@@ -98,6 +134,8 @@
             try
             {
                 this.GetInstruction(s);
+
+                s.Computed = true;
 
                 var oldAcc = s.Acc;
 

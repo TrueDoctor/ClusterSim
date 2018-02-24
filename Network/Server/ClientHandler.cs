@@ -127,7 +127,7 @@ namespace ClusterSim.Net.Server
 
                     watch.Reset();
                     watch.Start();
-
+                    var overhaed = Stopwatch.StartNew();
                     int size = this.OldStars.Count * 92 + 20;
                     var msg = new Message(this.Step, this.dt, this.min, this.max, this.OldStars.ToArray());
 
@@ -139,6 +139,9 @@ namespace ClusterSim.Net.Server
 
                     watch.Stop();
 
+                    overhaed.Stop();
+                    Console.WriteLine(overhaed.ElapsedMilliseconds/1000.0);
+
                     if (this.max - this.min != this.NewStars.Length - 1)
                     {
                         this.NewStars = null;
@@ -146,7 +149,7 @@ namespace ClusterSim.Net.Server
 
                     this.Performance = (double)(this.max - this.min) + 1 < 1
                                            ? 1
-                                           : (this.max - this.min + 1) / (double)watch.ElapsedMilliseconds;
+                                           : (this.max - this.min + 1) / (double)watch.ElapsedTicks;
 
                     //this.Performance = 1;
                     this.ReceiveFinished = true;

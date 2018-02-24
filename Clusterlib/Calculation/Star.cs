@@ -77,6 +77,8 @@
 
         public bool dead { get; set; }
 
+        public bool toClaculate
+
         public bool Computed { get; set; } = false;
 
         public Vector Acc { get; set; } = new Vector();
@@ -111,7 +113,7 @@
             get => this.Pos;
             set => this.Pos = value;
         }
-        
+
         public double Mass { get; set; }
 
         public Vector Pos
@@ -129,11 +131,11 @@
         public Star Clone()
         {
             // clone method to prevent shallow copys
-            var clone = new Star(this.Pos, this.Vel, this.Mass, this.id, this.dead) {DAcc = this.DAcc, Acc = this.Acc};
+            var clone = new Star(this.Pos, this.Vel, this.Mass, this.id, this.dead) { DAcc = this.DAcc, Acc = this.Acc };
 
             return clone;
         }
-        
+
         public double GetMass()
         {
             // return mass

@@ -75,7 +75,7 @@ namespace Client
             Console.WriteLine(
                 "Client Socket Program - Server Connected ... on " + Settings.Default.IP + ":" + Settings.Default.Port);
             Console.Beep();
-            var Cluster = new StarCluster(1, 1);
+            var Cluster = new BoxCluster();
 
             // Cluster.Stars = new List<Star>(1);
             // Cluster.Stars.Add(Misc.randomize(1, 1, 1, 1, 1));
@@ -118,6 +118,7 @@ namespace Client
                     max = msg.max;
                     
                     var newStars = Cluster.DoStep(Misc.Method.Rk5, multiThreading: true, min: min, max: max);
+                    step++;
 
                     // if(NewStars.Count)
                     Console.WriteLine(step);

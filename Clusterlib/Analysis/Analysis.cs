@@ -139,15 +139,15 @@
             this.progressBar.Value = 0;
         }
 
-        public async void EfficiencyAnalysis(object sender, EventArgs e)
+        public void EfficiencyAnalysis(object sender, EventArgs e)
         {
             Statistics.SetLineStyles();
             GnuPlot.HoldOn();
-            GnuPlot.Set("key top left", "xlabel 'Sternzahl'", "ylabel '{Rechenzeit}/{x} im ms'");
-            GnuPlot.Plot(this.GetTimes(new Cluster(), false), "title 'normal ' w linespoints");
-            GnuPlot.Plot(this.GetTimes(new Cluster(), true), "title 'normal 4 cores' w linespoints");
+            GnuPlot.Set("key top left", "xlabel 'Sternzahl'", "ylabel '\\frac{Rechenzeit}/{x} im ms'");
+            //GnuPlot.Plot(this.GetTimes(new Cluster(), false), "title 'normal ' w linespoints");
+            //GnuPlot.Plot(this.GetTimes(new Cluster(), true), "title 'normal 4 cores' w linespoints");
             GnuPlot.Plot(this.GetTimes(new BoxCluster(), false), "title 'Box' w linespoints");
-            GnuPlot.Plot(this.GetTimes(new BoxCluster(), true), "title 'Box 4 cores' w linespoints");
+            //GnuPlot.Plot(this.GetTimes(new BoxCluster(), true), "title 'Box 4 cores' w linespoints");
             /*
             GnuPlot.Plot(await Task.Run(() => this.GetTimes(new Cluster(), false)), "title 'Rechenzeit normal 1 core' w linespoints");
             GnuPlot.Plot(await Task.Run(() => this.GetTimes(new Cluster(), true)), "title 'Rechenzeit normal 4 core' w linespoints");
@@ -163,19 +163,19 @@
             var watch = new System.Diagnostics.Stopwatch();
             cluster.Stars.Add(Misc.randomize(10, 10, 10, 10, 0));
 
-            for (int i = 1; i < 140; i++)
+            for (int i = 1; i < 800; i++)
             {
                 cluster.Stars.Add(Misc.randomize(10, 10, 10, 10, i));
 
                 watch.Start();
 
-                for (int j = 0; j < 250; j++)
+                for (int j = 0; j < 10; j++)
                 {
                     cluster.DoStep(Misc.Method.Rk5, multithreading);
                 }
                 
                 watch.Stop();
-                times.Add(watch.ElapsedMilliseconds / (250.0 * (i + 1)));
+                times.Add(Math.Exp(watch.ElapsedMilliseconds / (10.0 * (i + 1))));
                 watch.Reset();
                 Application.DoEvents();
             }

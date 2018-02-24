@@ -24,7 +24,7 @@
 
         private List<ClientHandler> clients = new List<ClientHandler>();
 
-        public string rtable { get; set; } = "n1000dt3";
+        public string rtable { get; set; } = "Initial Stars";
 
         public string wtable { get; set; } = "n1000dt3";
 
@@ -88,7 +88,7 @@
                                 gesper += c.Performance;
                             }
 
-                            Thread.Sleep(20);
+                            Thread.Sleep(2);
                             foreach (var c in ready) partper += c.Performance;
                         }
                         catch (Exception e)
@@ -158,9 +158,8 @@
                     while (ready.Exists(
                             x => x.ctThread.IsAlive
                                  && (!x.Ready || !x.ReceiveFinished || x.Step == x.Mstep
-                                     || x.NewStars
-                                     == null)) /*&& (!(watch.ElapsedMilliseconds / 10000.0 > ovrper))||true*/
-                    ) Thread.Sleep(20);
+                                     || x.NewStars == null)) /*&& (!(watch.ElapsedMilliseconds / 10000.0 > ovrper))||true*/
+                    ) Thread.Sleep(2);
 
                     var NewStars = new List<Star>();
                     foreach (var c in ready)
