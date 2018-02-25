@@ -19,7 +19,7 @@ namespace ClusterSim.Standalone
 
         public static int SaveInterval { get; set; } = 100;
 
-        public static double MinDAcc { get; set; } = 0.0003;
+        public static double MinDAcc { get; set; } = 0.001;
 
         public static void Main(string[] args)
         {
@@ -79,7 +79,7 @@ namespace ClusterSim.Standalone
 
             Thread Key = new Thread(listen);
             Key.Start();
-            var cluster = new SubCluster(SQL.readStars(rTable, last - 1), dt); // instatiate Starcluster
+            var cluster = new BoxCluster(SQL.readStars(rTable, last) , dt); // instatiate Starcluster
 
 
             var time = 0d;
@@ -87,7 +87,7 @@ namespace ClusterSim.Standalone
                  !abort; i++)
             {
                 cluster.Dt = dt;
-                cluster.DoStep(Misc.Method.Rk5, true);
+                cluster.DoStep(Misc.Method.Rk5, true, 0, 0);
                 var maxDAcc = cluster.Stars.Max(x => x.DAcc);
                 if (maxDAcc > 0)
                 {
@@ -97,13 +97,13 @@ namespace ClusterSim.Standalone
 
                     for (int j = 0; j < 1; j++)
                     {
-                        var test = cluster.DivideIntoSubclusters();
+                        //var test = cluster.DivideIntoSubclusters();
                     }
 
                     watch.Stop();
-                    Console.WriteLine(watch.ElapsedMilliseconds / 10.0 /1000.0);
+                    //Console.WriteLine(watch.ElapsedMilliseconds / 10.0 /1000.0);
 
-                     cluster.CalcDt();
+                     //cluster.CalcDt();
                     // sub.GetSubsetSeeds().ForEach(s => Console.Write($"{s}, "));
                 }
 
@@ -119,10 +119,10 @@ namespace ClusterSim.Standalone
                 if (Math.Ceiling((time - dt) / 365) < Math.Ceiling(time / 365) && ++year % SaveInterval == 0)
                 {
                     Console.WriteLine($@"Exportiere Daten... Jahr: {(int)i * dt / 365} = {year}");
-                    /*while (!SQL.addRows(cluster.Stars, year / SaveInterval, wTable))
+                    while (!SQL.addRows(cluster.Stars, year / SaveInterval, wTable))
                     {
                         Thread.Sleep(100);
-                    }*/
+                    }
                 }
             }
 

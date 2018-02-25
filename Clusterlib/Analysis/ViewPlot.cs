@@ -34,7 +34,7 @@
             {
                 GnuPlot.Set("yrange " + range);
             }
-
+            GnuPlot.Set("ylabel 'Radius in Pc', font ',5'", "set tics font ', 10'");
             foreach (Parameters parameter in Enum.GetValues(typeof(Parameters)))
             {
                 var data = Statistics.RadialAverage(stars, parameter, stepSize, steps);
@@ -55,6 +55,8 @@
             stars.MoveCenter(stars.GetCenter());
             //stars = stars.Where(s => s.pos.distance() < 4 * stars.GetRadius()).ToList();
             var mass = stars.Sum(x => x.Mass);
+
+            GnuPlot.Set("xlabel 'Abstand vom Zentrum in AE', font ',10'", "tics font ', 10'");
 
             foreach (Parameters parameter in Enum.GetValues(typeof(Parameters)))
             {

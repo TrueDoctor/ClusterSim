@@ -51,7 +51,7 @@
                 }
 
                 stars.MoveCenter(stars.GetCenter());
-                stars = stars.Where(s => s.Pos.distance() < 4 * stars.GetRadius()).ToList();
+                //stars = stars.Where(s => s.Pos.distance() < 4 * stars.GetRadius()).ToList();
 
                 var mass = stars.Sum(x => x.Mass);
                 
@@ -98,12 +98,12 @@
                     stars.MoveCenter(center);
                 }
 
-                data[i] = stars.GetRadius();
+                data[i] = stars.GetRadius() * 4.84814e-6 ;
             }
             
             Statistics.SetLineStyles();
-            
-            GnuPlot.Plot(data, "title 'Dichte' w linespoints");
+            GnuPlot.Set("ylabel 'Radius in Pc', font ',5'", "set tics font ', 10'");
+            GnuPlot.Plot(data, "title 'Halb-Masse-Radius' w linespoints");
             this.progressBar.Value = 0;
         }
 

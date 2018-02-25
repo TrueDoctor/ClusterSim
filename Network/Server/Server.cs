@@ -24,9 +24,9 @@
 
         private List<ClientHandler> clients = new List<ClientHandler>();
 
-        public string rtable { get; set; } = "Initial Stars";
+        public string rtable { get; set; } = "initial";
 
-        public string wtable { get; set; } = "n1000dt3";
+        public string wtable { get; set; } = "copy2";
 
         public delegate void SendHandler(Server s, Lib.SendEventArgs e);
 
@@ -38,7 +38,7 @@
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.Title = "ClusterSim - Distribution Server";
 
-            const int saveInterval = 100, dt = 3;
+            const int saveInterval = 1, dt = 3;
             int step = SQL.lastStep(this.rtable) * saveInterval * 365 + 1;
             int errors = 0, year = step * saveInterval;
             double ovrper = 1;
@@ -57,7 +57,6 @@
                 try
                 {
                     double gesper, partper;
-
                     List<ClientHandler> ready;
                     Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
                     do
@@ -201,11 +200,11 @@
                     if (wtable.Length != 0
                         && Math.Ceiling(((double)step - 1) * dt / 365) < Math.Ceiling((double)step * dt / 365)
                         && ++year % saveInterval == 0)
-                    {/*
+                    {
                         while (!SQL.addRows(Cluster.Stars, year, wtable))
                         {
                             Thread.Sleep(100);
-                        }*/
+                        }
                     }
 
 

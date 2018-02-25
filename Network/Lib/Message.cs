@@ -21,6 +21,8 @@ namespace ClusterSim.Net.Lib
 
     public class Message
     {
+        public const int headerSize = 24;
+
         public int step;
         
         public int count;
@@ -29,7 +31,7 @@ namespace ClusterSim.Net.Lib
         
         public int max;
 
-        public int dt;
+        public double dt;
         
         public Message(int count)
         {
@@ -47,7 +49,7 @@ namespace ClusterSim.Net.Lib
                 this.Stars[i] = new Star(i);
         }
         
-        public Message(int step,int dt, int min, int max, Star[] Stars)
+        public Message(int step,double dt, int min, int max, Star[] Stars)
         {
             this.step = step;
             this.min = min;
@@ -66,29 +68,30 @@ namespace ClusterSim.Net.Lib
             this.count = BitConverter.ToInt32(input, 4);
             this.min = BitConverter.ToInt32(input, 8);
             this.max = BitConverter.ToInt32(input, 12);
-            this.dt = BitConverter.ToInt32(input, 16);
-            var star = new byte[92];
+            this.dt = BitConverter.ToDouble(input, 16);
+            var star = new byte[Star.size];
 
             for (var i = 0; i < this.count; i++)
             {
-                Array.Copy(input, i * 92 + 20, star, 0, 92);
+                Array.Copy(input, i * Star.size + Message.headerSize, star, 0, Star.size);
                 var s = new Star().Deserialize(star);
                 this.Stars[s.id] = s.Clone();
                 DStars.Add(this.Stars[s.id]);
             }
+
             return DStars;
         }
         
         public byte[] Serialize(int count)
         {
             this.count = count;
-            var output = new byte[count * 92 + 20];
+            var output = new byte[count * Star.size + Message.headerSize];
             Array.Copy(BitConverter.GetBytes(this.step), 0, output, 0, 4);
             Array.Copy(BitConverter.GetBytes(count), 0, output, 4, 4);
             Array.Copy(BitConverter.GetBytes(this.min), 0, output, 8, 4);
             Array.Copy(BitConverter.GetBytes(this.max), 0, output, 12, 4);
-            Array.Copy(BitConverter.GetBytes(this.dt), 0, output, 16, 4);
-            for (var i = 0; i < count; i++) Array.Copy(this.Stars[i].Serialize(), 0, output, i * 92 + 20, 92);
+            Array.Copy(BitConverter.GetBytes(this.dt), 0, output, 16, 8);
+            for (var i = 0; i < count; i++) Array.Copy(this.Stars[i].Serialize(), 0, output, i * Star.size + Message.headerSize, Star.size);
             return output;
         }
     }

@@ -50,13 +50,12 @@
 
             foreach (var star in this.Stars)
             {
-                if (star.toCompute)
+                if (star.ToCompute)
                 {
                     ids.Add(star.id);
                 }
             }
             
-        };
 
             return this.DoStep(m, multiThreading, ids);
         }

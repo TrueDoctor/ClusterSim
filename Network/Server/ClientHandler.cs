@@ -128,7 +128,7 @@ namespace ClusterSim.Net.Server
                     watch.Reset();
                     watch.Start();
                     var overhaed = Stopwatch.StartNew();
-                    int size = this.OldStars.Count * 92 + 20;
+                    int size = this.OldStars.Count * Star.size + Message.headerSize;
                     var msg = new Message(this.Step, this.dt, this.min, this.max, this.OldStars.ToArray());
 
                     this.networkStream.Write(msg.Serialize(this.OldStars.Count), 0, size);
@@ -169,7 +169,7 @@ namespace ClusterSim.Net.Server
 
         private void Read()
         {
-            int size = this.OldStars.Count * 92 + 20;
+            int size = this.OldStars.Count * Star.size + Message.headerSize;
             this.ReceiveFinished = false;
             var buffer = new byte[size];
             this.networkStream.Read(buffer, 0, size);

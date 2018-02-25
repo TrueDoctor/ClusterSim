@@ -19,6 +19,7 @@ namespace Client
 
     using Client.Properties;
 
+    using ClusterSim.ClusterLib.Calculation;
     using ClusterSim.ClusterLib.Calculation.Cluster;
     using ClusterSim.ClusterLib.Utility;
     using ClusterSim.Net.Lib;
@@ -90,22 +91,22 @@ namespace Client
 
                     ready = true;
 
-                    var header = new byte[20];
-                    if (serverStream.Read(header, 0, 20) != 20)
+                    var header = new byte[Message.headerSize];
+                    if (serverStream.Read(header, 0, Message.headerSize) != Message.headerSize)
                     {
                         throw new Exception("header zu kurz");
                     }
 
                     int size = BitConverter.ToInt32(header, 4);
                     var read = 0;
-                    var data = new byte[size * 92 + 20];
+                    var data = new byte[size * Star.size + Message.headerSize];
 
                     do
                     {
-                        read += serverStream.Read(data, read + 20, size * 92 - read);
+                        read += serverStream.Read(data, read + Message.headerSize, size * Star.size - read);
                     }
-                    while (read < size * 92);
-                    Array.Copy(header, data, 20);
+                    while (read < size * Star.size);
+                    Array.Copy(header, data, Message.headerSize);
 
                     var msg = new Message(size);
                     msg.DeSerialize(data);
@@ -125,8 +126,8 @@ namespace Client
 
                     // if (Cluster.Stars.Count != 120)
                     // return;
-                    var message = new Message(step, 0, min, max, newStars).Serialize(newStars.Length);
-                    serverStream.Write(message, 0, newStars.Length * 92 + 20);
+                    var message = new Message(step, msg.dt, min, max, newStars).Serialize(newStars.Length);
+                    serverStream.Write(message, 0, newStars.Length * Star.size + Message.headerSize);
                     serverStream.Flush();
                 }
             }

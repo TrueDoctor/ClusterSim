@@ -1,13 +1,14 @@
 ﻿namespace ClusterSim.ClusterLib.Calculation
 {
     using System;
+    using System.Drawing;
 
     using ClusterSim.ClusterLib.Utility;
 
     [Serializable]
     public class Star : IMassive
     {
-        private Vector acc = new Vector();
+        public const int size = 93;
 
         private int Id;
 
@@ -64,6 +65,7 @@
             this.Vel = s.Vel;
             this.id = s.id;
             this.Mass = s.Mass;
+            this.ToCompute = s.ToCompute;
         }
 
         public Star(Vec6 vec, double mass, int id = -1)
@@ -76,8 +78,6 @@
         }
 
         public bool dead { get; set; }
-
-        public bool toClaculate
 
         public bool Computed { get; set; } = false;
 
@@ -128,10 +128,12 @@
             set => this.vel = value;
         }
 
+        public bool ToCompute { get; set; }
+
         public Star Clone()
         {
             // clone method to prevent shallow copys
-            var clone = new Star(this.Pos, this.Vel, this.Mass, this.id, this.dead) { DAcc = this.DAcc, Acc = this.Acc };
+            var clone = new Star(this.Pos, this.Vel, this.Mass, this.id, this.dead) { DAcc = this.DAcc, Acc = this.Acc, ToCompute = this.ToCompute};
 
             return clone;
         }
@@ -171,13 +173,14 @@
 
         public byte[] Serialize()
         {
-            var temp = new byte[92];
+            var temp = new byte[size];
             Array.Copy(this.Pos.Serialize(), 0, temp, 0, 24);
             Array.Copy(this.Vel.Serialize(), 0, temp, 24, 24);
             Array.Copy(this.Acc.Serialize(), 0, temp, 48, 24);
             Array.Copy(BitConverter.GetBytes(this.Mass), 0, temp, 72, 8);
             Array.Copy(BitConverter.GetBytes(this.DAcc), 0, temp, 80, 8);
             Array.Copy(BitConverter.GetBytes(this.dead ? -(this.id + 1) : this.id), 0, temp, 88, 4);
+            Array.Copy(BitConverter.GetBytes(this.ToCompute), 0, temp, 92, 1);
             return temp;
         }
 
@@ -189,10 +192,12 @@
             Array.Copy(input, 24, vec, 0, 24);
             this.Vel.Deserialize(vec);
             Array.Copy(input, 48, vec, 0, 24);
-            this.Vel.Deserialize(vec);
+            this.Acc.Deserialize(vec);
             this.Mass = BitConverter.ToDouble(input, 72);
             this.DAcc = BitConverter.ToDouble(input, 80);
             this.id = BitConverter.ToInt32(input, 88);
+
+            this.ToCompute = BitConverter.ToBoolean(input, 92);
             return this;
         }
 
