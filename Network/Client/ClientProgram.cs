@@ -114,6 +114,7 @@ namespace Client
                     ready = false;
                     Cluster.Stars = msg.Stars.ToList();
                     Cluster.Dt = msg.dt;
+                    Cluster.ParentDt = msg.ParentDt;
                     step = msg.step;
                     min = msg.min;
                     max = msg.max;
@@ -126,7 +127,7 @@ namespace Client
 
                     // if (Cluster.Stars.Count != 120)
                     // return;
-                    var message = new Message(step, msg.dt, min, max, newStars).Serialize(newStars.Length);
+                    var message = new Message(step, msg.dt, msg.ParentDt, min, max, newStars).Serialize(newStars.Length);
                     serverStream.Write(message, 0, newStars.Length * Star.size + Message.headerSize);
                     serverStream.Flush();
                 }

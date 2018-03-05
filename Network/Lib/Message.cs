@@ -21,7 +21,7 @@ namespace ClusterSim.Net.Lib
 
     public class Message
     {
-        public const int headerSize = 24;
+        public const int headerSize = 32;
 
         public int step;
         
@@ -32,6 +32,8 @@ namespace ClusterSim.Net.Lib
         public int max;
 
         public double dt;
+
+        public double ParentDt;
         
         public Message(int count)
         {
@@ -49,7 +51,7 @@ namespace ClusterSim.Net.Lib
                 this.Stars[i] = new Star(i);
         }
         
-        public Message(int step,double dt, int min, int max, Star[] Stars)
+        public Message(int step,double dt, double ParentDt, int min, int max, Star[] Stars)
         {
             this.step = step;
             this.min = min;
@@ -57,6 +59,7 @@ namespace ClusterSim.Net.Lib
             this.Stars = Stars.Select(x => x.Clone()).ToArray();
             this.count = Stars.Length;
             this.dt = dt;
+            this.ParentDt = ParentDt;
         }
         
         public Star[] Stars { get; }
@@ -69,6 +72,7 @@ namespace ClusterSim.Net.Lib
             this.min = BitConverter.ToInt32(input, 8);
             this.max = BitConverter.ToInt32(input, 12);
             this.dt = BitConverter.ToDouble(input, 16);
+            this.ParentDt = BitConverter.ToDouble(input, 24);
             var star = new byte[Star.size];
 
             for (var i = 0; i < this.count; i++)
@@ -91,6 +95,7 @@ namespace ClusterSim.Net.Lib
             Array.Copy(BitConverter.GetBytes(this.min), 0, output, 8, 4);
             Array.Copy(BitConverter.GetBytes(this.max), 0, output, 12, 4);
             Array.Copy(BitConverter.GetBytes(this.dt), 0, output, 16, 8);
+            Array.Copy(BitConverter.GetBytes(this.dt), 0, output, 24, 8);
             for (var i = 0; i < count; i++) Array.Copy(this.Stars[i].Serialize(), 0, output, i * Star.size + Message.headerSize, Star.size);
             return output;
         }

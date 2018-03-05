@@ -8,7 +8,7 @@
     [Serializable]
     public class Star : IMassive
     {
-        public const int size = 93;
+        public const int size = 101;
 
         private int Id;
 
@@ -49,12 +49,13 @@
             double mass,
             int id,
             bool dead = false,
-            double dt = 2)
+            double dt = 1)
         {
             this.Pos = pos;
             this.Vel = vel;
             this.Mass = mass;
             this.id = id;
+            this.Dt = dt;
             this.dead = dead;
         }
 
@@ -63,7 +64,10 @@
             // constructor from given Star
             this.Pos = s.Pos;
             this.Vel = s.Vel;
+            this.Acc = s.Acc;
+            this.DAcc = s.DAcc;
             this.id = s.id;
+            this.Dt = s.Dt;
             this.Mass = s.Mass;
             this.ToCompute = s.ToCompute;
         }
@@ -84,6 +88,8 @@
         public Vector Acc { get; set; } = new Vector();
 
         public double DAcc { get; set; } = 0;
+
+        public double Dt { get; set; }
 
         public int id
         {
@@ -133,7 +139,7 @@
         public Star Clone()
         {
             // clone method to prevent shallow copys
-            var clone = new Star(this.Pos, this.Vel, this.Mass, this.id, this.dead) { DAcc = this.DAcc, Acc = this.Acc, ToCompute = this.ToCompute};
+            var clone = new Star(this.Pos, this.Vel, this.Mass, this.id, this.dead) { DAcc = this.DAcc, Acc = this.Acc, ToCompute = this.ToCompute, Dt = this.Dt};
 
             return clone;
         }
@@ -179,8 +185,9 @@
             Array.Copy(this.Acc.Serialize(), 0, temp, 48, 24);
             Array.Copy(BitConverter.GetBytes(this.Mass), 0, temp, 72, 8);
             Array.Copy(BitConverter.GetBytes(this.DAcc), 0, temp, 80, 8);
-            Array.Copy(BitConverter.GetBytes(this.dead ? -(this.id + 1) : this.id), 0, temp, 88, 4);
-            Array.Copy(BitConverter.GetBytes(this.ToCompute), 0, temp, 92, 1);
+            Array.Copy(BitConverter.GetBytes(this.Dt), 0, temp, 88, 8);
+            Array.Copy(BitConverter.GetBytes(this.dead ? -(this.id + 1) : this.id), 0, temp, 96, 4);
+            Array.Copy(BitConverter.GetBytes(this.ToCompute), 0, temp, 100, 1);
             return temp;
         }
 
@@ -195,9 +202,10 @@
             this.Acc.Deserialize(vec);
             this.Mass = BitConverter.ToDouble(input, 72);
             this.DAcc = BitConverter.ToDouble(input, 80);
-            this.id = BitConverter.ToInt32(input, 88);
+            this.Dt = BitConverter.ToDouble(input, 88);
+            this.id = BitConverter.ToInt32(input, 96);
 
-            this.ToCompute = BitConverter.ToBoolean(input, 92);
+            this.ToCompute = BitConverter.ToBoolean(input, 100);
             return this;
         }
 

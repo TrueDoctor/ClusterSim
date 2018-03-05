@@ -132,6 +132,25 @@ namespace ClusterSim.Dataview
                         SavePicture();
                         break;
 
+                    case Keys.A:
+                        var test = SQL.lastStep(this.table);
+                        GnuPlot.Set("autoscale z", "size square", "view equal xyz");
+                        GnuPlot.Set("yrange [] writeback", "xrange [] writeback", "zrange [] writeback");
+                        ViewPlot.SPlot(this.Stars, Parameters.Mass, table);
+                        //GnuPlot.Unset("autoscale");
+                        var temp = new List<Star>();
+                        for (int i = 0; i < test; i++)
+                        {
+                            //GnuPlot.Set("xrange restore", "yrange restore", "zrange restore");
+                            temp.AddRange(SQL.readStars(this.table, this.step++));
+                            //ViewPlot.SPlot(this.Stars, Parameters.Mass, table);
+                            Application.DoEvents();
+                        }
+                        GnuPlot.Set("xrange restore", "yrange restore", "zrange restore");
+                        ViewPlot.SPlot(temp, Parameters.Mass, table);
+
+                        break;
+
 
                 }
             draw();

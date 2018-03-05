@@ -15,15 +15,17 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
     {
         private double avgDAcc;
 
+        public double oldDt;
+
         private List<int> remaining;
 
-        public SubCluster(List<Star> stars, double dt = 1, double coe = 0.4, double minPrecision = 0.0003)
+        public SubCluster(List<Star> stars, double dt = 1, double coe = 0.4, double minPrecision = 0.006)
             : base(stars, dt, coe)
         {
-            this.MinPrecision = minPrecision;
+            MinPrecision = minPrecision;
         }
 
-        public double MinPrecision { get; set; }
+        public static double MinPrecision { get; set; }
 
         public static double EstimateStepTime(int count, int toCalculate, bool network)
         {
@@ -40,7 +42,7 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
             }
             else
             {
-                totalTime += Math.Log(5.7142857142857142857142857142857e-4 * count) * toCalculate;
+                totalTime += 5.7142857142857142857142857142857e-4 * Math.Log(count) * toCalculate;
             }
             
             return totalTime;
@@ -49,26 +51,77 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
         public List<Cluster> DivideIntoSubclusters()
         {
             // return list of Subclusters with set dt
+            
+            var newClusters = new List<Cluster>();
+            var subClusters = this.FormSubs(this.GetSubsetSeeds());
+            
+            var res = new List<Star>();
+            foreach (Star s in this.Stars)
+            {
+                res.Add(new Star(s));
+                res.Last().ToCompute = this.remaining.Contains(s.id);
+            }
 
-            //var minMaxDAcc = this.Stars.Where(x => this.remaining.Contains(x.id)).Max(c => c.DAcc);
+            var minMaxDAcc = res.Where(x => x.ToCompute).Min(c => this.calcRequiredDt(c));
+            //var min = Stars.OrderBy(c => this.calcRequiredDt(c)).First();
+            //var debug = this.calcRequiredDt(min);
 
-            var newClusters = (from cluster in this.FormSubs(this.GetSubsetSeeds())
-                               let maxDAcc = this.Stars.Where(x => cluster.Contains(x.id)).Max(c => c.DAcc)
-                               let newDt = this.Dt / this.calcRequiredDt(maxDAcc, this.Dt)
-                               select cluster.Count < BoxCluster.BoxPivot
-                                          ? new Cluster(this.Stars, newDt) { CalculationComplexity = this.Dt / newDt * EstimateStepTime(this.Stars.Count, cluster.Count, false)}
-                                          : new BoxCluster(this.Stars, newDt) { CalculationComplexity = this.Dt / newDt * EstimateStepTime(this.Stars.Count, cluster.Count, false) }).ToList();
+            this.Dt = minMaxDAcc;
+            if (this.Dt > this.ParentDt)
+            {
+                this.Dt = this.ParentDt;
+            }
+
+            if (res.Count < 2 )
+            {
+                throw new ArgumentException();
+            }
+            
+            newClusters.Add(new BoxCluster(res, this.Dt) { CalculationComplexity = this.Dt / minMaxDAcc * EstimateStepTime(this.Stars.Count, this.remaining.Count, false), ParentDt = this.Dt });
+            
+            foreach (var cluster in subClusters)
+            {
+
+                var result = new List<Star>();
+                foreach (Star s in this.Stars)
+                {
+                    result.Add(new Star(s));
+                    result.Last().ToCompute = cluster.Contains(s.id);
+                }
+
+
+                double minDt = result.Where(x => x.ToCompute).Min(c => this.calcRequiredDt(c));
+                double newDt = minDt > this.Dt ? this.Dt : minDt; // this.calcRequiredDt(minDt, this.Dt);
+
+                if (cluster.Count < 2&&false)
+                {
+                    throw new ArgumentException();
+                }
+
+                newClusters.Add(
+                    cluster.Count < BoxCluster.BoxPivot
+                        ? new Cluster(result, newDt) { CalculationComplexity = this.Dt / newDt * EstimateStepTime(this.Stars.Count, cluster.Count, false), ParentDt = this.Dt }
+                        : new BoxCluster(result, newDt) { CalculationComplexity = this.Dt / newDt * EstimateStepTime(this.Stars.Count, cluster.Count, false), ParentDt = this.Dt });
+            }
+            
             return newClusters;
         }
 
         private double calcRequiredDt(double maxDAcc)
         {
-            return this.Dt * this.MinPrecision / maxDAcc;
+            return this.oldDt + (this.oldDt * SubCluster.MinPrecision / maxDAcc - this.oldDt) / 2;
+            return this.Dt * SubCluster.MinPrecision / maxDAcc;
+        }
+        private double calcRequiredDt(Star s)
+        {
+            return s.Dt * SubCluster.MinPrecision / s.DAcc;
+            return this.Dt + (s.Dt * SubCluster.MinPrecision / s.DAcc - s.Dt) / 2;
         }
 
         private double calcRequiredDt(double maxDAcc, double match)
         {
-            var times = Math.Ceiling(match / this.Dt * this.MinPrecision / maxDAcc);
+            var times = Math.Ceiling(match / (this.oldDt + (this.oldDt * SubCluster.MinPrecision / maxDAcc - this.oldDt) / 2));
+            times = Math.Ceiling(match / (this.oldDt * SubCluster.MinPrecision / maxDAcc));
             return match / times;
         }
 
@@ -78,8 +131,8 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
 
             foreach (Star star in this.Stars)
             {
-                // stepSize.Add(this.Dt * 0.0003 / star.DAcc);
-                stepSize.Add(star.DAcc);
+                 stepSize.Add(calcRequiredDt(star));
+                //stepSize.Add(star.DAcc);
             }
 
             stepSize.Sort();
@@ -93,15 +146,15 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
 
         public List<int> GetSubsetSeeds()
         {
-            var heap = this.Stars.OrderBy(x => x.DAcc).ToArray();
+            var heap = this.Stars.OrderBy(x => x.Dt / x.DAcc).Reverse().ToArray();
             var subset = new List<int>();
 
-            this.avgDAcc = heap.Average(x => x.DAcc);
+            this.avgDAcc = heap.Average(x => x.Dt / x.DAcc);
 
             for (int i = heap.Length - 1; i >= 1; i--)
             {
-                double currentMax = heap[i].DAcc;
-                if (currentMax > 1.3 * heap[i - 1].DAcc || i > heap.Length * 0.95)
+                double currentMax = heap[i].Dt / heap[i].DAcc;
+                if (currentMax * 1.3 < (heap[i - 1].Dt / heap[i - 1].DAcc) || i > heap.Length * 0.97)
                 {
                     subset.Add(heap[i].id);
                 }
@@ -122,6 +175,8 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
                 this.GenerateInstructions();
             }
 
+            this.Stars = this.Stars.OrderBy(s => s.id).ToList();
+
             var cluster = new ConcurrentBag<List<int>>();
             var finalClusters = new List<HashSet<int>>();
 
@@ -130,12 +185,15 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
                 seed =>
                     {
                         var ids = new HashSet<int>();
-                        var temp = this.Boxes.First(x => x.ids[0] == seed);
+                        var temp = this.Boxes.First(x => x.ids[0] == seed && x.root);
                         ids.Add(seed);
                         this.GrowCluster(temp.id, ref ids);
                         var newIds = ids.ToList();
                         newIds.Sort();
-                        cluster.Add(newIds);
+                        if (ids.Count > 1 || true)
+                        {
+                            cluster.Add(newIds);
+                        }
                     });
 
             if (cluster.Count == 0)
@@ -151,8 +209,9 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
                 bool added = false;
                 foreach (var finalCluster in finalClusters)
                 {
-                    var workSet = new HashSet<int>();
-                    finalCluster.ToList().ForEach(x => workSet.Add(x));
+                    var workSet = new HashSet<int>(finalCluster);
+                    //workSet = new HashSet<int>(finalCluster);
+                    //finalCluster.ToList().ForEach(x => workSet.Add(x));
                     if (list.Any(x => !workSet.Add(x)))
                     {
                         added = true;
@@ -161,7 +220,7 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
                     }
                 }
 
-                if (added || list.Count < 2)
+                if (added)
                 {
                     continue;
                 }
@@ -176,10 +235,14 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
             {
                 remain.Add(i);
             }
+
+            var all = new HashSet<int>();
             foreach (var finalCluster in finalClusters)
             {
-                remain = remain.Except(finalCluster).ToList();
+                all.UnionWith(finalCluster);
             }
+
+            remain = remain.Except(all).ToList();
             this.remaining = remain;
 
             return finalClusters;
@@ -188,10 +251,12 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
         public void GrowCluster(int id, ref HashSet<int> ids)
         {
             Box seed = this.Boxes[id - this.Stars.Count];
-            foreach (int i in this.Instructions[seed.ids[0]])
+            var instructions = this.Instructions[seed.ids[0]];
+            foreach (int i in instructions)
             {
                 Box node = this.Boxes[i - this.Stars.Count];
-                if (!(seed.size >= node.size) || !node.root || this.Stars[node.ids.First()].DAcc * 1.5 < this.avgDAcc)
+                if ((ids.First() == seed.ids.First() ? !(seed.size * 4 >= node.size) : !(seed.size >= node.size))
+                    || !node.root || this.Stars[node.ids.First()].Dt / this.Stars[node.ids.First()].DAcc * 5 > this.avgDAcc)
                 {
                     continue;
                 }

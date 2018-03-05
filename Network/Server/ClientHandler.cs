@@ -127,9 +127,9 @@ namespace ClusterSim.Net.Server
 
                     watch.Reset();
                     watch.Start();
-                    var overhaed = Stopwatch.StartNew();
+                    var overhead = Stopwatch.StartNew();
                     int size = this.OldStars.Count * Star.size + Message.headerSize;
-                    var msg = new Message(this.Step, this.dt, this.min, this.max, this.OldStars.ToArray());
+                    var msg = new Message(this.Step, this.dt, this.dt, this.min, this.max, this.OldStars.ToArray());
 
                     this.networkStream.Write(msg.Serialize(this.OldStars.Count), 0, size);
                     this.networkStream.Flush();
@@ -139,8 +139,8 @@ namespace ClusterSim.Net.Server
 
                     watch.Stop();
 
-                    overhaed.Stop();
-                    Console.WriteLine(overhaed.ElapsedMilliseconds/1000.0);
+                    overhead.Stop();
+                    Console.WriteLine(overhead.ElapsedMilliseconds/1000.0);
 
                     if (this.max - this.min != this.NewStars.Length - 1)
                     {

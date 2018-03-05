@@ -39,13 +39,14 @@
 
         public double Dt { get; set; } // delta time
 
-        public double CalculationComplexity { get; set; } // delta time
+        public double ParentDt { get; set; }
+
+        public double CalculationComplexity { get; set; }
 
         public List<IMassive> MassLayer { get; set; } = new List<IMassive>();
 
-        public Star[] DoStep(Misc.Method m, bool multiThreading)
+        public virtual Star[] DoStep(Misc.Method m, bool multiThreading)
         {
-            
             var ids = new List<int>();
 
             foreach (var star in this.Stars)
@@ -55,58 +56,78 @@
                     ids.Add(star.id);
                 }
             }
-            
 
             return this.DoStep(m, multiThreading, ids);
         }
 
         public Star[] DoStep(Misc.Method m, bool multiThreading, int min, int max)
         {
-
-            max = max == 0 ? this.Stars.Count - 1 : max;
+            max = max == -1 ? this.Stars.Count - 1 : max;
             var ids = new List<int>();
             for (int i = min; i < max + 1; i++)
             {
                 ids.Add(i);
+                this.Stars[i].ToCompute = true;
             }
 
             return this.DoStep(m, multiThreading, ids);
         }
 
-        public Star[] DoStep(Misc.Method m, bool multiThreading, IEnumerable<int> ids)
+        public Star[] DoStep(Misc.Method m, bool multiThreading, List<int> ids)
         {
-            this.Instructions = new List<int>[this.Stars.Count];
-            this.MassLayer.Clear();
-
-
             var enumerable = ids as IList<int> ?? ids.ToList();
 
-            foreach (var s in this.Stars)
+            for (double time = 0; this.ParentDt > time; time += this.Dt)
             {
-                s.Computed = false; // reset computation status
-                this.MassLayer.Add(s);
-            }
+                this.Instructions = new List<int>[this.Stars.Count];
+                this.MassLayer.Clear();
 
-
-            this.CalcBoxes();
-            if (multiThreading)
-            {
-                Parallel.ForEach(enumerable, i => this.Integrate(i, Misc.Method.Rk5));
-            }
-            else
-            {
-                foreach (int id in enumerable)
+                foreach (var s in this.Stars)
                 {
+                    s.Computed = false; // reset computation status
+                    this.MassLayer.Add(s);
+                }
+                
+                this.CalcBoxes();
+                if (multiThreading)
+                {
+                    Parallel.ForEach(enumerable, i => this.Integrate(i, Misc.Method.Rk5));
+                }
+                else
+                {
+                    foreach (int id in enumerable)
+                    {
+                        this.Integrate(id, Misc.Method.Rk5);
+                    }
+                }
 
-                    this.Integrate(id, Misc.Method.Rk5);
+                var maxDAcc = this.Stars.Where(x=>ids.Contains(x.id)).OrderBy(x => x.Dt / x.DAcc).First();
+                if (maxDAcc.DAcc > 0)
+                {
+                    this.Dt += ((maxDAcc.Dt * SubCluster.MinPrecision / maxDAcc.DAcc) -this.Dt) / 2;
+                    //this.Dt = maxDAcc.Dt * SubCluster.MinPrecision / maxDAcc.DAcc;
+                    if (this.Dt < 0.0001)
+                    {
+                        this.Dt = 0.01;
+                    }
+
+                    if (time + this.Dt > this.ParentDt)
+                    {
+                        this.Dt = this.ParentDt - time;
+                    }
                 }
             }
 
-            return this.Stars.Where(x => x.Computed && enumerable.Contains(x.id))
-                .OrderBy(x => x.id).ToArray();
+            if (this.Stars.Exists(x => (x.ToCompute && !x.Computed) || (!x.ToCompute && x.Computed)))
+            {
+                throw new Exception("nicht alle Sterne berechnet");
+            }
+
+            this.Stars = this.Stars.OrderBy(star => star.id).ToList();
+            return this.Stars.Where(x => x.Computed && x.ToCompute).ToArray();
         }
 
-        public Vector CalcAcc(Vector a, IMassive b,  double mass)
+        public Vector CalcAcc(Vector a, IMassive b, double mass)
         {
             var tempDirection = a - b.pos;
 
@@ -118,7 +139,7 @@
             double d = 1 / tempDirection.distance(); // Sterne und Weltraum Grundlagen der Himmelsmechanik S.91
 
             double acceleration = b.mass * Gravitation * Math.Pow(d, 3);
-            
+
             acceleration = b.mass / mass * acceleration;
             var accVec = b.pos - a;
 
@@ -136,7 +157,7 @@
 
                 s.Computed = true;
 
-                var oldAcc = s.Acc;
+                var oldAcc = new Vector(s.Acc);
 
                 switch (method)
                 {
@@ -155,7 +176,8 @@
                 if (!oldAcc.IsNull())
                 {
                     var change = (oldAcc - s.Acc).distance();
-                    var old = s.Acc.distance();
+                    var old = oldAcc.distance();
+                    s.Dt = this.Dt;
                     s.DAcc = change / old;
                 }
             }
@@ -164,16 +186,15 @@
                 s.dead = true;
             }
         }
-    
-
-    protected virtual void GetInstruction(Star s)
+        
+        protected virtual void GetInstruction(Star s)
         {
-            var tempInst = new ConcurrentStack<int>();
+            var tempInst = new List<int>();
             for (int i = 0; i < this.Stars.Count; i++)
             {
                 if (i != s.id)
                 {
-                    tempInst.Push(i);
+                    tempInst.Add(i);
                 }
             }
 
@@ -183,7 +204,7 @@
         protected virtual void CalcBoxes()
         {
         }
-        
+
         protected void Rk4(ref Star s)
         {
             var star = new Vec6(s.Pos, s.Vel); // convert star to vec6

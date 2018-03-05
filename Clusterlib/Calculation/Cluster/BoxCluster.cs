@@ -14,7 +14,7 @@
 
         private List<Box> boxes = new List<Box>();
 
-        public BoxCluster(List<Star> stars, double dt = 1, double coe = 0.4) : this(dt, coe)
+        public BoxCluster(List<Star> stars, double dt = 1, double coe = 0.4) : this(coe, dt: dt)
         {
             this.Stars = stars;
 
@@ -66,7 +66,7 @@
                 return;
             }
 
-            var tempInst = new ConcurrentBag<int>();
+            var tempInst = new List<int>();
             this.GenerateInstruction(s.Pos, s.id, this.Boxes[0], ref tempInst);
             this.Instructions[s.id] = tempInst.ToList();
         }
@@ -114,14 +114,14 @@
             return tBox.id;
         }
 
-        private void GenerateInstruction(Vector sPos, int sid, Box box, ref ConcurrentBag<int> ids)
+        private void GenerateInstruction(Vector sPos, int sid, Box box, ref List<int> ids)
         {
             switch (box.ids.Count)
             {
                 case 0:
                     return;
                 case 1:
-                    if (box.ids.Contains(sid) || Math.Abs(box.mass) < 1e-2000)
+                    if (box.ids.Contains(sid) || Math.Abs(box.mass) < 1e-2000) 
                     {
                         return;
                     }
