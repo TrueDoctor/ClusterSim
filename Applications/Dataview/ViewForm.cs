@@ -139,10 +139,10 @@ namespace ClusterSim.Dataview
                         ViewPlot.SPlot(this.Stars, Parameters.Mass, table);
                         //GnuPlot.Unset("autoscale");
                         var temp = new List<Star>();
-                        for (int i = 0; i < test; i++)
+                        for (int i = step; i < test-1; i++)
                         {
                             //GnuPlot.Set("xrange restore", "yrange restore", "zrange restore");
-                            temp.AddRange(SQL.readStars(this.table, this.step++));
+                            temp.AddRange(SQL.readStars(this.table, i));
                             //ViewPlot.SPlot(this.Stars, Parameters.Mass, table);
                             Application.DoEvents();
                         }

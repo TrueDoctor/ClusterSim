@@ -33,11 +33,11 @@
 
         protected List<Box> Boxes { get => this.boxes; set => this.boxes = value; }
 
-        protected override void CalcBoxes()
+        protected override void CalcBoxes(bool forceBoxes = false)
         {
-            if (this.Stars.Count < BoxPivot)
+            if (this.Stars.Count < BoxPivot && !forceBoxes)
             {
-                base.CalcBoxes();
+                base.CalcBoxes(false);
                 return;
             }
 

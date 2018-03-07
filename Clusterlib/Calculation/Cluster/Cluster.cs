@@ -27,6 +27,7 @@
         {
             // constructor 
             this.Dt = dt;
+            this.ParentDt = dt;
             if (this.Stars == null)
             {
                 this.Stars = new List<Star>();
@@ -44,22 +45,7 @@
         public double CalculationComplexity { get; set; }
 
         public List<IMassive> MassLayer { get; set; } = new List<IMassive>();
-
-        public virtual Star[] DoStep(Misc.Method m, bool multiThreading)
-        {
-            var ids = new List<int>();
-
-            foreach (var star in this.Stars)
-            {
-                if (star.ToCompute)
-                {
-                    ids.Add(star.id);
-                }
-            }
-
-            return this.DoStep(m, multiThreading, ids);
-        }
-
+        
         public Star[] DoStep(Misc.Method m, bool multiThreading, int min, int max)
         {
             max = max == -1 ? this.Stars.Count - 1 : max;
@@ -73,8 +59,13 @@
             return this.DoStep(m, multiThreading, ids);
         }
 
-        public Star[] DoStep(Misc.Method m, bool multiThreading, List<int> ids)
+        public virtual Star[] DoStep(Misc.Method m, bool multiThreading, List<int> ids = null)
         {
+            if (ids == null)
+            {
+                ids = (from star in this.Stars where star.ToCompute select star.id).ToList();
+            }
+
             var enumerable = ids as IList<int> ?? ids.ToList();
 
             for (double time = 0; this.ParentDt > time; time += this.Dt)
@@ -201,7 +192,7 @@
             this.Instructions[s.id] = tempInst.ToList();
         }
 
-        protected virtual void CalcBoxes()
+        protected virtual void CalcBoxes(bool forceBoxes = false)
         {
         }
 
