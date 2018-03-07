@@ -68,6 +68,11 @@
 
             var enumerable = ids as IList<int> ?? ids.ToList();
 
+            if (this.Dt > this.ParentDt)
+            {
+                this.Dt = this.ParentDt;
+            }
+
             for (double time = 0; this.ParentDt > time; time += this.Dt)
             {
                 this.Instructions = new List<int>[this.Stars.Count];
@@ -92,14 +97,16 @@
                     }
                 }
 
-                var maxDAcc = this.Stars.Where(x=>ids.Contains(x.id)).OrderBy(x => x.Dt / x.DAcc).First();
+                var maxDAcc = this.Stars.Where(x => ids.Contains(x.id)).OrderBy(x => x.Dt / x.DAcc).First();
+
                 if (maxDAcc.DAcc > 0)
                 {
-                    this.Dt += ((maxDAcc.Dt * SubCluster.MinPrecision / maxDAcc.DAcc) -this.Dt) / 2;
-                    //this.Dt = maxDAcc.Dt * SubCluster.MinPrecision / maxDAcc.DAcc;
-                    if (this.Dt < 0.0001)
+                    //this.Dt += ((maxDAcc.Dt * SubCluster.MinPrecision / maxDAcc.DAcc) - this.Dt) / 2;
+                    this.Dt = SubCluster.CalcRequiredDt(maxDAcc);
+                    
+                    if (this.Dt > this.ParentDt)
                     {
-                        this.Dt = 0.01;
+                        this.Dt = this.ParentDt;
                     }
 
                     if (time + this.Dt > this.ParentDt)

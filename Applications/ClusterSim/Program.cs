@@ -107,13 +107,13 @@ namespace ClusterSim.Standalone
                 var maxDAcc = cluster.Stars.Max(x => x.DAcc);
                 if (maxDAcc > 0)
                 {
-                    cluster.ParentDt = 500000;
-                    Sub.ParentDt = 500000;
+                    cluster.ParentDt = 3000;
+                    Sub.ParentDt = 3000;
                     Stopwatch watch = Stopwatch.StartNew();
 
                     for (int j = 0; j < 1; j++)
                     {
-                         cluster.DoStep(Misc.Method.Rk5, true, 0, -1);
+                         //cluster.DoStep(Misc.Method.Rk5, true, 0, -1);
                         //DoStep(ref Sub);
                     }
 
