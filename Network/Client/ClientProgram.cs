@@ -19,7 +19,9 @@ namespace Client
 
     using Client.Properties;
 
-    using ClusterSim.ClusterLib;
+    using ClusterSim.ClusterLib.Calculation;
+    using ClusterSim.ClusterLib.Calculation.Cluster;
+    using ClusterSim.ClusterLib.Utility;
     using ClusterSim.Net.Lib;
 
     #endregion
@@ -59,7 +61,7 @@ namespace Client
             if (!Properties.Settings.Default.IP.Equals(String.Empty))
                 ip = Settings.Default.IP;
 
-             ip = "192.168.2.42";
+             //ip = "192.168..42";
             try
             {
                 clientSocket.Connect(ip, Settings.Default.Port);
@@ -74,7 +76,7 @@ namespace Client
             Console.WriteLine(
                 "Client Socket Program - Server Connected ... on " + Settings.Default.IP + ":" + Settings.Default.Port);
             Console.Beep();
-            var Cluster = new StarCluster(1, 1);
+            var Cluster = new BoxCluster();
 
             // Cluster.Stars = new List<Star>(1);
             // Cluster.Stars.Add(Misc.randomize(1, 1, 1, 1, 1));
@@ -89,37 +91,44 @@ namespace Client
 
                     ready = true;
 
-                    var header = new byte[20];
-                    if (serverStream.Read(header, 0, 20) != 20) throw new Exception("header zu kurz");
+                    var header = new byte[Message.headerSize];
+                    if (serverStream.Read(header, 0, Message.headerSize) != Message.headerSize)
+                    {
+                        throw new Exception("header zu kurz");
+                    }
+
                     int size = BitConverter.ToInt32(header, 4);
                     var read = 0;
-                    var data = new byte[size * 60 + 20];
+                    var data = new byte[size * Star.size + Message.headerSize];
 
                     do
                     {
-                        read += serverStream.Read(data, read + 20, size * 60 - read);
+                        read += serverStream.Read(data, read + Message.headerSize, size * Star.size - read);
                     }
-                    while (read < size * 60);
-                    Array.Copy(header, data, 20);
+                    while (read < size * Star.size);
+                    Array.Copy(header, data, Message.headerSize);
 
                     var msg = new Message(size);
                     msg.DeSerialize(data);
 
                     ready = false;
                     Cluster.Stars = msg.Stars.ToList();
-                    Cluster.dt = msg.dt;
+                    Cluster.Dt = msg.dt;
+                    Cluster.ParentDt = msg.ParentDt;
                     step = msg.step;
                     min = msg.min;
                     max = msg.max;
-                    var NewStars = Cluster.doStep(++step, min, max, Misc.Method.RK5);
+                    
+                    var newStars = Cluster.DoStep(Misc.Method.Rk5, multiThreading: true, min: min, max: max);
+                    step++;
 
                     // if(NewStars.Count)
                     Console.WriteLine(step);
 
                     // if (Cluster.Stars.Count != 120)
                     // return;
-                    var message = new Message(step, 0, min, max, NewStars).Serialize(NewStars.Length);
-                    serverStream.Write(message,0,NewStars.Length * 60 + 20);
+                    var message = new Message(step, msg.dt, msg.ParentDt, min, max, newStars).Serialize(newStars.Length);
+                    serverStream.Write(message, 0, newStars.Length * Star.size + Message.headerSize);
                     serverStream.Flush();
                 }
             }

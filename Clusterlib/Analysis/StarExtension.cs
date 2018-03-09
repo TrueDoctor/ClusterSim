@@ -1,5 +1,8 @@
 ﻿namespace ClusterSim.ClusterLib.Analysis
 {
+    using ClusterSim.ClusterLib.Calculation;
+    using ClusterSim.ClusterLib.Calculation.Cluster;
+
     public static class StarExtension
     {
         public static double GetMetric(this Star star, Parameters param)
@@ -7,15 +10,15 @@
             switch (param)
             {
                 case Parameters.Kinetic:
-                    var vel = star.vel.distance();
-                    return star.mass * vel * vel * 0.5;
+                    var vel = star.Vel.distance();
+                    return star.Mass * vel * vel * 0.5;
                 
                 case Parameters.Mass:
-                    return star.mass;
+                    return star.Mass;
                 case Parameters.Pulse:
-                    return star.mass * star.vel.distance();
+                    return star.Mass * star.Vel.distance();
                 case Parameters.Vel:
-                    return star.vel.distance();
+                    return star.Vel.distance();
                 default:
                     return double.NaN;
             }
@@ -26,21 +29,26 @@
             switch (param)
             {
                 case Parameters.Kinetic:
-                    var vel = star.vel.distance();
-                    return star.mass * vel * vel * 0.5;
+                    var vel = star.Vel.distance();
+                    return star.Mass * vel * vel * 0.5;
                 case Parameters.Potential:
-                    var r = star.pos.distance();
-                    return star.mass * mass * 1 * -StarCluster.Gravitation  / r;
+                    var r = star.Pos.distance();
+                    return star.Mass * mass * 2 * -StarCluster.Gravitation  / r;
                 case Parameters.Mass:
-                    return star.mass;
+                    return star.Mass;
                 case Parameters.Pulse:
-                    return star.mass * star.vel.distance();
+                    return star.Mass * star.Vel.distance();
                 case Parameters.Vel:
-                    return star.vel.distance();
+                    return star.Vel.distance();
                 default:
                     return double.NaN;
             }
         }
-        
+
+        public static bool Escaped(this Star star, double acc)
+        {
+            var vel = 2 * acc * star.Pos.distance();
+            return vel * vel < star.Vel.distance2();
+        }
     }
 }

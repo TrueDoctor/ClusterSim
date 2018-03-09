@@ -40,6 +40,8 @@
             PlotBuffer = new List<StoredPlot>();
             SPlotBuffer = new List<StoredPlot>();
             Hold = false;
+            Set("key font \",15\"");
+            Set("xtics font \"Verdana, 10\" ");
         }
 
         public static void WriteLine(string gnuplotcommands)

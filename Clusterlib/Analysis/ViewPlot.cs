@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ClusterSim.ClusterLib.Analysis
+﻿namespace ClusterSim.ClusterLib.Analysis
 {
-    using System.Runtime.CompilerServices;
-    using System.Security.Policy;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
 
-    using Microsoft.Win32.SafeHandles;
+    using ClusterSim.ClusterLib.Calculation;
+    using ClusterSim.ClusterLib.Utility;
 
     public static class ViewPlot
     {
@@ -20,9 +16,9 @@ namespace ClusterSim.ClusterLib.Analysis
 
             GnuPlot.Set($"cbrange[{(int)min}:{(int)max}]");
             GnuPlot.SPlot(
-                stars.Select(x => x.pos.vec[0]).ToArray(),
-                stars.Select(x => x.pos.vec[1]).ToArray(),
-                stars.Select(x => x.pos.vec[2]).ToArray(),
+                stars.Select(x => x.Pos.vec[0]).ToArray(),
+                stars.Select(x => x.Pos.vec[1]).ToArray(),
+                stars.Select(x => x.Pos.vec[2]).ToArray(),
                 stars.Select(x => Math.Log(x.GetMetric(param))).ToArray(),
                 name,
                 "with points palette pt 7");
@@ -38,7 +34,7 @@ namespace ClusterSim.ClusterLib.Analysis
             {
                 GnuPlot.Set("yrange " + range);
             }
-
+            GnuPlot.Set("ylabel 'Radius in Pc', font ',5'", "set tics font ', 10'");
             foreach (Parameters parameter in Enum.GetValues(typeof(Parameters)))
             {
                 var data = Statistics.RadialAverage(stars, parameter, stepSize, steps);
@@ -58,7 +54,9 @@ namespace ClusterSim.ClusterLib.Analysis
 
             stars.MoveCenter(stars.GetCenter());
             //stars = stars.Where(s => s.pos.distance() < 4 * stars.GetRadius()).ToList();
-            var mass = stars.Sum(x => x.mass);
+            var mass = stars.Sum(x => x.Mass);
+
+            GnuPlot.Set("xlabel 'Abstand vom Zentrum in AE', font ',10'", "tics font ', 10'");
 
             foreach (Parameters parameter in Enum.GetValues(typeof(Parameters)))
             {

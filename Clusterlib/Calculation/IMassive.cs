@@ -1,4 +1,4 @@
-﻿namespace ClusterSim.ClusterLib
+﻿namespace ClusterSim.ClusterLib.Calculation
 {
     public interface IMassive
     {

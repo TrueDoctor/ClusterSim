@@ -1,15 +1,14 @@
 ﻿using System.Collections.Generic;
 
-namespace ClusterSim.ClusterLib
+namespace ClusterSim.ClusterLib.Calculation
 {
     using System.Linq;
 
-    class Box : IMassive
+    public class Box : IMassive
     {
         Vector Position,  AvgPos;
         public Vector PosId, Dimension;
         public List<IMassive> objects = new List<IMassive>();
-        public List<int> Calcids;
         public List<Box> Neighbours { get; set; }= new List<Box>();
         public List<int> ids;
         public int id { get; set; }

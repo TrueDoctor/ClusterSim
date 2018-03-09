@@ -17,7 +17,7 @@ namespace ClusterSim.Net.Server
     using System.Net.Sockets;
     using System.Threading;
 
-    using ClusterSim.ClusterLib;
+    using ClusterSim.ClusterLib.Calculation;
     using ClusterSim.Net.Lib;
 
     /// <summary>
@@ -58,11 +58,13 @@ namespace ClusterSim.Net.Server
 
         public int Step { get; set; }
 
+        private Server Serv {get; set; }
+
         private static int Id { get; set; }
 
         private List<Star> OldStars { get; set; } = new List<Star>();
 
-        public void OnSend(object o, SendEventArgs e)
+        public void OnSend(object o, Lib.SendEventArgs e)
         {
             this.Step = e.Step;
             this.min = e.Orders.Find(x => x[0] == this.id)[1];
@@ -83,6 +85,17 @@ namespace ClusterSim.Net.Server
         public void Subscribe(Server s)
         {
             s.SendData += this.OnSend;
+            this.Serv = s;
+        }
+
+        public void Unsubscribe()
+        {
+            this.Unsubscribe(this.Serv);
+        }
+
+        public void Unsubscribe(Server s)
+        {
+            s.SendData -= this.OnSend;
         }
 
         private void ConnectionLoop()
@@ -114,9 +127,9 @@ namespace ClusterSim.Net.Server
 
                     watch.Reset();
                     watch.Start();
-
-                    int size = this.OldStars.Count * 60 + 20;
-                    var msg = new Message(this.Step, this.dt, this.min, this.max, this.OldStars.ToArray());
+                    var overhead = Stopwatch.StartNew();
+                    int size = this.OldStars.Count * Star.size + Message.headerSize;
+                    var msg = new Message(this.Step, this.dt, this.dt, this.min, this.max, this.OldStars.ToArray());
 
                     this.networkStream.Write(msg.Serialize(this.OldStars.Count), 0, size);
                     this.networkStream.Flush();
@@ -126,6 +139,9 @@ namespace ClusterSim.Net.Server
 
                     watch.Stop();
 
+                    overhead.Stop();
+                    Console.WriteLine(overhead.ElapsedMilliseconds/1000.0);
+
                     if (this.max - this.min != this.NewStars.Length - 1)
                     {
                         this.NewStars = null;
@@ -133,7 +149,7 @@ namespace ClusterSim.Net.Server
 
                     this.Performance = (double)(this.max - this.min) + 1 < 1
                                            ? 1
-                                           : (this.max - this.min + 1) / (double)watch.ElapsedMilliseconds;
+                                           : (this.max - this.min + 1) / (double)watch.ElapsedTicks;
 
                     //this.Performance = 1;
                     this.ReceiveFinished = true;
@@ -141,6 +157,7 @@ namespace ClusterSim.Net.Server
                 }
                 catch (Exception e)
                 {
+                    this.Unsubscribe();
                     Console.Clear();
                     Console.WriteLine(" >> Client {0} disconnected\n\n{1}", this.id, e);
                     return;
@@ -152,7 +169,7 @@ namespace ClusterSim.Net.Server
 
         private void Read()
         {
-            int size = this.OldStars.Count * 60 + 20;
+            int size = this.OldStars.Count * Star.size + Message.headerSize;
             this.ReceiveFinished = false;
             var buffer = new byte[size];
             this.networkStream.Read(buffer, 0, size);

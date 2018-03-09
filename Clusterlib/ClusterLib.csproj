@@ -57,12 +57,18 @@
     <Compile Include="Analysis\StarExtension.cs" />
     <Compile Include="Analysis\ViewPlot.cs" />
     <Compile Include="Analysis\Statistics.cs" />
-    <Compile Include="Box.cs" />
-    <Compile Include="EnumerableExtension.cs" />
-    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Calculation\Box.cs" />
+    <Compile Include="Calculation\Cluster\BoxCluster.cs" />
+    <Compile Include="Calculation\Cluster\Cluster.cs" />
+    <Compile Include="Calculation\Cluster\ICluster.cs" />
+    <Compile Include="Calculation\InitialVelExtension.cs" />
+    <Compile Include="Utility\CenterEnumerableExtension.cs" />
+    <Compile Include="Calculation\Cluster\SubCluster.cs" />
+    <Compile Include="Visualization\EnumerableExtension.cs" />
+    <Compile Include="Utility\GlobalSuppressions.cs" />
     <Compile Include="Analysis\GnuPlot.cs" />
-    <Compile Include="IMassive.cs" />
-    <Compile Include="Misc.cs" />
+    <Compile Include="Calculation\IMassive.cs" />
+    <Compile Include="Utility\Misc.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -70,10 +76,11 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="SQL.cs" />
-    <Compile Include="Star.cs" />
-    <Compile Include="StarCluster.cs" />
+    <Compile Include="Utility\SQL.cs" />
+    <Compile Include="Calculation\Star.cs" />
+    <Compile Include="Calculation\Cluster\StarCluster.cs" />
     <Compile Include="Vector.cs" />
+    <Compile Include="Visualization\StarExtension.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

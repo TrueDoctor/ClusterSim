@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using ClusterSim.ClusterLib;
+using ClusterSim.ClusterLib.Calculation;
 
 namespace ClusterSim.DataManager
 {
+    using ClusterSim.ClusterLib;
+    using ClusterSim.ClusterLib.Calculation.Cluster;
+    using ClusterSim.ClusterLib.Utility;
+
     public partial class Random : Form
     {
         private string table;
@@ -85,7 +84,7 @@ namespace ClusterSim.DataManager
                     Stars.Add(
                         new Star(
                             new Vector().random(Math.Pow(10, PosBar.Value)),
-                            new Vector().random(Math.Pow(10, VelBar.Value)),
+                            new Vector(), //new Vector().random(Math.Pow(10, VelBar.Value)),
                             masses[i], i));
 
                 else
@@ -104,17 +103,20 @@ namespace ClusterSim.DataManager
             cluster.Stars = Stars;
             cluster.Stars.MoveCenter(cluster.Stars.GetCenter());
 
-            SQL.addRows(cluster.Stars, 0, table);
+            SQL.addRows(cluster.Stars, 0, this.table);
 
-            StarCluster rand = new StarCluster(table, table, 0, 1);
+            StarCluster rand = new StarCluster(this.table, 0);
+            rand.Stars.MoveCenter(rand.Stars.GetCenter());
 
             progressBar.Value = 0;
             BarAns.Text = "Berechne Initialgeschwindigkeiten";
 
+
+            var mass = Stars.Sum(x => x.Mass);
             for (int i = 0; i < StarCount.Value; i++)
             {
                 Application.DoEvents();
-                rand.initialvel(i);//initial velocity for each star
+                rand.InitialVel(i, mass);//initial velocity for each star
                 progressBar.Increment(1);
             }
             SQL.dropTable(table);
