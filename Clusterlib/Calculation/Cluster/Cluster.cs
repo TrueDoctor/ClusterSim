@@ -4,6 +4,7 @@
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
 
     using global::ClusterSim.ClusterLib.Utility;
@@ -16,6 +17,7 @@
         public Cluster(List<Star> stars, double dt = 1) : this(dt)
         {
             this.Stars = stars;
+            this.ComputeCount = this.GetComputeCount();
 
             if (this.Stars == null)
             {
@@ -34,7 +36,7 @@
             }
         }
 
-        public List<int>[] Instructions { get; set; }
+        public List<int>[] Instructions { get; set; } 
 
         public List<Star> Stars { get; set; }
 
@@ -44,38 +46,40 @@
 
         public double CalculationComplexity { get; set; }
 
+        public int ComputeCount { get; set; }
+
+        public int RecursionLevel { get; set; } = 0;
+
         public List<IMassive> MassLayer { get; set; } = new List<IMassive>();
-        
+
+        protected bool SkipInstructionRefresh { get; set; } = false;
+
         public Star[] DoStep(Misc.Method m, bool multiThreading, int min, int max)
         {
             max = max == -1 ? this.Stars.Count - 1 : max;
-            var ids = new List<int>();
+            
             for (int i = min; i < max + 1; i++)
             {
-                ids.Add(i);
                 this.Stars[i].ToCompute = true;
             }
 
-            return this.DoStep(m, multiThreading, ids);
+            return this.DoStep(m, multiThreading);
         }
 
-        public virtual Star[] DoStep(Misc.Method m, bool multiThreading, List<int> ids = null)
+        public virtual Star[] DoStep(Misc.Method m, bool multiThreading)
         {
-            if (ids == null)
-            {
-                ids = (from star in this.Stars where star.ToCompute select star.id).ToList();
-            }
+            var ids = (from star in this.Stars where star.ToCompute select star.id).ToList();
+            
+            this.ComputeCount = ids.Count;
 
-            var enumerable = ids as IList<int> ?? ids.ToList();
+            this.Instructions = new List<int>[this.Stars.Count];
+            
+            this.Dt = this.Dt < this.ParentDt ? this.Dt : this.ParentDt;
 
-            if (this.Dt > this.ParentDt)
-            {
-                this.Dt = this.ParentDt;
-            }
+            this.SkipInstructionRefresh = false;
 
             for (double time = 0; this.ParentDt > time; time += this.Dt)
             {
-                this.Instructions = new List<int>[this.Stars.Count];
                 this.MassLayer.Clear();
 
                 foreach (var s in this.Stars)
@@ -87,35 +91,32 @@
                 this.CalcBoxes();
                 if (multiThreading)
                 {
-                    Parallel.ForEach(enumerable, i => this.Integrate(i, Misc.Method.Rk5));
+                    Parallel.ForEach(ids, i => this.Integrate(i, Misc.Method.Rk5));
                 }
                 else
                 {
-                    foreach (int id in enumerable)
+                    foreach (int id in ids)
                     {
                         this.Integrate(id, Misc.Method.Rk5);
                     }
                 }
 
-                var maxDAcc = this.Stars.Where(x => ids.Contains(x.id)).OrderBy(x => x.Dt / x.DAcc).First();
-
-                if (maxDAcc.DAcc > 0)
+                if (!this.SkipInstructionRefresh && this.ComputeCount < BoxCluster.BoxPivot)
                 {
-                    //this.Dt += ((maxDAcc.Dt * SubCluster.MinPrecision / maxDAcc.DAcc) - this.Dt) / 2;
-                    this.Dt = SubCluster.CalcRequiredDt(maxDAcc);
-                    
-                    if (this.Dt > this.ParentDt)
-                    {
-                        this.Dt = this.ParentDt;
-                    }
+                    this.ReplaceInstructions();
+                    this.SkipInstructionRefresh = true;
+                }
 
-                    if (time + this.Dt > this.ParentDt)
-                    {
-                        this.Dt = this.ParentDt - time;
-                    }
+                this.Dt = this.GetNewDt();
+                if (time + this.Dt > this.ParentDt)
+                {
+                    this.Dt = this.ParentDt - time;
                 }
             }
 
+            this.Dt = this.GetNewDt();
+
+            this.SkipInstructionRefresh = false;
             if (this.Stars.Exists(x => (x.ToCompute && !x.Computed) || (!x.ToCompute && x.Computed)))
             {
                 throw new Exception("nicht alle Sterne berechnet");
@@ -143,6 +144,25 @@
 
             accVec.mult(acceleration);
             return accVec;
+        }
+
+        protected double GetNewDt()
+        {
+            var maxDAcc = this.Stars.Where(x => x.ToCompute).OrderBy(x => x.Dt / x.DAcc).First();
+            double dt = this.Dt;
+            if (!(maxDAcc.DAcc > 0))
+            {
+                return dt;
+            }
+
+            dt = SubCluster.CalcRequiredDt(maxDAcc);
+
+            if (dt > this.ParentDt)
+            {
+                dt = this.ParentDt;
+            }
+
+            return dt;
         }
 
         protected virtual void Integrate(int id, Misc.Method method)
@@ -187,6 +207,11 @@
         
         protected virtual void GetInstruction(Star s)
         {
+            if (this.SkipInstructionRefresh)
+            {
+                return;
+            }
+
             var tempInst = new List<int>();
             for (int i = 0; i < this.Stars.Count; i++)
             {
@@ -243,6 +268,15 @@
             s.Vel += f.ToVector(1);
         }
 
+        protected int GetComputeCount()
+        {
+            return this.Stars.Count(x => x.ToCompute);
+        }
+
+        protected virtual void ReplaceInstructions()
+        {
+        }
+        
         private Vec6 F(Vec6 star, int id)
         {
             var acc = new Vector();

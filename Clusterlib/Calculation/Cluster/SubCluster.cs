@@ -1,5 +1,4 @@
-﻿
-namespace ClusterSim.ClusterLib.Calculation.Cluster
+﻿namespace ClusterSim.ClusterLib.Calculation.Cluster
 {
     using System;
     using System.Collections;
@@ -16,6 +15,8 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
 
     public class SubCluster : BoxCluster
     {
+        private const double MaxRecursion = -2;
+
         private double avgDAcc;
 
         private List<int> remaining;
@@ -49,32 +50,19 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
             return totalTime;
         }
 
-        public override Star[] DoStep(Misc.Method m, bool multiThreading, List<int> ids = null)
+        public override Star[] DoStep(Misc.Method m, bool multiThreading)
         {
-            int count;
-            if (ids != null)
-            {
-                count = ids.Count;
-
-                foreach (var star in this.Stars)
-                {
-                    star.ToCompute = ids.Contains(star.id);
-                }
-            }
-            else
-            {
-                count = this.Stars.Count(x => x.ToCompute);
-            }
-
+            int count = this.GetComputeCount();
+            
             var minDt = Stars.Where(x => x.ToCompute).Min(c => CalcRequiredDt(c));
             var stepTime = EstimateStepTime(this.Stars.Count, count, false);
-            var totalTime = (this.ParentDt / minDt) * stepTime;
+            var totalTime = Math.Ceiling(this.ParentDt / minDt) * stepTime;
 
             var subClusters = this.DivideIntoSubClusters();
 
             if (subClusters == null || subClusters.Sum(x => x.CalculationComplexity) > totalTime)
             {
-                return base.DoStep(m, multiThreading, ids);
+                return base.DoStep(m, multiThreading);
             }
 
             this.CalculationComplexity = subClusters.Sum(x => x.CalculationComplexity);
@@ -85,61 +73,84 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
                 if (!time.Equals(0))
                 {
                     subClusters = this.DivideIntoSubClusters();
-
                 }
-                
-                var temp = new ConcurrentBag<Star>();
 
-                if (subClusters == null || subClusters.Sum(x => x.CalculationComplexity) > totalTime)
+                var temp = new ConcurrentBag<Star>();
+                totalTime = stepTime * Math.Ceiling(this.Dt / subClusters.Min(x=>x.Dt));
+
+                if (subClusters == null 
+                    || subClusters.Sum(x => x.CalculationComplexity) > totalTime  * 1.5
+                    || subClusters.Count < 2
+                    || subClusters.All(x => x.Dt * 2 > subClusters.First().Dt))
                 {
-                    var tStars = base.DoStep(m, multiThreading, ids);
+                    var tempDt = this.ParentDt;
+                    this.ParentDt = this.Dt;
+                    this.Dt = subClusters.Min(x => x.Dt);
+                    var tStars = base.DoStep(m, multiThreading);
                     foreach (var tStar in tStars)
                     {
                         temp.Add(tStar);
                     }
+
+                    this.Dt = this.ParentDt;
+                    this.ParentDt = tempDt;
 
                     time += this.Dt;
                 }
                 else
                 {
                     time += subClusters.First().Dt;
-
-                    Parallel.ForEach(
-                        subClusters,
-                        c =>
-                            {
-                                var stars = c.DoStep(Misc.Method.Rk5, multiThreading);
-                                foreach (var star in stars)
+                    if (multiThreading)
+                    {
+                        Parallel.ForEach(
+                            subClusters,
+                            c =>
                                 {
-                                    temp.Add(star);
-                                }
-                            });
+                                    var stars = c.DoStep(Misc.Method.Rk5, multiThreading);
+                                    foreach (var star in stars)
+                                    {
+                                        temp.Add(star);
+                                    }
+                                });
+                    }
+                    else
+                    {
+                        foreach (var c in subClusters)
+                        {
+                            var stars = c.DoStep(Misc.Method.Rk5, multiThreading);
+                            foreach (var star in stars)
+                            {
+                                temp.Add(star);
+                            }
+                        }
+                    }
 
                     this.Dt = subClusters.First().Dt;
                 }
 
                 newStars = temp.OrderBy(s => s.id).ToList();
 
-
                 if (newStars.Count != this.Stars.Count(x => x.ToCompute))
                 {
-                    var duplicates = newStars.Where(x => newStars.Count(c => c.id == x.id) > 1).Select(d => d.id).Distinct()
+                    var duplicates = newStars.Where(x => newStars.Count(c => c.id == x.id) > 1).Select(d => d.id)
+                        .Distinct()
                         .ToList();
                     foreach (var duplicate in duplicates)
                     {
-                        while (newStars.Remove(newStars.Where(x => x.id == duplicate).OrderBy(c => c.DAcc).First()) && newStars.Count(c => c.id == duplicate) > 1)
+                        while (newStars.Remove(newStars.Where(x => x.id == duplicate).OrderBy(c => c.DAcc).First())
+                               && newStars.Count(c => c.id == duplicate) > 1)
                         {
                         }
                     }
 
                     // throw new Exception("Duplicate!");
                 }
-                
+
                 this.Stars.RemoveAll(x => newStars.Select(c => c.id).Contains(x.id));
                 this.Stars.AddRange(newStars);
                 this.Stars = this.Stars.OrderBy(star => star.id).ToList();
 
-                //this.Stars.ForEach(x => x.ToCompute = false);
+                // this.Stars.ForEach(x => x.ToCompute = false);
             }
 
             this.Stars = this.Stars.OrderBy(star => star.id).ToList();
@@ -165,9 +176,22 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
         {
             // return list of SubClusters with set dt
             var newClusters = new List<Cluster>();
-            var subClusters = this.FormSubs(this.GetSubsetSeeds());
+            var seeds = this.GetSubsetSeeds();
+            if (seeds.Count == 0)
+            {
+                 newClusters.Add(new BoxCluster(this.Stars, this.Dt)
+                           {
+                               CalculationComplexity = this.CalculationComplexity,
+                               ParentDt = this.Dt,
+                               ComputeCount = this.Stars.Count,
+                               RecursionLevel = this.RecursionLevel
+                           });
+                return newClusters;
+            }
 
-            var res = new List<Star>();
+            var subClusters = this.FormSubs(seeds);
+
+           var res = new List<Star>();
             foreach (Star s in this.Stars)
             {
                 res.Add(new Star(s));
@@ -182,13 +206,7 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
                 this.Dt = this.ParentDt;
             }
 
-            if (res.Count < 2)
-            {
-                throw new ArgumentException();
-            }
-
-            newClusters.Add(new BoxCluster(res, this.Dt) { CalculationComplexity = this.Dt / minMaxDAcc * EstimateStepTime(this.Stars.Count, this.remaining.Count, false), ParentDt = this.Dt });
-
+            double complexity;
             if (subClusters == null)
             {
                 return null;
@@ -196,7 +214,6 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
 
             foreach (var cluster in subClusters)
             {
-
                 var result = new List<Star>();
                 foreach (Star s in this.Stars)
                 {
@@ -204,23 +221,58 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
                     result.Last().ToCompute = cluster.Contains(s.id);
                 }
 
-
                 double minDt = result.Where(x => x.ToCompute).Min(c => CalcRequiredDt(c));
                 double newDt = minDt > this.Dt ? this.Dt : minDt; // this.calcRequiredDt(minDt, this.Dt);
-                double complexity = this.Dt / newDt * EstimateStepTime(this.Stars.Count, cluster.Count, false);
+                complexity = Math.Ceiling(this.Dt / newDt) * EstimateStepTime(this.Stars.Count, cluster.Count, false);
+
+                if (this.Dt / newDt < 2)
+                {
+                    this.Dt = Math.Min(this.Dt, newDt);
+                    continue;
+                }
 
                 newClusters.Add(
-                    cluster.Count < 20 || complexity * 0.75 > newClusters.First().CalculationComplexity * 50 || newDt * 5 > this.Dt
-                        ? new BoxCluster(result, newDt) { CalculationComplexity = complexity, ParentDt = this.Dt }
-                        : new SubCluster(result, newDt) { CalculationComplexity = complexity, ParentDt = this.Dt });
+                    cluster.Count < 20 || this.RecursionLevel < MaxRecursion
+                    || result.Where(x => x.ToCompute).Average(c => CalcRequiredDt(c)) < newDt * 2
+                        ? new BoxCluster(result, newDt)
+                              {
+                            CalculationComplexity = complexity,
+                            ParentDt = this.Dt,
+                            ComputeCount = cluster.Count,
+                            RecursionLevel = this.RecursionLevel - 1
+                        }
+                        : new SubCluster(result, newDt)
+                        {
+                            CalculationComplexity = complexity,
+                            ParentDt = this.Dt,
+                            ComputeCount = cluster.Count,
+                            RecursionLevel = this.RecursionLevel - 1
+                        });
+            }
+            
+
+            if (res.Count < 2)
+            {
+                throw new ArgumentException();
             }
 
+            complexity = EstimateStepTime(this.Stars.Count, this.remaining.Count, false);
+
+            newClusters.Add(
+                new BoxCluster(res, this.Dt)
+                    {
+                        CalculationComplexity = complexity,
+                        ParentDt = this.Dt,
+                        ComputeCount = this.remaining.Count,
+                        RecursionLevel = this.RecursionLevel - 1
+                    });
+            newClusters.Reverse();
             return newClusters;
         }
 
         public List<double> CalcDt()
         {
-            var stepSize = this.Stars.Select(CalcRequiredDt).ToList();
+            var stepSize = this.Stars.Select(x=>x.DAcc).ToList();
 
             stepSize.Sort();
 
@@ -242,12 +294,13 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
             }
 
             return res;
+
             // return this.Dt + (s.Dt * SubCluster.MinPrecision / s.DAcc - s.Dt) / 2;
         }
 
         private List<int> GetSubsetSeeds()
         {
-            var heap = this.Stars.Where(c => c.ToCompute).OrderBy(x => x.Dt / x.DAcc).Reverse().ToArray();
+            var heap = this.Stars.Where(c => c.ToCompute).OrderBy(x => x.DAcc).ToArray();
             var subset = new List<int>();
 
             if (heap == null)
@@ -255,12 +308,12 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
                 throw new ArgumentException("Keine Sterne zu berechnen");
             }
 
-            this.avgDAcc = heap.Average(x => x.Dt / x.DAcc);
+            this.avgDAcc = heap.Average(x => x.DAcc);
 
             for (int i = heap.Length - 1; i >= 1; i--)
             {
-                double currentMax = heap[i].Dt / heap[i].DAcc;
-                if (currentMax * 1.3 < (heap[i - 1].Dt / heap[i - 1].DAcc) || i > heap.Length * 0.97)
+                double currentMax = heap[i].DAcc;
+                if (currentMax > heap[i - 1].DAcc * 1.3 || currentMax > avgDAcc * 2)
                 {
                     subset.Add(heap[i].id);
                 }
@@ -367,7 +420,7 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
 
                 var iD = node.ids.First();
                 var star = this.Stars[iD];
-                if (star.Dt / star.DAcc * 7 > this.avgDAcc || !star.ToCompute)
+                if (star.DAcc  < this.avgDAcc * 2 || !star.ToCompute)
                 {
                     continue;
                 }

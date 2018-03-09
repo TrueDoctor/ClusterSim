@@ -4,11 +4,12 @@
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
-    
+    using System.Threading.Tasks;
+
     public class BoxCluster : Cluster, ICluster
     {
         // fields
-        protected const int BoxPivot = 110;
+        public const int BoxPivot = 110;
 
         protected readonly double BoxCoefficient;
 
@@ -28,16 +29,16 @@
         {
             this.BoxCoefficient = boxCoefficient;
         }
-        
+
         protected double BoxSize { get; set; }
 
         protected List<Box> Boxes { get => this.boxes; set => this.boxes = value; }
 
         protected override void CalcBoxes(bool forceBoxes = false)
         {
-            if (this.Stars.Count < BoxPivot && !forceBoxes)
+            if (this.SkipInstructionRefresh)
             {
-                base.CalcBoxes(false);
+                this.MassLayer.AddRange(this.Boxes);
                 return;
             }
 
@@ -57,9 +58,14 @@
             this.Boxes = this.Boxes.OrderBy(x => x.id).ToList();
             this.MassLayer.AddRange(this.Boxes);
         }
-        
+
         protected override void GetInstruction(Star s)
         {
+            if (this.SkipInstructionRefresh)
+            {
+                return;
+            }
+
             if (this.Stars.Count < BoxPivot)
             {
                 base.GetInstruction(s);
@@ -69,6 +75,62 @@
             var tempInst = new List<int>();
             this.GenerateInstruction(s.Pos, s.id, this.Boxes[0], ref tempInst);
             this.Instructions[s.id] = tempInst.ToList();
+        }
+
+        protected override void ReplaceInstructions()
+        {
+            this.ComputeCount += this.ComputeCount == 0 ? this.GetComputeCount() : 0;
+
+            if (this.Stars.Count < BoxPivot || this.ComputeCount == this.Stars.Count)
+            {
+                return;
+            }
+
+            var workStars = this.Stars.Where(x => x.ToCompute).ToList();
+            var calcIds = workStars.Select(x => x.id).ToList();
+
+            Parallel.ForEach(
+                calcIds,
+                c =>
+                    {
+                        var instructions = this.Instructions[c];
+                        foreach (var x in instructions.ToArray())
+                        {
+                            var newInstructions = new List<int>();
+
+                            if (this.ReverseBox(x, calcIds, ref newInstructions))
+                            {
+                                this.Instructions[c].Remove(x);
+                                this.Instructions[c].AddRange(newInstructions.ToList());
+                            }
+                        }
+                    });
+        }
+
+        protected bool ReverseBox(int id, ICollection<int> calcIds, ref List<int> ids)
+        {
+            bool containsCompute = false;
+
+            foreach (var i in this.Boxes[id - this.Stars.Count].ids)
+            {
+                if (i < this.Stars.Count)
+                {
+                    ids.Add(i);
+
+                    if (calcIds.Contains(i))
+                    {
+                        return true;
+                    }
+                }
+                else
+                {
+                    if (this.ReverseBox(i, calcIds, ref ids))
+                    {
+                        containsCompute = true;
+                    }
+                }
+            }
+            return containsCompute;
         }
 
         private int AddBox(ref List<Box> workBoxes, ref int boxId, Vector pos, double size, IEnumerable<IMassive> stars)
@@ -121,7 +183,7 @@
                 case 0:
                     return;
                 case 1:
-                    if (box.ids.Contains(sid) || Math.Abs(box.mass) < 1e-2000) 
+                    if (box.ids.Contains(sid) || Math.Abs(box.mass) < 1e-2000)
                     {
                         return;
                     }

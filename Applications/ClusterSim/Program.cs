@@ -100,6 +100,7 @@ namespace ClusterSim.Standalone
             var X = new List<double>();
 
             var Y = new List<double>();
+            
 
             for (int i = (last /** SaveInterval * 365*/) + 1;
                  !abort; i++)
@@ -107,13 +108,13 @@ namespace ClusterSim.Standalone
                 var maxDAcc = cluster.Stars.Max(x => x.DAcc);
                 if (maxDAcc > 0)
                 {
-                    cluster.ParentDt = 3000;
-                    Sub.ParentDt = 3000;
+                    cluster.ParentDt = 20000;
+                    Sub.ParentDt = 20000;
                     Stopwatch watch = Stopwatch.StartNew();
 
                     for (int j = 0; j < 1; j++)
                     {
-                         //cluster.DoStep(Misc.Method.Rk5, true, 0, -1);
+                         cluster.DoStep(Misc.Method.Rk5, true, 0, -1);
                         //DoStep(ref Sub);
                     }
 
@@ -123,7 +124,7 @@ namespace ClusterSim.Standalone
 
                     Console.WriteLine("n: " + watch.ElapsedMilliseconds / 1.0 / 1000.0);
 
-                    X.Add(watch.ElapsedMilliseconds / 2.0 / 1000.0);
+                    X.Add(watch.ElapsedMilliseconds / 1.0 / 1000.0);
 
                     watch.Restart();
 
@@ -135,17 +136,22 @@ namespace ClusterSim.Standalone
 
                     watch.Stop();
 
+                    //Sub.CalcDt();
+
                     SQL.addRows(Sub.Stars, i, wTable);
                     Console.WriteLine("sub: " + watch.ElapsedMilliseconds / 1.0 / 1000.0);
-                    Y.Add(watch.ElapsedMilliseconds / 2.0 / 1000.0);
+                    Y.Add(watch.ElapsedMilliseconds / 1.0 / 1000.0);
 
                     //cluster.CalcDt();
                      //Sub.GetSubsetSeeds().ForEach(s => Console.Write($"{s}, "));
                 }
 
                 time += dt;
-
-                //GnuPlot.Plot(X.ToArray(), Y.ToArray());
+                GnuPlot.HoldOn();
+                GnuPlot.Unset("logscale y");
+                GnuPlot.Set("key top left", "xlabel 'Dauer Normal'", "ylabel 'Gesamtdauer'");
+                GnuPlot.Plot(X.ToArray(), Y.ToArray(), "title 'SubCluster' ");
+                GnuPlot.Plot(X.ToArray(), X.ToArray(), "title 'Normal' w linespoints");
 
                 //broadcaster.SendToChannel("steps", $"i{i}");
 

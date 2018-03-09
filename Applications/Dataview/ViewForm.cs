@@ -221,9 +221,9 @@ namespace ClusterSim.Dataview
             Box.Cursor = Cursors.WaitCursor;
             //import(step);
             if (trace == true)//if trace = false reset bitmap
-                Canvas = new Bitmap(Canvas, Box.Width - this.Box.Width % 2, Box.Height - this.Box.Height % 2);
+                Canvas = new Bitmap(Canvas, Box.Width*10 - this.Box.Width % 2, Box.Height*10 - this.Box.Height % 2);
             else
-                Canvas = new Bitmap((Box.Width - this.Box.Width % 2)*1, (Box.Height - this.Box.Height % 2)*1, PixelFormat.Format24bppRgb);
+                Canvas = new Bitmap((Box.Width*10 - this.Box.Width % 2)*1, (Box.Height*10 - this.Box.Height % 2)*1, PixelFormat.Format24bppRgb);
 
             var fCanvas = Graphics.FromImage(this.Canvas);
 
