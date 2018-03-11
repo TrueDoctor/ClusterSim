@@ -59,14 +59,14 @@
             this.MassLayer.AddRange(this.Boxes);
         }
 
-        protected override void GetInstruction(Star s)
+        protected override void GetInstruction(Star s, bool forceBox = false)
         {
             if (this.SkipInstructionRefresh)
             {
                 return;
             }
 
-            if (this.Stars.Count < BoxPivot)
+            if (this.Stars.Count < BoxPivot && !forceBox)
             {
                 base.GetInstruction(s);
                 return;

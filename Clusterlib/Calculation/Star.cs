@@ -186,7 +186,7 @@
             Array.Copy(BitConverter.GetBytes(this.Mass), 0, temp, 72, 8);
             Array.Copy(BitConverter.GetBytes(this.DAcc), 0, temp, 80, 8);
             Array.Copy(BitConverter.GetBytes(this.Dt), 0, temp, 88, 8);
-            Array.Copy(BitConverter.GetBytes(this.dead ? -(this.id + 1) : this.id), 0, temp, 96, 4);
+            Array.Copy(BitConverter.GetBytes(this.id), 0, temp, 96, 4);
             Array.Copy(BitConverter.GetBytes(this.ToCompute), 0, temp, 100, 1);
             return temp;
         }

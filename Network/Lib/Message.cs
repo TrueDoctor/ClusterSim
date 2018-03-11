@@ -3,7 +3,7 @@
 //   
 // </copyright>
 // <summary>
-//   The message.
+//   The message Object provides the possibility to serialize StarClusters.
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -16,20 +16,19 @@ namespace ClusterSim.Net.Lib
     using System.Linq;
 
     using ClusterSim.ClusterLib.Calculation;
+    using ClusterSim.ClusterLib.Calculation.Cluster;
 
     #endregion
 
     public class Message
     {
-        public const int headerSize = 32;
+        public const int headerSize = 25;
 
         public int step;
         
         public int count;
         
-        public int min;
-        
-        public int max; //testchange
+        public bool Subcluster;
 
         public double dt;
 
@@ -46,22 +45,18 @@ namespace ClusterSim.Net.Lib
         /// </summary>
         public Message()
         {
-            this.Stars = new Star[this.count];
-            for (var i = 0; i < this.count; i++)
-                this.Stars[i] = new Star(i);
         }
         
-        public Message(int step,double dt, double ParentDt, int min, int max, Star[] Stars)
+        public Message(int step, Cluster cluster, bool subCluster = false)
         {
             this.step = step;
-            this.min = min;
-            this.max = max;
-            this.Stars = Stars.Select(x => x.Clone()).ToArray();
-            this.count = Stars.Length;
-            this.dt = dt;
-            this.ParentDt = ParentDt;
+            this.Subcluster = subCluster;
+            this.Stars = cluster.Stars.Select(x => x.Clone()).ToArray();
+            this.count = cluster.Stars.Count;
+            this.dt = cluster.Dt;
+            this.ParentDt = cluster.ParentDt;
         }
-        
+
         public Star[] Stars { get; }
         
         public List<Star> DeSerialize(byte[] input)
@@ -69,34 +64,35 @@ namespace ClusterSim.Net.Lib
             var DStars = new List<Star>();
             this.step = BitConverter.ToInt32(input, 0);
             this.count = BitConverter.ToInt32(input, 4);
-            this.min = BitConverter.ToInt32(input, 8);
-            this.max = BitConverter.ToInt32(input, 12);
-            this.dt = BitConverter.ToDouble(input, 16);
-            this.ParentDt = BitConverter.ToDouble(input, 24);
+            this.dt = BitConverter.ToDouble(input, 8);
+            this.ParentDt = BitConverter.ToDouble(input, 16);
+            this.Subcluster = BitConverter.ToBoolean(input, 24);
             var star = new byte[Star.size];
 
             for (var i = 0; i < this.count; i++)
             {
                 Array.Copy(input, i * Star.size + Message.headerSize, star, 0, Star.size);
                 var s = new Star().Deserialize(star);
-                this.Stars[s.id] = s.Clone();
-                DStars.Add(this.Stars[s.id]);
+                DStars.Add(s.Clone());
             }
 
             return DStars;
         }
         
-        public byte[] Serialize(int count)
+        public byte[] Serialize(Star[] stars)
         {
-            this.count = count;
+            this.count = stars.Length;
             var output = new byte[count * Star.size + Message.headerSize];
             Array.Copy(BitConverter.GetBytes(this.step), 0, output, 0, 4);
             Array.Copy(BitConverter.GetBytes(count), 0, output, 4, 4);
-            Array.Copy(BitConverter.GetBytes(this.min), 0, output, 8, 4);
-            Array.Copy(BitConverter.GetBytes(this.max), 0, output, 12, 4);
-            Array.Copy(BitConverter.GetBytes(this.dt), 0, output, 16, 8);
-            Array.Copy(BitConverter.GetBytes(this.dt), 0, output, 24, 8);
-            for (var i = 0; i < count; i++) Array.Copy(this.Stars[i].Serialize(), 0, output, i * Star.size + Message.headerSize, Star.size);
+            Array.Copy(BitConverter.GetBytes(this.dt), 0, output, 8, 8);
+            Array.Copy(BitConverter.GetBytes(this.ParentDt), 0, output, 16, 8);
+            Array.Copy(BitConverter.GetBytes(this.Subcluster), 0, output, 24, 1);
+            for (var i = 0; i < this.count; i++)
+            {
+                Array.Copy(stars[i].Serialize(), 0, output, i * Star.size + Message.headerSize, Star.size);
+            }
+
             return output;
         }
     }

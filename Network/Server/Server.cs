@@ -24,15 +24,13 @@
 
         private List<ClientHandler> clients = new List<ClientHandler>();
 
-        public string rtable { get; set; } = "initial";
+        public string rtable { get; set; } = "n200dtv";
 
         public string wtable { get; set; } = "copy2";
 
         public delegate void SendHandler(Server s, Lib.SendEventArgs e);
 
-        public event SendHandler SendData;
-
-        public void Main()
+        public async void Main()
         {
             var listenThread = new Thread(this.Listen) { Name = "ListenThread" };
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -40,68 +38,32 @@
 
             const int saveInterval = 1, dt = 3;
             int step = SQL.lastStep(this.rtable) * saveInterval * 365 + 1;
+            step = SQL.lastStep(this.rtable);
             int errors = 0, year = step * saveInterval;
-            double ovrper = 1;
+            double ovrper = 1, time = 0;
 
             Console.WriteLine("Load Stars...");
-            var Cluster = new StarCluster(rtable, step - 1, dt);
+            var Cluster = new SubCluster(SQL.readStars(this.rtable, step - 1));
             Console.WriteLine("Loading finished");
             listenThread.Start();
 
             var msg = new StringBuilder();
-            var watch = new Stopwatch();
-
+            
             Console.CursorVisible = false;
+
+            Cluster.Dt = 1;
+            Cluster.ParentDt = 300;
+            Cluster.DoStep(Misc.Method.Rk5, true, 0, -1);
+
             while (true)
             {
                 try
                 {
-                    double gesper, partper;
-                    List<ClientHandler> ready;
-                    Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
-                    do
-                    {
-                        if (this.clients.Exists(x => x.Abort)) Console.Clear();
+                    var ready = this.RefreshClients();
 
-                        this.newClients.RemoveAll(x => x.Abort);
-                        this.clients.RemoveAll(x => x.Abort);
-                        this.clients = this.clients.Union(this.newClients).ToList();
+                    var watch = Stopwatch.StartNew();
 
-                        gesper = 0;
-                        partper = 0;
-                        ready = this.clients.FindAll(x => x.Ready && x.Performance != 0);
-
-                        try
-                        {
-                            foreach (var c in this.clients)
-                            {
-                                if (c.ctThread != null)
-                                {
-                                    if (!c.ctThread.IsAlive)
-                                    {
-                                        c.Abort = true;
-                                        c.Unsubscribe(this);
-                                    }
-                                }
-
-                                gesper += c.Performance;
-                            }
-
-                            Thread.Sleep(2);
-                            foreach (var c in ready) partper += c.Performance;
-                        }
-                        catch (Exception e)
-                        {
-                            Console.Clear();
-                            Console.WriteLine(e);
-                        }
-
-                    }
-                    while (partper <= gesper / 1.2 || ready.Count == 0 || Cluster.Stars == null);
-                    Thread.CurrentThread.Priority = ThreadPriority.Normal;
-
-                    watch.Reset();
-                    watch.Start();
+                    double partper = ready.Sum(c => c.Performance);
 
                     double coe = Cluster.Stars.Count / partper;
 
@@ -112,26 +74,15 @@
                             "Client",
                             "Performance",
                             errors));
+                    
+                    Cluster.Stars.ForEach(x => x.ToCompute = true);
 
-                    var start = 0;
-                    int end;
-
-
-                    var orders = new List<int[]>();
-
-                    foreach (var c in ready)
-                    {
-                        end = start + (int)Math.Round(c.Performance * coe);
-                        orders.Add(new[] { c.id, start, c != ready.Last() ? end - 1 : Cluster.Stars.Count - 1 });
-                        start = end;
-                    }
-
-                    var send = new Lib.SendEventArgs(step, dt, orders, Cluster.Stars.ToArray());
-                    this.SendData(this, send);
-
+                    var computation = Cluster.DoStep(Misc.Method.Rk5, this.clients.Select(c => c as IComputationNode).ToList());
+                    
                     Console.WriteLine(step);
 
                     foreach (var c in this.clients)
+                    {
                         msg.Append(
                             string.Format(
                                 "{0}  G:   {1,4:f2} {2,5} : {3,13} {4,12:f2}    \n",
@@ -140,43 +91,22 @@
                                 c.id,
                                 c.clientSocket.Client.RemoteEndPoint.ToString().Split(':')[0],
                                 c.Performance));
-
-                    /*var rand = new Random();
-                    for (int i = 0; i < 30; i++)
-                    {
-                        msg.Append(
-                            string.Format(
-                                "{0}  G:   {1,4:f2} {2,5} : {3,13} {4,12:f2}    \n",
-                                ready.Contains(this.clients[0]) ? '*' : ' ',
-                                ovrper,
-                                this.clients[0].id + i,
-                                "192.168.2." + (Convert.ToInt32(this.clients[0].clientSocket.Client.RemoteEndPoint.ToString().Split(':')[0].Split('.').Last()) + i),
-                                this.clients[0].Performance + (double)rand.Next(-5, 5) / 10));
-                    }*/
-
-                    while (ready.Exists(
-                            x => x.ctThread.IsAlive
-                                 && (!x.Ready || !x.ReceiveFinished || x.Step == x.Mstep
-                                     || x.NewStars == null)) /*&& (!(watch.ElapsedMilliseconds / 10000.0 > ovrper))||true*/
-                    ) Thread.Sleep(2);
-
-                    var NewStars = new List<Star>();
-                    foreach (var c in ready)
-                    {
-                        if (c.Mstep > step && c.NewStars != null)
-                        {
-                            NewStars.AddRange(c.NewStars);
-                        }
-                        else Console.WriteLine(c.Mstep);
                     }
 
-                    if (NewStars.Count != Cluster.Stars.Count && step != 0)
+                    await computation;
+                    var newStars = computation.Result;
+
+                    time += Cluster.Dt;
+
+                    if (newStars.Count != Cluster.Stars.Count && step != 0)
+                    {
                         throw new Exception("Falsche Rückgabelänge => Rechenergebnisse fehler- oder lückenhaft");
+                    }
 
 
                     for (var i = 0; i < Cluster.Stars.Count; i++)
                     {
-                        var temp = NewStars.Find(x => x.id == i);
+                        var temp = newStars.Find(x => x.id == i);
                         if (temp != null)
                         {
                             Cluster.Stars[i] = temp.Clone();
@@ -190,7 +120,7 @@
                             // step--;
                             throw new Exception(
                                 string.Format(
-                                    $"client: {ready[0].Step}  \nServer: {step} \n0 = {NewStars.Count - Cluster.Stars.Count}"));
+                                    $"client: {ready[0].Step}  \nServer: {step} \n0 = {newStars.Count - Cluster.Stars.Count}"));
                         }
                     }
 
@@ -250,9 +180,56 @@
                 }//*/
             }
         }
+        
+        private List<ClientHandler> RefreshClients()
+        {
+            double gesper, partper;
+            List<ClientHandler> ready;
+            //Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
+            do
+            {
+                if (this.clients.Exists(x => x.Abort)) Console.Clear();
+
+                this.newClients.RemoveAll(x => x.Abort);
+                this.clients.RemoveAll(x => x.Abort);
+                this.clients = this.clients.Union(this.newClients).ToList();
+
+                gesper = 0;
+                partper = 0;
+                ready = this.clients.FindAll(x => x.Available && x.Performance != 0);
+
+                try
+                {
+                    foreach (var c in this.clients)
+                    {
+                        if (c.ctThread != null)
+                        {
+                            if (!c.ctThread.IsAlive)
+                            {
+                                c.Abort = true;
+                            }
+                        }
+
+                        gesper += c.Performance;
+                    }
+
+                    Thread.Sleep(2);
+                    foreach (var c in ready) partper += c.Performance;
+                }
+                catch (Exception e)
+                {
+                    Console.Clear();
+                    Console.WriteLine(e);
+                }
+
+            } while (partper <= gesper / 1.2 || ready.Count == 0 );
+
+            Thread.CurrentThread.Priority = ThreadPriority.Normal;
+            return ready;
+        }
 
         /// <summary>
-        ///     The listen.
+        ///     The listen Thread.
         /// </summary>
         private void Listen()
         {
@@ -273,7 +250,6 @@
                 this.newClients.Add(new ClientHandler());
                 Console.Beep();
                 Console.WriteLine(@"Warte auf die Beendigung von {0} Speicher Threads", this.newClients.Last().id);
-                this.newClients.Last().Subscribe(this);
                 this.newClients.Last().StarClient(tempClient);
             }
         }

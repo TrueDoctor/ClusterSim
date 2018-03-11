@@ -13,18 +13,21 @@ namespace ClusterSim.Net.Server
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
+    using System.IO;
     using System.Linq;
     using System.Net.Sockets;
     using System.Threading;
+    using System.Threading.Tasks;
 
     using ClusterSim.ClusterLib.Calculation;
+    using ClusterSim.ClusterLib.Calculation.Cluster;
     using ClusterSim.Net.Lib;
 
     /// <summary>
     ///     The client handler.
     /// </summary>
     [SuppressMessage("ReSharper", "StyleCop.SA1201", Justification = "Reviewed. Suppression is OK here.")]
-    public class ClientHandler
+    public class ClientHandler : IComputationNode
     {
         // ReSharper disable once StyleCop.SA1201
         // ReSharper disable once StyleCop.SA1215
@@ -34,19 +37,17 @@ namespace ClusterSim.Net.Server
 
         public Thread ctThread;
 
-        private int min;
-
-        private int max;
-
         private NetworkStream networkStream;
-
-        private int dt;
 
         public bool Abort { get; set; } = false;
 
         public int Mstep { get; set; }
 
-        public Star[] NewStars { get; private set; }
+        public List<Star> NewStars { get; private set; }
+
+        public Func<Cluster, Task<List<Star>>> DoStep { get; set; }
+
+        public bool Available { get; set; } = true;
 
         public double Performance { get; set; } = 1;
 
@@ -58,128 +59,75 @@ namespace ClusterSim.Net.Server
 
         public int Step { get; set; }
 
-        private Server Serv {get; set; }
-
         private static int Id { get; set; }
 
         private List<Star> OldStars { get; set; } = new List<Star>();
 
-        public void OnSend(object o, Lib.SendEventArgs e)
-        {
-            this.Step = e.Step;
-            this.min = e.Orders.Find(x => x[0] == this.id)[1];
-            this.max = e.Orders.Find(x => x[0] == this.id)[2];
-            this.OldStars = e.Stars.ToList();
-            this.dt = e.dt;
-            this.Send = true;
-        }
 
         public void StarClient(TcpClient inClientSocket)
         {
             this.clientSocket = inClientSocket;
 
-            this.ctThread = new Thread(this.ConnectionLoop) { Name = "Client:" + this.id };
-            this.ctThread.Start();
-        }
+            this.networkStream = this.clientSocket.GetStream();
 
-        public void Subscribe(Server s)
-        {
-            s.SendData += this.OnSend;
-            this.Serv = s;
-        }
+            this.DoStep = cluster => this.Simulate(cluster, true);
 
-        public void Unsubscribe()
-        {
-            this.Unsubscribe(this.Serv);
-        }
+            this.Performance = 1;
 
-        public void Unsubscribe(Server s)
-        {
-            s.SendData -= this.OnSend;
+            //this.ctThread = new Thread(this.ConnectionLoop) { Name = "Client:" + this.id };
+            //this.ctThread.Start();
         }
-
-        private void ConnectionLoop()
+        
+        public async Task<List<Star>> Simulate(Cluster cluster, bool sub)
         {
-            while (!this.Abort)
+            this.Available = false;
+            try
             {
-                var watch = new Stopwatch();
-                try
-                {
-                    this.networkStream = this.clientSocket.GetStream();
+                this.networkStream = this.clientSocket.GetStream();
 
-                    if (!this.Performance.Equals(0.0))
-                    {
-                        this.Ready = true;
-                        while (!this.Send)
-                        {
-                            Thread.Sleep(20);
-                            this.networkStream.Flush();
-                        }
 
-                        this.Ready = false;
-                    }
-                    else
-                    {
-                        this.min = 0;
-                        this.max = this.OldStars.Count - 1;
-                        this.Send = false;
-                    }
+                int size = cluster.Stars.Count * Star.size + Message.headerSize;
 
-                    watch.Reset();
-                    watch.Start();
-                    var overhead = Stopwatch.StartNew();
-                    int size = this.OldStars.Count * Star.size + Message.headerSize;
-                    var msg = new Message(this.Step, this.dt, this.dt, this.min, this.max, this.OldStars.ToArray());
+                var msg = new Message(this.Step, cluster, sub);
 
-                    this.networkStream.Write(msg.Serialize(this.OldStars.Count), 0, size);
-                    this.networkStream.Flush();
-                    this.Send = false;
+                this.networkStream.Write(msg.Serialize(cluster.Stars.ToArray()), 0, size);
+                this.networkStream.Flush();
+                this.Send = false;
 
-                    this.Read();
+                var watch = Stopwatch.StartNew();
+                await this.Read(cluster.Stars.Count(x => x.ToCompute));
+                watch.Stop();
 
-                    watch.Stop();
+                this.Performance = cluster.CalculationComplexity * 1000 / watch.ElapsedMilliseconds; 
 
-                    overhead.Stop();
-                    Console.WriteLine(overhead.ElapsedMilliseconds/1000.0);
+                this.networkStream.Flush();
+                this.Available = true;
 
-                    if (this.max - this.min != this.NewStars.Length - 1)
-                    {
-                        this.NewStars = null;
-                    }
-
-                    this.Performance = (double)(this.max - this.min) + 1 < 1
-                                           ? 1
-                                           : (this.max - this.min + 1) / (double)watch.ElapsedTicks;
-
-                    //this.Performance = 1;
-                    this.ReceiveFinished = true;
-                    this.networkStream.Flush();
-                }
-                catch (Exception e)
-                {
-                    this.Unsubscribe();
-                    Console.Clear();
-                    Console.WriteLine(" >> Client {0} disconnected\n\n{1}", this.id, e);
-                    return;
-                }
+                return this.NewStars;
             }
-
-            Console.Clear();
+            catch (Exception e)
+            {
+                Console.Clear();
+                Console.WriteLine(" >> Client {0} disconnected\n\n{1}", this.id, e);
+                return null;
+            }
         }
-
-        private void Read()
+        
+        private async Task<bool> Read(int StarCount)
         {
-            int size = this.OldStars.Count * Star.size + Message.headerSize;
+            int size = StarCount * Star.size + Message.headerSize;
             this.ReceiveFinished = false;
             var buffer = new byte[size];
-            this.networkStream.Read(buffer, 0, size);
+            //this.networkStream.Read(buffer, 0, size);
+            await this.networkStream.ReadAsync(buffer, 0, size);
             this.networkStream.Flush();
-            var msg = new Message(this.OldStars.Count);
-            this.NewStars = msg.DeSerialize(buffer).ToArray();
+            var msg = new Message();
+            this.NewStars = msg.DeSerialize(buffer);
 
             // this.NewStars = new Star[msg.max - msg.min + 1];
             // Array.Copy(msg.Stars, msg.min, this.NewStars, 0, msg.max - msg.min + 1);
             this.Mstep = msg.step;
+            return true;
         }
     }
 }

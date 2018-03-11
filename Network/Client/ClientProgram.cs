@@ -12,6 +12,7 @@ namespace Client
     #region
 
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Net;
     using System.Net.Sockets;
@@ -60,8 +61,8 @@ namespace Client
 
             if (!Properties.Settings.Default.IP.Equals(String.Empty))
                 ip = Settings.Default.IP;
-
-             //ip = "192.168..42";
+            
+             //ip = "192.168..42"; 
             try
             {
                 clientSocket.Connect(ip, Settings.Default.Port);
@@ -76,15 +77,14 @@ namespace Client
             Console.WriteLine(
                 "Client Socket Program - Server Connected ... on " + Settings.Default.IP + ":" + Settings.Default.Port);
             Console.Beep();
-            var Cluster = new BoxCluster();
+            var Cluster = new SubCluster(new List<Star>());
 
             // Cluster.Stars = new List<Star>(1);
             // Cluster.Stars.Add(Misc.randomize(1, 1, 1, 1, 1));
-            int step, min, max;
-            step = min = 0;
-            max = 1;
-            try
-            {//*/
+            int step;
+            step = 0;
+            /*try
+            {//#1#*/
                 while (true)
                 {
                     var serverStream = clientSocket.GetStream();
@@ -108,18 +108,15 @@ namespace Client
                     while (read < size * Star.size);
                     Array.Copy(header, data, Message.headerSize);
 
-                    var msg = new Message(size);
-                    msg.DeSerialize(data);
-
+                    var msg = new Message();
+                   
                     ready = false;
-                    Cluster.Stars = msg.Stars.ToList();
+                    Cluster.Stars = msg.DeSerialize(data);
                     Cluster.Dt = msg.dt;
                     Cluster.ParentDt = msg.ParentDt;
                     step = msg.step;
-                    min = msg.min;
-                    max = msg.max;
                     
-                    var newStars = Cluster.DoStep(Misc.Method.Rk5, multiThreading: true, min: min, max: max);
+                    var newStars = Cluster.DoStep(Misc.Method.Rk5, multiThreading: true, forceCluster: !msg.Subcluster);
                     step++;
 
                     // if(NewStars.Count)
@@ -127,16 +124,17 @@ namespace Client
 
                     // if (Cluster.Stars.Count != 120)
                     // return;
-                    var message = new Message(step, msg.dt, msg.ParentDt, min, max, newStars).Serialize(newStars.Length);
+                    // var message = new Message(step, msg.dt, msg.ParentDt, min, max, newStars).Serialize(newStars.Length);
+                    var message = new Message(step, Cluster).Serialize(newStars);
                     serverStream.Write(message, 0, newStars.Length * Star.size + Message.headerSize);
                     serverStream.Flush();
                 }
-            }
+            /*}
             catch (Exception e)
             {
                 Console.WriteLine("Verbindung verloren\n\n" + e.Message);
                 Thread.Sleep(2000);
-            }//*/
+            }//#1#*/
 
             // Console.ReadLine()););return; }
         }

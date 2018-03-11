@@ -50,10 +50,15 @@
             return totalTime;
         }
 
-        public override Star[] DoStep(Misc.Method m, bool multiThreading)
+        public override Star[] DoStep(Misc.Method m, bool multiThreading, bool forceCluster = false)
         {
+            if (forceCluster)
+            {
+                return base.DoStep(m, multiThreading);
+            }
+
             int count = this.GetComputeCount();
-            
+
             var minDt = Stars.Where(x => x.ToCompute).Min(c => CalcRequiredDt(c));
             var stepTime = EstimateStepTime(this.Stars.Count, count, false);
             var totalTime = Math.Ceiling(this.ParentDt / minDt) * stepTime;
@@ -76,10 +81,9 @@
                 }
 
                 var temp = new ConcurrentBag<Star>();
-                totalTime = stepTime * Math.Ceiling(this.Dt / subClusters.Min(x=>x.Dt));
+                totalTime = stepTime * Math.Ceiling(this.Dt / subClusters.Min(x => x.Dt));
 
-                if (subClusters == null 
-                    || subClusters.Sum(x => x.CalculationComplexity) > totalTime  * 1.5
+                if (subClusters.Sum(x => x.CalculationComplexity) > totalTime * 1.5
                     || subClusters.Count < 2
                     || subClusters.All(x => x.Dt * 2 > subClusters.First().Dt))
                 {
@@ -130,21 +134,7 @@
 
                 newStars = temp.OrderBy(s => s.id).ToList();
 
-                if (newStars.Count != this.Stars.Count(x => x.ToCompute))
-                {
-                    var duplicates = newStars.Where(x => newStars.Count(c => c.id == x.id) > 1).Select(d => d.id)
-                        .Distinct()
-                        .ToList();
-                    foreach (var duplicate in duplicates)
-                    {
-                        while (newStars.Remove(newStars.Where(x => x.id == duplicate).OrderBy(c => c.DAcc).First())
-                               && newStars.Count(c => c.id == duplicate) > 1)
-                        {
-                        }
-                    }
-
-                    // throw new Exception("Duplicate!");
-                }
+                newStars = this.RemoveDuplicates(newStars);
 
                 this.Stars.RemoveAll(x => newStars.Select(c => c.id).Contains(x.id));
                 this.Stars.AddRange(newStars);
@@ -155,6 +145,64 @@
 
             this.Stars = this.Stars.OrderBy(star => star.id).ToList();
             return this.Stars.Where(x => x.Computed && x.ToCompute).ToArray();
+        }
+
+        public async Task<List<Star>> DoStep(Misc.Method m, List<IComputationNode> clients)
+        {
+            int count = this.GetComputeCount();
+            
+            var subClusters = this.DivideIntoSubClusters();
+
+            this.CalculationComplexity = subClusters.Sum(x => x.CalculationComplexity);
+            List<Star> newStars = new List<Star>();
+
+            var first = subClusters.First();
+
+            var tasks = new List<Task<List<Star>>>();
+            subClusters = subClusters.OrderByDescending(x => x.CalculationComplexity).ToList();
+            /*var clientsPerformance = clients.Sum(x => x.Performance);*/
+
+            foreach (var subCluster in subClusters)
+            {
+                if (subCluster is SubCluster)
+                {
+                    this.SkipInstructionRefresh = true;
+                    tasks.Add(this.DoStep(m, clients));
+                }
+                else
+                {
+                    var ready = clients.Where(x => x.Available).OrderBy(y => y.Performance).ToList();
+                    var remaining = tasks.Where(x => !x.IsCompleted);
+                    if (ready.Count == 0)
+                    {
+                        await Task.WhenAny(remaining);
+                        ready = clients.Where(x => x.Available).OrderBy(y => y.Performance).ToList();
+                    }
+                    
+                    var client = ready.Last();
+                    tasks.Add(client.DoStep(subCluster));
+                }
+            }
+
+
+            await Task.WhenAll(tasks);
+
+            tasks.ForEach(t => newStars.AddRange(t.Result));
+
+            this.Dt = first.Dt;
+            
+
+            newStars = this.RemoveDuplicates(newStars);
+
+            this.Stars.RemoveAll(x => newStars.Select(c => c.id).Contains(x.id));
+            this.Stars.AddRange(newStars);
+            this.Stars = this.Stars.OrderBy(star => star.id).ToList();
+
+            // this.Stars.ForEach(x => x.ToCompute = false);
+            this.SkipInstructionRefresh = false;
+
+            this.Stars = this.Stars.OrderBy(star => star.id).ToList();
+            return this.Stars.Where(x => x.ToCompute).ToList();
         }
 
         public List<Cluster> DivideIntoSubClusters(bool all)
@@ -177,22 +225,23 @@
             // return list of SubClusters with set dt
             var newClusters = new List<Cluster>();
             var seeds = this.GetSubsetSeeds();
-            if (seeds.Count == 0)
+            if (seeds == null || seeds.Count == 0)
             {
-                 newClusters.Add(new BoxCluster(this.Stars, this.Dt)
-                           {
-                               CalculationComplexity = this.CalculationComplexity,
-                               ParentDt = this.Dt,
-                               ComputeCount = this.Stars.Count,
-                               RecursionLevel = this.RecursionLevel
-                           });
+                this.CalculationComplexity = EstimateStepTime(this.Stars.Count, this.ComputeCount, false);
+                newClusters.Add(new BoxCluster(this.Stars, this.Dt)
+                {
+                    CalculationComplexity = this.CalculationComplexity,
+                    ParentDt = this.Dt,
+                    ComputeCount = this.Stars.Count,
+                    RecursionLevel = this.RecursionLevel -1
+                });
                 return newClusters;
             }
 
             var subClusters = this.FormSubs(seeds);
 
-           var res = new List<Star>();
-            foreach (Star s in this.Stars)
+            var res = new List<Star>();
+            foreach (var s in this.Stars)
             {
                 res.Add(new Star(s));
                 res.Last().ToCompute = this.remaining.Contains(s.id);
@@ -228,6 +277,7 @@
                 if (this.Dt / newDt < 2)
                 {
                     this.Dt = Math.Min(this.Dt, newDt);
+                    this.remaining.AddRange(cluster);
                     continue;
                 }
 
@@ -235,7 +285,7 @@
                     cluster.Count < 20 || this.RecursionLevel < MaxRecursion
                     || result.Where(x => x.ToCompute).Average(c => CalcRequiredDt(c)) < newDt * 2
                         ? new BoxCluster(result, newDt)
-                              {
+                        {
                             CalculationComplexity = complexity,
                             ParentDt = this.Dt,
                             ComputeCount = cluster.Count,
@@ -249,7 +299,7 @@
                             RecursionLevel = this.RecursionLevel - 1
                         });
             }
-            
+
 
             if (res.Count < 2)
             {
@@ -257,22 +307,24 @@
             }
 
             complexity = EstimateStepTime(this.Stars.Count, this.remaining.Count, false);
+            res.ForEach(x => x.ToCompute = this.remaining.Contains(x.id));
 
             newClusters.Add(
                 new BoxCluster(res, this.Dt)
-                    {
-                        CalculationComplexity = complexity,
-                        ParentDt = this.Dt,
-                        ComputeCount = this.remaining.Count,
-                        RecursionLevel = this.RecursionLevel - 1
-                    });
+                {
+                    CalculationComplexity = complexity,
+                    ParentDt = this.Dt,
+                    ComputeCount = this.remaining.Count,
+                    RecursionLevel = this.RecursionLevel - 1
+                });
+            this.CalculationComplexity = newClusters.Sum(c => c.CalculationComplexity);
             newClusters.Reverse();
             return newClusters;
         }
 
         public List<double> CalcDt()
         {
-            var stepSize = this.Stars.Select(x=>x.DAcc).ToList();
+            var stepSize = this.Stars.Select(x => x.DAcc).ToList();
 
             stepSize.Sort();
 
@@ -326,6 +378,29 @@
             return null;
         }
 
+        private List<Star> RemoveDuplicates(List<Star> newStars)
+        {
+            if (newStars.Count == this.Stars.Count(x => x.ToCompute))
+            {
+                return newStars;
+            }
+
+            var duplicates = newStars.Where(x => newStars.Count(c => c.id == x.id) > 1).Select(d => d.id)
+                .Distinct()
+                .ToList();
+            foreach (var duplicate in duplicates)
+            {
+                while (newStars.Remove(newStars.Where(x => x.id == duplicate).OrderBy(c => c.DAcc).First())
+                       && newStars.Count(c => c.id == duplicate) > 1)
+                {
+                }
+            }
+
+            // throw new Exception("Duplicate!");
+
+            return newStars;
+        }
+
         private IEnumerable<HashSet<int>> FormSubs(IEnumerable<int> seeds)
         {
             this.CalcBoxes();
@@ -352,6 +427,18 @@
                         }
                     });
 
+            // Degug
+            /*foreach (int seed in seeds)
+            {
+                var ids = new HashSet<int>();
+                var temp = this.Boxes.First(x => x.ids[0] == seed && x.root);
+                ids.Add(seed);
+                this.GrowCluster(temp.id, ref ids);
+                var newIds = ids.ToList();
+                newIds.Sort();
+                cluster.Add(newIds);
+            }*/
+
             if (cluster.Count == 0)
             {
                 return null;
@@ -366,7 +453,7 @@
                 foreach (var finalCluster in finalClusters)
                 {
                     var workSet = new HashSet<int>(finalCluster);
-                    if (list.Any(x => !workSet.Add(x)))
+                    if (list.Any(x => finalCluster.Contains(x)))
                     {
                         added = true;
                         list.ForEach(x => finalCluster.Add(x));
@@ -420,7 +507,7 @@
 
                 var iD = node.ids.First();
                 var star = this.Stars[iD];
-                if (star.DAcc  < this.avgDAcc * 2 || !star.ToCompute)
+                if (star.DAcc < this.avgDAcc * 2 || !star.ToCompute)
                 {
                     continue;
                 }
@@ -444,7 +531,7 @@
             }
 
             this.CalcBoxes(true);
-            Parallel.ForEach(this.Stars.Where(x => x.ToCompute), this.GetInstruction);
+            Parallel.ForEach(this.Stars.Where(x => x.ToCompute), s => this.GetInstruction(s, true));
         }
     }
 }

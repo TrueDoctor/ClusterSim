@@ -66,7 +66,7 @@
             return this.DoStep(m, multiThreading);
         }
 
-        public virtual Star[] DoStep(Misc.Method m, bool multiThreading)
+        public virtual Star[] DoStep(Misc.Method m, bool multiThreading, bool forceCluster = true)
         {
             var ids = (from star in this.Stars where star.ToCompute select star.id).ToList();
             
@@ -191,11 +191,12 @@
                         break;
                 }
 
+                s.Dt = this.Dt;
+
                 if (!oldAcc.IsNull())
                 {
                     var change = (oldAcc - s.Acc).distance();
                     var old = oldAcc.distance();
-                    s.Dt = this.Dt;
                     s.DAcc = change / old;
                 }
             }
@@ -205,7 +206,7 @@
             }
         }
         
-        protected virtual void GetInstruction(Star s)
+        protected virtual void GetInstruction(Star s, bool forceBox = false)
         {
             if (this.SkipInstructionRefresh)
             {
