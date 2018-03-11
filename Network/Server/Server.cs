@@ -24,7 +24,7 @@
 
         private List<ClientHandler> clients = new List<ClientHandler>();
 
-        public string rtable { get; set; } = "n200dtv";
+        public string rtable { get; set; } = "n5000dtv";
 
         public string wtable { get; set; } = "copy2";
 
@@ -52,7 +52,7 @@
             Console.CursorVisible = false;
 
             Cluster.Dt = 1;
-            Cluster.ParentDt = 300;
+            Cluster.ParentDt = 30000;
             Cluster.DoStep(Misc.Method.Rk5, true, 0, -1);
 
             while (true)
@@ -77,8 +77,12 @@
                     
                     Cluster.Stars.ForEach(x => x.ToCompute = true);
 
-                    var computation = Cluster.DoStep(Misc.Method.Rk5, this.clients.Select(c => c as IComputationNode).ToList());
+                    var Nodes = this.clients.Select(c => c as IComputationNode).ToList();
+
+                    var computation = Cluster.DoStep(Misc.Method.Rk5, Nodes);
                     
+                    await computation;
+
                     Console.WriteLine(step);
 
                     foreach (var c in this.clients)
@@ -93,7 +97,7 @@
                                 c.Performance));
                     }
 
-                    await computation;
+                    
                     var newStars = computation.Result;
 
                     time += Cluster.Dt;

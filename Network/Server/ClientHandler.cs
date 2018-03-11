@@ -52,16 +52,10 @@ namespace ClusterSim.Net.Server
         public double Performance { get; set; } = 1;
 
         public bool Ready { get; set; }
-
-        public bool ReceiveFinished { get; set; }
-
-        public bool Send { get; set; }
-
+        
         public int Step { get; set; }
 
         private static int Id { get; set; }
-
-        private List<Star> OldStars { get; set; } = new List<Star>();
 
 
         public void StarClient(TcpClient inClientSocket)
@@ -73,9 +67,6 @@ namespace ClusterSim.Net.Server
             this.DoStep = cluster => this.Simulate(cluster, true);
 
             this.Performance = 1;
-
-            //this.ctThread = new Thread(this.ConnectionLoop) { Name = "Client:" + this.id };
-            //this.ctThread.Start();
         }
         
         public async Task<List<Star>> Simulate(Cluster cluster, bool sub)
@@ -92,7 +83,6 @@ namespace ClusterSim.Net.Server
 
                 this.networkStream.Write(msg.Serialize(cluster.Stars.ToArray()), 0, size);
                 this.networkStream.Flush();
-                this.Send = false;
 
                 var watch = Stopwatch.StartNew();
                 await this.Read(cluster.Stars.Count(x => x.ToCompute));
@@ -113,19 +103,14 @@ namespace ClusterSim.Net.Server
             }
         }
         
-        private async Task<bool> Read(int StarCount)
+        private async Task<bool> Read(int starCount)
         {
-            int size = StarCount * Star.size + Message.headerSize;
-            this.ReceiveFinished = false;
+            int size = starCount * Star.size + Message.headerSize;
             var buffer = new byte[size];
-            //this.networkStream.Read(buffer, 0, size);
             await this.networkStream.ReadAsync(buffer, 0, size);
             this.networkStream.Flush();
             var msg = new Message();
             this.NewStars = msg.DeSerialize(buffer);
-
-            // this.NewStars = new Star[msg.max - msg.min + 1];
-            // Array.Copy(msg.Stars, msg.min, this.NewStars, 0, msg.max - msg.min + 1);
             this.Mstep = msg.step;
             return true;
         }

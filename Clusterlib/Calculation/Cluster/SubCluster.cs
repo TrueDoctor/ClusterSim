@@ -166,8 +166,9 @@
             {
                 if (subCluster is SubCluster)
                 {
-                    this.SkipInstructionRefresh = true;
-                    tasks.Add(this.DoStep(m, clients));
+                    //this.SkipInstructionRefresh = true;
+                    tasks.Add((subCluster as SubCluster).DoStep(m, clients));
+                    //this.SkipInstructionRefresh = false;
                 }
                 else
                 {
@@ -411,7 +412,7 @@
             var cluster = new ConcurrentBag<List<int>>();
             var finalClusters = new List<HashSet<int>>();
 
-            Parallel.ForEach(
+            /*Parallel.ForEach(
                 seeds,
                 seed =>
                     {
@@ -425,10 +426,10 @@
                         {
                             cluster.Add(newIds);
                         }
-                    });
+                    });*/
 
             // Degug
-            /*foreach (int seed in seeds)
+            foreach (int seed in seeds)
             {
                 var ids = new HashSet<int>();
                 var temp = this.Boxes.First(x => x.ids[0] == seed && x.root);
@@ -437,7 +438,7 @@
                 var newIds = ids.ToList();
                 newIds.Sort();
                 cluster.Add(newIds);
-            }*/
+            }
 
             if (cluster.Count == 0)
             {
