@@ -1,10 +1,8 @@
 ﻿namespace ClusterSim.ClusterLib.Calculation.Cluster
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
 
     using global::ClusterSim.ClusterLib.Utility;
@@ -13,7 +11,7 @@
     {
         // fields
         public const double Gravitation = 0.0002959122083; // 0.0000000000667384;//gravitation constant in AE^3 / Sun-mass * Day^2
-
+        
         public Cluster(List<Star> stars, double dt = 1) : this(dt)
         {
             this.Stars = stars;
@@ -36,6 +34,8 @@
             }
         }
 
+        public static double GalaxyMass { get; set; }
+
         public List<int>[] Instructions { get; set; } 
 
         public List<Star> Stars { get; set; }
@@ -52,9 +52,11 @@
 
         public List<IMassive> MassLayer { get; set; } = new List<IMassive>();
 
-        protected bool SkipInstructionRefresh { get; set; } = false;
+        protected bool SkipInstructionRefresh { get; set; }
 
-        public Star[] DoStep(Misc.Method m, bool multiThreading, int min, int max)
+        protected double DistanceFormGalaxy { get; set; } = -1;
+
+        public Star[] DoStep(Misc.Method m, bool multiThreading, int min, int max, double distanceFromGalaxy = -1)
         {
             max = max == -1 ? this.Stars.Count - 1 : max;
             
@@ -63,10 +65,10 @@
                 this.Stars[i].ToCompute = true;
             }
 
-            return this.DoStep(m, multiThreading);
+            return this.DoStep(m, multiThreading, distanceFromGalaxy: distanceFromGalaxy);
         }
 
-        public virtual Star[] DoStep(Misc.Method m, bool multiThreading, bool forceCluster = true)
+        public virtual Star[] DoStep(Misc.Method m, bool multiThreading, bool forceCluster = false, double distanceFromGalaxy = -1)
         {
             var ids = (from star in this.Stars where star.ToCompute select star.id).ToList();
             
@@ -77,6 +79,8 @@
             this.Dt = this.Dt < this.ParentDt ? this.Dt : this.ParentDt;
 
             this.SkipInstructionRefresh = false;
+
+            this.DistanceFormGalaxy = distanceFromGalaxy;
 
             for (double time = 0; this.ParentDt > time; time += this.Dt)
             {
@@ -281,14 +285,25 @@
         private Vec6 F(Vec6 star, int id)
         {
             var acc = new Vector();
+            var pos = star.ToVector(0);
+
             for (var j = 0; j < this.Instructions[id].Count; j++)
             {
                 int temp = this.Instructions[id][j];
                 if (!this.MassLayer[temp].dead && !this.MassLayer[id].dead && temp != id)
                 {
-                    acc.add(this.CalcAcc(star.ToVector(0), this.MassLayer[temp], this.MassLayer[id].mass)); // add all acceleration vectors
+                    acc.add(this.CalcAcc(pos, this.MassLayer[temp], this.MassLayer[id].mass)); // add all acceleration vectors
                 }
             }
+            if (this.DistanceFormGalaxy.Equals(-1))
+            {
+                return new Vec6(star.ToVector(1), acc);
+            }
+
+            var r = this.DistanceFormGalaxy + pos.vec[2];
+            var a = GalaxyMass / (r * r);
+
+            acc.vec[2] += a;
 
             return new Vec6(star.ToVector(1), acc);
         }

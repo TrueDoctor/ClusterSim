@@ -51,13 +51,15 @@
                 }
 
                 stars.MoveCenter(stars.GetCenter());
-                //stars = stars.Where(s => s.Pos.distance() < 4 * stars.GetRadius()).ToList();
+                stars = stars.Where(s => s.Pos.distance() < 4 * stars.GetRadius()).ToList();
 
                 var mass = stars.Sum(x => x.Mass);
-                
+
                 data[0].Add(stars.Sum(x => x.GetMetric(mass, Parameters.Kinetic)));
-                if (i>0&&data[0][i] > 2*data[0][i-1])
-                    data[0][i] = data[0][i-1]*1.4; 
+                if (i > 0 && data[0][i] > 2 * data[0][i - 1])
+                {
+                    data[0][i] = data[0][i - 1] * 1.4;
+                }
 
                 data[1].Add(stars.Sum(x => x.GetMetric(mass, Parameters.Potential)));
                 data[2].Add(data[0][i] + data[1][i]);

@@ -8,7 +8,7 @@ namespace ClusterSim.ClusterLib.Calculation
 {
     public interface IComputationNode
     {
-        Func<Cluster.Cluster, Task<List<Star>>> DoStep { get; set; }
+        Func<Cluster.Cluster, double, Task<List<Star>>> DoStep { get; set; }
 
         bool Available { get; set; }
 

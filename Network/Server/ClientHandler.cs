@@ -45,7 +45,7 @@ namespace ClusterSim.Net.Server
 
         public List<Star> NewStars { get; private set; }
 
-        public Func<Cluster, Task<List<Star>>> DoStep { get; set; }
+        public Func<Cluster, double, Task<List<Star>>> DoStep { get; set; }
 
         public bool Available { get; set; } = true;
 
@@ -64,12 +64,12 @@ namespace ClusterSim.Net.Server
 
             this.networkStream = this.clientSocket.GetStream();
 
-            this.DoStep = cluster => this.Simulate(cluster, true);
+            this.DoStep = (cluster, coe) => this.Simulate(cluster, coe, true);
 
             this.Performance = 1;
         }
         
-        public async Task<List<Star>> Simulate(Cluster cluster, bool sub)
+        public async Task<List<Star>> Simulate(Cluster cluster, double coe, bool sub)
         {
             this.Available = false;
             try
@@ -79,7 +79,7 @@ namespace ClusterSim.Net.Server
 
                 int size = cluster.Stars.Count * Star.size + Message.headerSize;
 
-                var msg = new Message(this.Step, cluster, sub);
+                var msg = new Message(this.Step, cluster, coe, sub);
 
                 this.networkStream.Write(msg.Serialize(cluster.Stars.ToArray()), 0, size);
                 this.networkStream.Flush();
@@ -88,7 +88,8 @@ namespace ClusterSim.Net.Server
                 await this.Read(cluster.Stars.Count(x => x.ToCompute));
                 watch.Stop();
 
-                this.Performance = cluster.CalculationComplexity * 1000 / watch.ElapsedMilliseconds; 
+                var newTime = cluster.CalculationComplexity * 1000 / watch.ElapsedMilliseconds;
+                this.Performance += (newTime - this.Performance) / 2; 
 
                 this.networkStream.Flush();
                 this.Available = true;

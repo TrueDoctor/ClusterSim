@@ -24,7 +24,7 @@
 
         private List<ClientHandler> clients = new List<ClientHandler>();
 
-        public string rtable { get; set; } = "n5000dtv";
+        public string rtable { get; set; } = "n200dtv";
 
         public string wtable { get; set; } = "copy2";
 
@@ -43,7 +43,8 @@
             double ovrper = 1, time = 0;
 
             Console.WriteLine("Load Stars...");
-            var Cluster = new SubCluster(SQL.readStars(this.rtable, step - 1));
+            var cluster = new SubCluster(SQL.readStars(this.rtable, step - 1));
+            Cluster.GalaxyMass = -1;
             Console.WriteLine("Loading finished");
             listenThread.Start();
 
@@ -51,9 +52,11 @@
             
             Console.CursorVisible = false;
 
-            Cluster.Dt = 1;
-            Cluster.ParentDt = 30000;
-            Cluster.DoStep(Misc.Method.Rk5, true, 0, -1);
+            cluster.Dt = 1;
+            cluster.ParentDt = 600;
+            cluster.DoStep(Misc.Method.Rk5, true, 0, -1);
+
+            var logger = new DataLogger();
 
             while (true)
             {
@@ -65,7 +68,7 @@
 
                     double partper = ready.Sum(c => c.Performance);
 
-                    double coe = Cluster.Stars.Count / partper;
+                    double coe = cluster.Stars.Count / partper;
 
                     msg.Append(
                         string.Format(
@@ -75,11 +78,11 @@
                             "Performance",
                             errors));
                     
-                    Cluster.Stars.ForEach(x => x.ToCompute = true);
+                    cluster.Stars.ForEach(x => x.ToCompute = true);
 
-                    var Nodes = this.clients.Select(c => c as IComputationNode).ToList();
+                    var nodes = this.clients.Select(c => c as IComputationNode).ToList();
 
-                    var computation = Cluster.DoStep(Misc.Method.Rk5, Nodes);
+                    var computation = cluster.DoStep(Misc.Method.Rk5, nodes, -1);
                     
                     await computation;
 
@@ -96,24 +99,23 @@
                                 c.clientSocket.Client.RemoteEndPoint.ToString().Split(':')[0],
                                 c.Performance));
                     }
-
                     
                     var newStars = computation.Result;
 
-                    time += Cluster.Dt;
+                    time += cluster.Dt;
 
-                    if (newStars.Count != Cluster.Stars.Count && step != 0)
+                    if (newStars.Count != cluster.Stars.Count && step != 0)
                     {
                         throw new Exception("Falsche Rückgabelänge => Rechenergebnisse fehler- oder lückenhaft");
                     }
 
 
-                    for (var i = 0; i < Cluster.Stars.Count; i++)
+                    for (var i = 0; i < cluster.Stars.Count; i++)
                     {
                         var temp = newStars.Find(x => x.id == i);
                         if (temp != null)
                         {
-                            Cluster.Stars[i] = temp.Clone();
+                            cluster.Stars[i] = temp.Clone();
                         }
                         else
                         {
@@ -124,7 +126,7 @@
                             // step--;
                             throw new Exception(
                                 string.Format(
-                                    $"client: {ready[0].Step}  \nServer: {step} \n0 = {newStars.Count - Cluster.Stars.Count}"));
+                                    $"client: {ready[0].Step}  \nServer: {step} \n0 = {newStars.Count - cluster.Stars.Count}"));
                         }
                     }
 
@@ -135,33 +137,20 @@
                         && Math.Ceiling(((double)step - 1) * dt / 365) < Math.Ceiling((double)step * dt / 365)
                         && ++year % saveInterval == 0)
                     {
-                        while (!SQL.addRows(Cluster.Stars, year, wtable))
+                        while (!SQL.addRows(cluster.Stars, year, wtable))
                         {
                             Thread.Sleep(100);
                         }
                     }
 
+                    cluster.ParentDt = cluster.Dt * 10;
 
-                    /*if (NewStars.Count == Cluster.Stars.Count)
-                    {
-                        step++;
-                        Console.Beep();
-    
-                        if (wtable.Length != 0 && step * dt % 36500 == 0)
-                            foreach (Star s in Cluster.Stars)
-                                while (SQL.addRow(s, step, wtable) == false) ;//do until succesfull
-                    }
-                    else 
-                    {
-                        Console.Beep();Console.WriteLine("\n\n\nSchritt Fehlgeschlagen");
-                        errors++;
-                        //step--;
-                        throw new Exception(String.Format($"client: {ready[0].step.ToString()}  \nServer: {step} \n0 = {(NewStars.Count - Cluster.Stars.Count)}"));
-    
-                    }
-                    */
                     watch.Stop();
                     ovrper = (watch.ElapsedMilliseconds / 1000.0 + ovrper) / 2.0;
+
+                    var multiplier = cluster.Dt / cluster.Stars.Min(x => x.Dt);
+
+                    //logger.Log(Cluster.EstimateStepTime(true) * multiplier, Cluster.CalculationComplexity, watch.ElapsedMilliseconds);
 
                     Console.Clear();
                     Console.Write(msg);

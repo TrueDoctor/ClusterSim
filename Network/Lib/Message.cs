@@ -22,7 +22,7 @@ namespace ClusterSim.Net.Lib
 
     public class Message
     {
-        public const int headerSize = 25;
+        public const int headerSize = 41;
 
         public int step;
         
@@ -33,7 +33,11 @@ namespace ClusterSim.Net.Lib
         public double dt;
 
         public double ParentDt;
-        
+
+        public double distanceFromGalaxy;
+
+        public double Mass;
+
         public Message(int count)
         {
             this.Stars = new Star[count];
@@ -47,7 +51,7 @@ namespace ClusterSim.Net.Lib
         {
         }
         
-        public Message(int step, Cluster cluster, bool subCluster = false)
+        public Message(int step, Cluster cluster, double coe, bool subCluster = false)
         {
             this.step = step;
             this.Subcluster = subCluster;
@@ -55,6 +59,8 @@ namespace ClusterSim.Net.Lib
             this.count = cluster.Stars.Count;
             this.dt = cluster.Dt;
             this.ParentDt = cluster.ParentDt;
+            this.distanceFromGalaxy = coe;
+            this.Mass = Cluster.GalaxyMass;
         }
 
         public Star[] Stars { get; }
@@ -66,7 +72,9 @@ namespace ClusterSim.Net.Lib
             this.count = BitConverter.ToInt32(input, 4);
             this.dt = BitConverter.ToDouble(input, 8);
             this.ParentDt = BitConverter.ToDouble(input, 16);
-            this.Subcluster = BitConverter.ToBoolean(input, 24);
+            this.distanceFromGalaxy = BitConverter.ToDouble(input, 24);
+            this.Mass = BitConverter.ToDouble(input, 32);
+            this.Subcluster = BitConverter.ToBoolean(input, 40);
             var star = new byte[Star.size];
 
             for (var i = 0; i < this.count; i++)
@@ -87,7 +95,9 @@ namespace ClusterSim.Net.Lib
             Array.Copy(BitConverter.GetBytes(count), 0, output, 4, 4);
             Array.Copy(BitConverter.GetBytes(this.dt), 0, output, 8, 8);
             Array.Copy(BitConverter.GetBytes(this.ParentDt), 0, output, 16, 8);
-            Array.Copy(BitConverter.GetBytes(this.Subcluster), 0, output, 24, 1);
+            Array.Copy(BitConverter.GetBytes(this.distanceFromGalaxy), 0, output, 24, 8);
+            Array.Copy(BitConverter.GetBytes(this.Mass), 0, output, 32, 8);
+            Array.Copy(BitConverter.GetBytes(this.Subcluster), 0, output, 40, 1);
             for (var i = 0; i < this.count; i++)
             {
                 Array.Copy(stars[i].Serialize(), 0, output, i * Star.size + Message.headerSize, Star.size);

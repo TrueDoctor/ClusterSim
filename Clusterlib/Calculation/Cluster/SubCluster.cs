@@ -28,7 +28,7 @@
         }
 
         public static double MinPrecision { get; set; }
-
+        
         public static double EstimateStepTime(int count, int toCalculate, bool network)
         {
             double totalTime = 2;
@@ -50,14 +50,22 @@
             return totalTime;
         }
 
-        public override Star[] DoStep(Misc.Method m, bool multiThreading, bool forceCluster = false)
+        public double EstimateStepTime(bool network)
         {
+            return EstimateStepTime(this.Stars.Count, this.ComputeCount, network);
+        }
+
+        public override Star[] DoStep(Misc.Method m, bool multiThreading, bool forceCluster = false, double distanceFromGalaxy = -1)
+        {
+            this.DistanceFormGalaxy = distanceFromGalaxy;
+
             if (forceCluster)
             {
-                return base.DoStep(m, multiThreading);
+                return base.DoStep(m, multiThreading, distanceFromGalaxy: this.DistanceFormGalaxy);
             }
 
             int count = this.GetComputeCount();
+            
 
             var minDt = Stars.Where(x => x.ToCompute).Min(c => CalcRequiredDt(c));
             var stepTime = EstimateStepTime(this.Stars.Count, count, false);
@@ -67,14 +75,14 @@
 
             if (subClusters == null || subClusters.Sum(x => x.CalculationComplexity) > totalTime)
             {
-                return base.DoStep(m, multiThreading);
+                return base.DoStep(m, multiThreading, distanceFromGalaxy: this.DistanceFormGalaxy);
             }
 
             this.CalculationComplexity = subClusters.Sum(x => x.CalculationComplexity);
             List<Star> newStars;
 
             for (double time = 0; time < this.ParentDt;)
-            {
+             {
                 if (!time.Equals(0))
                 {
                     subClusters = this.DivideIntoSubClusters();
@@ -90,7 +98,7 @@
                     var tempDt = this.ParentDt;
                     this.ParentDt = this.Dt;
                     this.Dt = subClusters.Min(x => x.Dt);
-                    var tStars = base.DoStep(m, multiThreading);
+                    var tStars = base.DoStep(m, multiThreading, distanceFromGalaxy: this.DistanceFormGalaxy);
                     foreach (var tStar in tStars)
                     {
                         temp.Add(tStar);
@@ -110,7 +118,7 @@
                             subClusters,
                             c =>
                                 {
-                                    var stars = c.DoStep(Misc.Method.Rk5, multiThreading);
+                                    var stars = c.DoStep(Misc.Method.Rk5, multiThreading, distanceFromGalaxy: this.DistanceFormGalaxy);
                                     foreach (var star in stars)
                                     {
                                         temp.Add(star);
@@ -121,7 +129,7 @@
                     {
                         foreach (var c in subClusters)
                         {
-                            var stars = c.DoStep(Misc.Method.Rk5, multiThreading);
+                            var stars = c.DoStep(Misc.Method.Rk5, multiThreading, distanceFromGalaxy: this.DistanceFormGalaxy);
                             foreach (var star in stars)
                             {
                                 temp.Add(star);
@@ -129,7 +137,7 @@
                         }
                     }
 
-                    this.Dt = subClusters.First().Dt;
+                    this.Dt = subClusters.First().Dt * 10;
                 }
 
                 newStars = temp.OrderBy(s => s.id).ToList();
@@ -147,10 +155,11 @@
             return this.Stars.Where(x => x.Computed && x.ToCompute).ToArray();
         }
 
-        public async Task<List<Star>> DoStep(Misc.Method m, List<IComputationNode> clients)
+        public async Task<List<Star>> DoStep(Misc.Method m, List<IComputationNode> clients, double distanceFromGalaxy)
         {
             int count = this.GetComputeCount();
-            
+            this.DistanceFormGalaxy = distanceFromGalaxy;
+
             var subClusters = this.DivideIntoSubClusters();
 
             this.CalculationComplexity = subClusters.Sum(x => x.CalculationComplexity);
@@ -167,7 +176,7 @@
                 if (subCluster is SubCluster)
                 {
                     //this.SkipInstructionRefresh = true;
-                    tasks.Add((subCluster as SubCluster).DoStep(m, clients));
+                    tasks.Add((subCluster as SubCluster).DoStep(m, clients, this.DistanceFormGalaxy));
                     //this.SkipInstructionRefresh = false;
                 }
                 else
@@ -181,7 +190,7 @@
                     }
                     
                     var client = ready.Last();
-                    tasks.Add(client.DoStep(subCluster));
+                    tasks.Add(client.DoStep(subCluster, this.DistanceFormGalaxy));
                 }
             }
 

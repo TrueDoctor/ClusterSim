@@ -15,6 +15,7 @@ namespace Client
     using System.Collections.Generic;
     using System.Linq;
     using System.Net;
+    using System.Net.Configuration;
     using System.Net.Sockets;
     using System.Threading;
 
@@ -115,8 +116,9 @@ namespace Client
                     Cluster.Dt = msg.dt;
                     Cluster.ParentDt = msg.ParentDt;
                     step = msg.step;
+                    ClusterSim.ClusterLib.Calculation.Cluster.Cluster.GalaxyMass = msg.Mass;
                     
-                    var newStars = Cluster.DoStep(Misc.Method.Rk5, multiThreading: true, forceCluster: !msg.Subcluster);
+                    var newStars = Cluster.DoStep(Misc.Method.Rk5, multiThreading: true, forceCluster: !msg.Subcluster, distanceFromGalaxy: msg.distanceFromGalaxy);
                     step++;
 
                     // if(NewStars.Count)
@@ -125,7 +127,7 @@ namespace Client
                     // if (Cluster.Stars.Count != 120)
                     // return;
                     // var message = new Message(step, msg.dt, msg.ParentDt, min, max, newStars).Serialize(newStars.Length);
-                    var message = new Message(step, Cluster).Serialize(newStars);
+                    var message = new Message(step, Cluster, msg.distanceFromGalaxy).Serialize(newStars);
                     serverStream.Write(message, 0, newStars.Length * Star.size + Message.headerSize);
                     serverStream.Flush();
                 }

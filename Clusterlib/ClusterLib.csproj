@@ -64,6 +64,7 @@
     <Compile Include="Calculation\Cluster\ICluster.cs" />
     <Compile Include="Calculation\IComputationNode.cs" />
     <Compile Include="Calculation\InitialVelExtension.cs" />
+    <Compile Include="Calculation\WaveGenerator.cs" />
     <Compile Include="Utility\CenterEnumerableExtension.cs" />
     <Compile Include="Calculation\Cluster\SubCluster.cs" />
     <Compile Include="Visualization\EnumerableExtension.cs" />

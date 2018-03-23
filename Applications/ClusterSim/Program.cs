@@ -23,7 +23,7 @@ namespace ClusterSim.Standalone
     {
         private static bool abort = false;
 
-        public static int SaveInterval { get; set; } = 100;
+        public static int SaveInterval { get; set; } = 10000000;
 
         public static double MinDAcc { get; set; } = 0.001;
 
@@ -90,12 +90,14 @@ namespace ClusterSim.Standalone
 
             var time = 0d;
 
-
+            Cluster.GalaxyMass = 1.4e6;
             cluster.ParentDt = 100;
-            cluster.DoStep(Misc.Method.Rk5, true, 0, -1);
+            cluster.DoStep(Misc.Method.Rk5, true, 0, -1, 3.162e+9);
             
             Sub.Stars = new List<Star>(cluster.Stars.Select(x=>x.Clone()));
             Sub.Dt = cluster.Dt;
+
+            var tide = new WaveGenerator(1.4e6, 3.162e9);
 
             var X = new List<double>();
 
@@ -108,13 +110,13 @@ namespace ClusterSim.Standalone
                 var maxDAcc = cluster.Stars.Max(x => x.DAcc);
                 if (maxDAcc > 0)
                 {
-                    cluster.ParentDt = 20000;
-                    Sub.ParentDt = 20000;
-                    Stopwatch watch = Stopwatch.StartNew();
+                    cluster.ParentDt = 3000;
+                    //Sub.ParentDt = 3000;
+                    var watch = Stopwatch.StartNew();
 
                     for (int j = 0; j < 1; j++)
                     {
-                         cluster.DoStep(Misc.Method.Rk5, true, 0, -1);
+                         //cluster.DoStep(Misc.Method.Rk5, true, 0, -1);
                         //DoStep(ref Sub);
                     }
 
@@ -131,14 +133,14 @@ namespace ClusterSim.Standalone
                     for (int j = 0; j < 1; j++)
                     {
                         //DoStep(ref Sub);
-                        Sub.DoStep(Misc.Method.Rk5, true, 0, -1);
+                        Sub.DoStep(Misc.Method.Rk5, true, 0, -1, tide.GetVirtualDistance(time));
                     }
 
                     watch.Stop();
 
                     //Sub.CalcDt();
 
-                    SQL.addRows(Sub.Stars, i, wTable);
+                    //SQL.addRows(Sub.Stars, i, wTable);
                     Console.WriteLine("sub: " + watch.ElapsedMilliseconds / 1.0 / 1000.0);
                     Y.Add(watch.ElapsedMilliseconds / 1.0 / 1000.0);
 
@@ -146,12 +148,14 @@ namespace ClusterSim.Standalone
                      //Sub.GetSubsetSeeds().ForEach(s => Console.Write($"{s}, "));
                 }
 
-                time += dt;
+                time += Sub.ParentDt;
+
+                Sub.ParentDt = Sub.Dt;
                 GnuPlot.HoldOn();
                 GnuPlot.Unset("logscale y");
                 GnuPlot.Set("key top left", "xlabel 'Dauer Normal'", "ylabel 'Gesamtdauer'");
-                GnuPlot.Plot(X.ToArray(), Y.ToArray(), "title 'SubCluster' ");
-                GnuPlot.Plot(X.ToArray(), X.ToArray(), "title 'Normal' w linespoints");
+                //GnuPlot.Plot(X.ToArray(), Y.ToArray(), "title 'SubCluster' ");
+                //GnuPlot.Plot(X.ToArray(), X.ToArray(), "title 'Normal' w linespoints");
 
                 //broadcaster.SendToChannel("steps", $"i{i}");
 
@@ -160,13 +164,13 @@ namespace ClusterSim.Standalone
                 cluster.Stars.MoveCenter(cluster.Stars.GetCenter());
 
 
-                if (Math.Ceiling((time - dt) / 365) < Math.Ceiling(time / 365) && ++year % SaveInterval == 0)
+                if (Math.Ceiling((time - dt) / SaveInterval) < Math.Ceiling(time / SaveInterval) && ++year % 1 == 0)
                 {
                     Console.WriteLine($@"Exportiere Daten... Jahr: {(int)i * dt / 365} = {year}");
-//                    while (!SQL.addRows(cluster.Stars, year / SaveInterval, wTable))
-//                    {
-//                        Thread.Sleep(100);
-//                    }
+                    while (!SQL.addRows(cluster.Stars, year, wTable))
+                    {
+                        Thread.Sleep(100);
+                    }
                 }
             }
 

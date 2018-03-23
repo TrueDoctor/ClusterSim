@@ -18,7 +18,7 @@ namespace ClusterSim.ClusterLib.Calculation.Cluster
 
         double Dt { get; set; } // delta time
 
-        Star[] DoStep(Misc.Method m, bool multiThreading, int min = 0, int max = 0);
+        Star[] DoStep(Misc.Method m, bool multiThreading, int min = 0, int max = 0, double distanceFromGalaxy = -1);
 
         Vector CalcAcc(Vector a, IMassive b, double mass);
     }
