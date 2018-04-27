@@ -27,5 +27,8 @@
     <Setting Name="database" Type="System.String" Scope="User">
       <Value Profile="(Default)">offline</Value>
     </Setting>
+    <Setting Name="MinPrecision" Type="System.Double" Scope="Application">
+      <Value Profile="(Default)">0.001</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

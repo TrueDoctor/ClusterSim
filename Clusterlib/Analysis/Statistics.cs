@@ -132,7 +132,7 @@
             foreach (Star star in stars)
             {
                     x.Add(star.Pos.distance());
-                    y.Add(star.GetMetric(mass, param));
+                    y.Add(star.GetMetric(stars, param));
             }
         }
 

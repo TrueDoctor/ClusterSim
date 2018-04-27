@@ -38,12 +38,12 @@
                 data[i] = new List<double>();
             }
             
-            for (int i = 0; i < 200; i++)
+            for (int i = 0; i < this.DataPoints; i++)
             {
                 Application.DoEvents();
                 this.progressBar.Increment(1);
 
-                var stars = SQL.readStars(this.TableName, i * (this.Steps / 200));
+                var stars = SQL.readStars(this.TableName, (int)(i * (this.Steps / (double)this.DataPoints)));
 
                 if (stars == null)
                 {
@@ -51,17 +51,17 @@
                 }
 
                 stars.MoveCenter(stars.GetCenter());
-                stars = stars.Where(s => s.Pos.distance() < 4 * stars.GetRadius()).ToList();
+                //stars = stars.Where(s => s.Pos.distance() < 4 * stars.GetRadius()).ToList();
 
-                var mass = stars.Sum(x => x.Mass);
+                //var mass = stars.Sum(x => x.Mass);
 
-                data[0].Add(stars.Sum(x => x.GetMetric(mass, Parameters.Kinetic)));
-                if (i > 0 && data[0][i] > 2 * data[0][i - 1])
+                data[0].Add(stars.Sum(x => x.GetMetric(stars, Parameters.Kinetic)));
+                /*if (i > 0 && data[0][i] > 2 * data[0][i - 1])
                 {
                     data[0][i] = data[0][i - 1] * 1.4;
-                }
-
-                data[1].Add(stars.Sum(x => x.GetMetric(mass, Parameters.Potential)));
+                }*/
+                
+                data[1].Add(stars.Sum(x => x.GetMetric(stars, Parameters.Potential)));
                 data[2].Add(data[0][i] + data[1][i]);
             }
 
@@ -81,13 +81,13 @@
 
         private void DensityAnalysis(object sender, EventArgs e)
         {
-            var data = new double[200];
-            for (int i = 0; i < 200; i++)
+            var data = new double[this.DataPoints];
+            for (int i = 0; i < this.DataPoints; i++)
             {
                 Application.DoEvents();
                 this.progressBar.Increment(1);
 
-                var stars = SQL.readStars(this.TableName, i * (this.Steps / 200));
+                var stars = SQL.readStars(this.TableName, (int)(i * (this.Steps / (double)this.DataPoints)));
 
                 if (stars == null)
                 {
@@ -100,7 +100,7 @@
                     stars.MoveCenter(center);
                 }
 
-                data[i] = stars.GetRadius() * 4.84814e-6 ;
+                data[i] = stars.GetRadius() * 4.84814e-6 / 25 ;
             }
             
             Statistics.SetLineStyles();
@@ -111,13 +111,13 @@
 
         private void RelaxationTime(object sender, EventArgs e)
         {
-            var data = new double[200];
-            for (int i = 0; i < 200; i++)
+            var data = new double[this.DataPoints];
+            for (int i = 0; i < this.DataPoints; i++)
             {
                 Application.DoEvents();
                 this.progressBar.Increment(1);
 
-                var stars = SQL.readStars(this.TableName, i * (this.Steps / 200));
+                var stars = SQL.readStars(this.TableName, (int)(i * (this.Steps / (double)this.DataPoints)));
 
                 if (stars == null)
                 {
@@ -130,7 +130,7 @@
                     stars.MoveCenter(center);
                 }
 
-                data[i] = /*stars.GetPercentEscaped() / (i * 2000 * (this.Steps / 200));*/ stars.GetRelax();
+                data[i] = /*stars.GetPercentEscaped() / (i * this.DataPoints0 * (this.Steps / this.DataPoints));*/ stars.GetRelax();
             }
 
             Statistics.SetLineStyles();
@@ -190,6 +190,16 @@
         {
             var lifetime = Statistics.GetLifeTime(this.TableName);
             this.ClusterLifetime.Text += lifetime;
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                this.DataPoints = Convert.ToInt32(this.DatapointInput.Text);
+                this.progressBar.Maximum = this.DataPoints;
+            }
+            catch { }
         }
     }
 }

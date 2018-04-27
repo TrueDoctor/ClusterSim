@@ -21,10 +21,14 @@
 
         private List<int> remaining;
 
-        public SubCluster(List<Star> stars, double dt = 1, double coe = 0.4, double minPrecision = 0.0003)
+        public SubCluster(List<Star> stars, double dt = 1, double coe = 0.4, double minPrecision = -1)
             : base(stars, dt, coe)
         {
             MinPrecision = minPrecision;
+            if (MinPrecision.Equals(-1))
+            {
+                MinPrecision = ClusterLib.Properties.Settings.Default.MinPrecision;
+            }
         }
 
         public static double MinPrecision { get; set; }
@@ -95,6 +99,8 @@
                     || subClusters.Count < 2
                     || subClusters.All(x => x.Dt * 2 > subClusters.First().Dt))
                 {
+                    // if base algorithm
+
                     var tempDt = this.ParentDt;
                     this.ParentDt = this.Dt;
                     this.Dt = subClusters.Min(x => x.Dt);
@@ -104,7 +110,7 @@
                         temp.Add(tStar);
                     }
 
-                    this.Dt = this.ParentDt;
+                    /*this.Dt = this.ParentDt;*/
                     this.ParentDt = tempDt;
 
                     time += this.Dt;

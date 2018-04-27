@@ -144,7 +144,7 @@ namespace ClusterSim.Dataview
                         {
                             GnuPlot.Set("xrange restore", "yrange restore", "zrange restore");
                             //temp.AddRange(SQL.readStars(this.table, i));
-                            ViewPlot.SPlot(SQL.readStars(this.table, i), Parameters.Mass, table);
+                            ViewPlot.SPlot(SQL.readStars(this.table, i), Parameters.Kinetic, table);
                             Thread.Sleep(500);
                             Application.DoEvents();
                             if (i > test - 10)
@@ -379,11 +379,13 @@ namespace ClusterSim.Dataview
             var range = SQL.readStars(this.table, this.step + frames).GetRadius() * 4;
 
 
-            for (int i = 0; i < frames; i++) //add frames
+            for (int i = 0; i < frames; i++)
             {
+                // add frames
                 Application.DoEvents();
-                //import(++step);
-                //this.towD = true;
+
+                // import(++step);
+                // this.towD = true;
                 this.Stars = SQL.readStars(this.table, ++step);
                 this.Stars.MoveCenter(this.Stars.GetCenter());
                 Bitmap frame;
@@ -393,7 +395,7 @@ namespace ClusterSim.Dataview
                     Directory.CreateDirectory(path.Replace(".mp4", string.Empty));
 
                     ViewPlot.PlotXY(this.Stars, "[0.0000000000001: 100]", range, savePath);
-                    //ViewPlot.Plot(this.Stars, "[0.000000000000000000000000000000000001: 0.00000000000000001]", 800000, 80, savePath);
+                    // ViewPlot.Plot(this.Stars, "[0.000000000000000000000000000000000001: 0.00000000000000001]", 800000, 80, savePath);
 
                     do
                         try

@@ -99,14 +99,16 @@ namespace ClusterSim.DataManager
                 progressBar.Increment(1);
             }
 
-            StarCluster cluster = new StarCluster(0);
-            cluster.Stars = Stars;
-            cluster.Stars.MoveCenter(cluster.Stars.GetCenter());
+            /*Cluster cluster = new Cluster(0);
+            cluster.Stars = Stars;*/
 
-            SQL.addRows(cluster.Stars, 0, this.table);
+            Stars.MoveCenter(Stars.GetCenter());
 
-            StarCluster rand = new StarCluster(this.table, 0);
-            rand.Stars.MoveCenter(rand.Stars.GetCenter());
+//            SQL.addRows(cluster.Stars, 0, this.table);
+
+            var rand = new Cluster(Stars, 0);
+
+//            rand.Stars.MoveCenter(rand.Stars.GetCenter());
 
             progressBar.Value = 0;
             BarAns.Text = "Berechne Initialgeschwindigkeiten";
@@ -119,6 +121,7 @@ namespace ClusterSim.DataManager
                 rand.InitialVel(i, mass);//initial velocity for each star
                 progressBar.Increment(1);
             }
+
             SQL.dropTable(table);
             SQL.addTable(table);//clear table 
             SQL.addRows(rand.Stars, 0, table);//export data

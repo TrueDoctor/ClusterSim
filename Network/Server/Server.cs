@@ -24,7 +24,7 @@
 
         private List<ClientHandler> clients = new List<ClientHandler>();
 
-        public string rtable { get; set; } = "n200dtv";
+        public string rtable { get; set; } = "n500dtv";
 
         public string wtable { get; set; } = "copy2";
 
@@ -36,10 +36,10 @@
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.Title = "ClusterSim - Distribution Server";
 
-            const int saveInterval = 1, dt = 3;
+            const int saveInterval = 365000, dt = 1;
             int step = SQL.lastStep(this.rtable) * saveInterval * 365 + 1;
             step = SQL.lastStep(this.rtable);
-            int errors = 0, year = step * saveInterval;
+            int errors = 0, year = step;
             double ovrper = 1, time = 0;
 
             Console.WriteLine("Load Stars...");
@@ -52,11 +52,14 @@
             
             Console.CursorVisible = false;
 
+            Cluster.GalaxyMass = 0; // 1.4e6;
             cluster.Dt = 1;
-            cluster.ParentDt = 600;
-            cluster.DoStep(Misc.Method.Rk5, true, 0, -1);
+            cluster.ParentDt = 365;
+            cluster.DoStep(Misc.Method.Rk5, true, 0, -1, 3.162e+9);
+            
+            var tide = new WaveGenerator(1.4e6, 3.162e9);
 
-            var logger = new DataLogger();
+//            var logger = new DataLogger();
 
             while (true)
             {
@@ -82,7 +85,7 @@
 
                     var nodes = this.clients.Select(c => c as IComputationNode).ToList();
 
-                    var computation = cluster.DoStep(Misc.Method.Rk5, nodes, -1);
+                    var computation = cluster.DoStep(Misc.Method.Rk5, nodes, tide.GetVirtualDistance(time));
                     
                     await computation;
 
@@ -134,8 +137,7 @@
                     Console.Beep();
 
                     if (wtable.Length != 0
-                        && Math.Ceiling(((double)step - 1) * dt / 365) < Math.Ceiling((double)step * dt / 365)
-                        && ++year % saveInterval == 0)
+                        && Math.Ceiling((time - cluster.ParentDt) / saveInterval) < Math.Ceiling(time / saveInterval) && ++year % 1 == 0)
                     {
                         while (!SQL.addRows(cluster.Stars, year, wtable))
                         {
@@ -143,14 +145,18 @@
                         }
                     }
 
-                    cluster.ParentDt = cluster.Dt * 10;
+                    cluster.ParentDt = cluster.Dt * 50;
+
+                    if (cluster.ParentDt > saveInterval / 50.0)
+                    {
+                        cluster.ParentDt = saveInterval / 50.0;
+                    }
 
                     watch.Stop();
                     ovrper = (watch.ElapsedMilliseconds / 1000.0 + ovrper) / 2.0;
 
-                    var multiplier = cluster.Dt / cluster.Stars.Min(x => x.Dt);
-
-                    //logger.Log(Cluster.EstimateStepTime(true) * multiplier, Cluster.CalculationComplexity, watch.ElapsedMilliseconds);
+//                    var multiplier = cluster.Dt / cluster.Stars.Min(x => x.Dt);
+//                    logger.Log(Cluster.EstimateStepTime(true) * multiplier, Cluster.CalculationComplexity, watch.ElapsedMilliseconds);
 
                     Console.Clear();
                     Console.Write(msg);
@@ -178,7 +184,8 @@
         {
             double gesper, partper;
             List<ClientHandler> ready;
-            //Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
+
+            // Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
             do
             {
                 if (this.clients.Exists(x => x.Abort)) Console.Clear();

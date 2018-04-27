@@ -31,6 +31,11 @@ namespace ClusterSim.ClusterLib.Calculation
 
         public double GetVirtualDistance(double time)
         {
+            if (Cluster.Cluster.GalaxyMass.Equals(0))
+            {
+                return -1;
+            }
+
             var angle = ((double)time / this.PeriodTime - ((int)(time / this.PeriodTime))) * 2 * Math.PI;
             var amp = (Math.Pow(Math.Pow(10, Math.Sin(angle)), 2) / 100 + 1) * this.Orbit;
             return amp;

@@ -23,10 +23,8 @@ namespace ClusterSim.Standalone
     {
         private static bool abort = false;
 
-        public static int SaveInterval { get; set; } = 10000000;
-
-        public static double MinDAcc { get; set; } = 0.001;
-
+        public static int SaveInterval { get; set; } = 365000;
+        
         public static void Main(string[] args)
         {
             XDMessagingClient client = new XDMessagingClient(); // https://github.com/TheCodeKing/XDMessaging.Net
@@ -36,22 +34,27 @@ namespace ClusterSim.Standalone
 
             if (args.Length > 0) // if the program gets called with arguments
             {
-                List<String> list = SQL.readTables();
+                var list = SQL.readTables();
+
                 if (list != null)
                 {
-                    List<string> res = new List<string>();
+                    var res = new List<string>();
                     foreach (string s in args)
                     {
-                        if (list.Contains(s))//check if argument is a valid table name
+                        if (list.Contains(s))
+                        {
+                            //check if argument is a valid table name
                             rTable = s;
+                        }
 
                         Console.WriteLine(rTable);
                     }
                 }
             }
 
-            if (rTable == "")//if argument handover failed or was not  given
+            if (rTable == string.Empty)
             {
+                // if argument handover failed or was not  given
                 Console.WriteLine("Auswahltabelle: "); // input name manually 
                 rTable = Console.ReadLine();
             }
@@ -75,27 +78,28 @@ namespace ClusterSim.Standalone
 
             //Console.WriteLine("\nSchritte: ");
 
-            int n = 2;//Convert.ToInt32(Console.ReadLine());
+            int n = 2; // Convert.ToInt32(Console.ReadLine());
 
-            int year = last * SaveInterval;
-            Console.WriteLine(@"Warte auf die Beendigung von {0} Speicher Threads", Math.Round((dt * n) / 365, 2));
-            Thread.Sleep(2000);
+            int year = last;
+            // Console.WriteLine(@"Warte auf die Beendigung von {0} Speicher Threads", Math.Round((dt * n) / 365, 2));
+            // Thread.Sleep(2000);
             broadcaster.SendToChannel("steps", "s" + n);// send max step to steps channel
 
 
-            Thread Key = new Thread(listen);
-            Key.Start();
+            Thread key = new Thread(listen);
+            key.Start();
             var cluster = new BoxCluster(SQL.readStars(rTable, last), dt); // instatiate Starcluster
-            var Sub = new SubCluster(SQL.readStars(rTable, last), dt);
+            var sub = new SubCluster(SQL.readStars(rTable, last), dt);
 
-            var time = 0d;
+            var time = (double)last * SaveInterval;
 
-            Cluster.GalaxyMass = 1.4e6;
-            cluster.ParentDt = 100;
+            Cluster.GalaxyMass = 0; // 1.4e6;
+            cluster.ParentDt = 365;
             cluster.DoStep(Misc.Method.Rk5, true, 0, -1, 3.162e+9);
-            
-            Sub.Stars = new List<Star>(cluster.Stars.Select(x=>x.Clone()));
-            Sub.Dt = cluster.Dt;
+
+            sub.Stars = new List<Star>(cluster.Stars.Select(x => x.Clone()));
+            sub.ParentDt = cluster.ParentDt;
+            sub.Dt = cluster.Dt;
 
             var tide = new WaveGenerator(1.4e6, 3.162e9);
 
@@ -110,8 +114,8 @@ namespace ClusterSim.Standalone
                 var maxDAcc = cluster.Stars.Max(x => x.DAcc);
                 if (maxDAcc > 0)
                 {
-                    cluster.ParentDt = 3000;
-                    //Sub.ParentDt = 3000;
+                    //cluster.ParentDt = 3000;
+                    //sub.ParentDt = 365;
                     var watch = Stopwatch.StartNew();
 
                     for (int j = 0; j < 1; j++)
@@ -124,7 +128,7 @@ namespace ClusterSim.Standalone
 
                     //SQL.addRows(cluster.Stars, i, wTable);
 
-                    Console.WriteLine("n: " + watch.ElapsedMilliseconds / 1.0 / 1000.0);
+                    //Console.WriteLine("n: " + watch.ElapsedMilliseconds / 1.0 / 1000.0);
 
                     X.Add(watch.ElapsedMilliseconds / 1.0 / 1000.0);
 
@@ -133,7 +137,7 @@ namespace ClusterSim.Standalone
                     for (int j = 0; j < 1; j++)
                     {
                         //DoStep(ref Sub);
-                        Sub.DoStep(Misc.Method.Rk5, true, 0, -1, tide.GetVirtualDistance(time));
+                        sub.DoStep(Misc.Method.Rk5, false, 0, -1, tide.GetVirtualDistance(time));
                     }
 
                     watch.Stop();
@@ -148,12 +152,18 @@ namespace ClusterSim.Standalone
                      //Sub.GetSubsetSeeds().ForEach(s => Console.Write($"{s}, "));
                 }
 
-                time += Sub.ParentDt;
+                time += sub.ParentDt;
 
-                Sub.ParentDt = Sub.Dt;
-                GnuPlot.HoldOn();
+                sub.ParentDt = sub.Dt * 50;
+
+                if (sub.ParentDt > SaveInterval / 50)
+                {
+                    sub.ParentDt = SaveInterval / 50;
+                }
+
+                /*GnuPlot.HoldOn();
                 GnuPlot.Unset("logscale y");
-                GnuPlot.Set("key top left", "xlabel 'Dauer Normal'", "ylabel 'Gesamtdauer'");
+                GnuPlot.Set("key top left", "xlabel 'Dauer Normal'", "ylabel 'Gesamtdauer'");*/
                 //GnuPlot.Plot(X.ToArray(), Y.ToArray(), "title 'SubCluster' ");
                 //GnuPlot.Plot(X.ToArray(), X.ToArray(), "title 'Normal' w linespoints");
 
@@ -161,20 +171,21 @@ namespace ClusterSim.Standalone
 
                 // send "i"+step in channel steps
                 // Console.WriteLine("\n");//+ i + "\n ");
-                cluster.Stars.MoveCenter(cluster.Stars.GetCenter());
+                sub.Stars.MoveCenter(sub.Stars.GetCenter());
 
 
-                if (Math.Ceiling((time - dt) / SaveInterval) < Math.Ceiling(time / SaveInterval) && ++year % 1 == 0)
+                if ((int)(time / SaveInterval) > year)
                 {
-                    Console.WriteLine($@"Exportiere Daten... Jahr: {(int)i * dt / 365} = {year}");
-                    while (!SQL.addRows(cluster.Stars, year, wTable))
+                    ++year;
+                    Console.WriteLine($@"Exportiere Daten... Jahr: {(int) time / SaveInterval} = {year}");
+                    while (!SQL.addRows(sub.Stars, year, wTable))
                     {
-                        Thread.Sleep(100);
+                        Thread.Sleep(5000);
                     }
                 }
             }
 
-            Key.Abort();
+            key.Abort();
 
             SQL.order(wTable);
             broadcaster.SendToChannel("steps", "abort");

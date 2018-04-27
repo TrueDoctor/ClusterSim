@@ -35,6 +35,7 @@
             this.Efficiency = new System.Windows.Forms.Button();
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.ClusterLifetime = new System.Windows.Forms.Label();
+            this.DatapointInput = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // ClusterName
@@ -104,11 +105,21 @@
             this.ClusterLifetime.Text = "Lebenszeit:";
             this.ClusterLifetime.Click += new System.EventHandler(this.CalcLivetime);
             // 
+            // DatapointInput
+            // 
+            this.DatapointInput.Location = new System.Drawing.Point(161, 38);
+            this.DatapointInput.Name = "DatapointInput";
+            this.DatapointInput.Size = new System.Drawing.Size(75, 20);
+            this.DatapointInput.TabIndex = 7;
+            this.DatapointInput.Text = "200";
+            this.DatapointInput.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
+            // 
             // Analysis
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(284, 261);
+            this.Controls.Add(this.DatapointInput);
             this.Controls.Add(this.ClusterLifetime);
             this.Controls.Add(this.progressBar);
             this.Controls.Add(this.Efficiency);
@@ -132,5 +143,6 @@
         private System.Windows.Forms.Button Efficiency;
         private System.Windows.Forms.ProgressBar progressBar;
         private System.Windows.Forms.Label ClusterLifetime;
+        private System.Windows.Forms.TextBox DatapointInput;
     }
 }

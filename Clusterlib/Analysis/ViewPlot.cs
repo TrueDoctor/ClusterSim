@@ -56,7 +56,7 @@
             //stars = stars.Where(s => s.pos.distance() < 4 * stars.GetRadius()).ToList();
             var mass = stars.Sum(x => x.Mass);
 
-            GnuPlot.Set("xlabel 'Abstand vom Zentrum in AE', font ',10'", "tics font ', 10'");
+            GnuPlot.Set("xlabel 'Abstand vom Zentrum in AE' font ',15'", "tics font ', 12'");
 
             foreach (Parameters parameter in Enum.GetValues(typeof(Parameters)))
             {
