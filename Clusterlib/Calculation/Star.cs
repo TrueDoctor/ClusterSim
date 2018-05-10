@@ -2,6 +2,7 @@
 {
     using System;
     using System.Drawing;
+    using System.Linq;
 
     using ClusterSim.ClusterLib.Utility;
 
@@ -132,6 +133,16 @@
         {
             get => this.vel;
             set => this.vel = value;
+        }
+
+        public double[] Vec4
+        {
+            get => this.pos.vec.Append(this.Mass).ToArray();
+            set
+            {
+                this.pos.vec = value.Take(3).ToArray();
+                this.Mass = value.Last();
+            }
         }
 
         public bool ToCompute { get; set; }

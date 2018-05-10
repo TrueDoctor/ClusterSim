@@ -33,6 +33,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Cudafy.NET, Version=1.29.5576.13786, Culture=neutral, PublicKeyToken=63a4c9931616906b, processorArchitecture=MSIL">
+      <HintPath>..\packages\CUDAfy.NET.1.29.5576.13786\lib\net40\Cudafy.NET.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenCL.Net, Version=2.2.9.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OpenCL.Net.2.2.9.0\lib\net40\OpenCL.Net.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -64,6 +70,10 @@
     <Compile Include="Calculation\Cluster\ICluster.cs" />
     <Compile Include="Calculation\IComputationNode.cs" />
     <Compile Include="Calculation\InitialVelExtension.cs" />
+    <Compile Include="Calculation\OpenCl\ClWorker.cs" />
+    <Compile Include="Calculation\OpenCl\Cuda.cs" />
+    <Compile Include="Calculation\OpenCl\double4StarExtesion.cs" />
+    <Compile Include="Calculation\OpenCl\ISimulationWorker.cs" />
     <Compile Include="Calculation\WaveGenerator.cs" />
     <Compile Include="Utility\CenterEnumerableExtension.cs" />
     <Compile Include="Calculation\Cluster\SubCluster.cs" />
@@ -95,11 +105,24 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+    <None Include="Calculation\OpenCl\Test.cl" />
     <None Include="packages.config" />
+    <None Include="Tools\place_these_executables_in_same_folder_as_Cudafy.NET.dll_" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Readme\CUDA.NET.Readme.txt" />
+    <Content Include="Readme\CUDAfy-License.txt" />
+    <Content Include="Readme\example_source_code.cs.txt" />
+    <Content Include="Readme\ILSpy-license.txt" />
+    <Content Include="Readme\README.txt" />
+    <Content Include="Tools\cudafycl.exe" />
+    <Content Include="Tools\CudafyViewer.exe" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('..\packages\OpenCL.Net.2.2.9.0\build\net40\OpenCL.Net.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\OpenCL.Net.2.2.9.0\build\net40\OpenCL.Net.targets'))" />
   </Target>
+  <Import Project="..\packages\OpenCL.Net.2.2.9.0\build\net40\OpenCL.Net.targets" Condition="Exists('..\packages\OpenCL.Net.2.2.9.0\build\net40\OpenCL.Net.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

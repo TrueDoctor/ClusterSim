@@ -65,6 +65,7 @@
     <Compile Include="ClientHandler.cs" />
     <Compile Include="DataLogger.cs" />
     <Compile Include="Programm.cs" />
+    <Compile Include="Properties\SendEventArgs.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>

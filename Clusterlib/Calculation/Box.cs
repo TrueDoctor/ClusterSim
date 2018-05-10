@@ -22,6 +22,7 @@ namespace ClusterSim.ClusterLib.Calculation
             set => AvgPos = value;
         }
 
+        public double[] Vec4 => this.pos.vec.Append(this.mass).ToArray();
 
         public Box(int id,Vector Pos,Vector PosId, double Dim, IEnumerable<IMassive> Objects, List<int> ids,bool root = false)
         {

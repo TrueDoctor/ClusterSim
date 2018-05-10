@@ -17,6 +17,7 @@ namespace ClusterSim.Standalone
     using ClusterSim.ClusterLib.Analysis;
     using ClusterSim.ClusterLib.Calculation;
     using ClusterSim.ClusterLib.Calculation.Cluster;
+    using ClusterSim.ClusterLib.Calculation.OpenCl;
     using ClusterSim.ClusterLib.Utility;
 
     public class Program
@@ -95,6 +96,8 @@ namespace ClusterSim.Standalone
 
             Cluster.GalaxyMass = 0; // 1.4e6;
             cluster.ParentDt = 365;
+
+            ClWorker.CalcAcc(cluster.Stars[0], cluster.Stars.Select(x=>x as IMassive).ToList());
             cluster.DoStep(Misc.Method.Rk5, true, 0, -1, 3.162e+9);
 
             sub.Stars = new List<Star>(cluster.Stars.Select(x => x.Clone()));
