@@ -5,8 +5,6 @@
     using System.Linq;
     using System.Threading.Tasks;
 
-    using ClusterSim.ClusterLib.Calculation.OpenCl;
-
     using global::ClusterSim.ClusterLib.Utility;
 
     public class Cluster : ICluster
@@ -288,14 +286,6 @@
         {
             var acc = new Vector();
             var pos = star.ToVector(0);
-
-            List<IMassive> bodys = new List<IMassive>();
-            foreach (int i in this.Instructions[id])
-            {
-                bodys.Add(this.MassLayer[i]);
-            }
-
-            //ClWorker.CalcAcc(this.Stars[id], bodys);
 
             for (var j = 0; j < this.Instructions[id].Count; j++)
             {
