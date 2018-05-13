@@ -32,7 +32,7 @@
 
         protected double BoxSize { get; set; }
 
-        protected List<Box> Boxes { get => this.boxes; set => this.boxes = value; }
+        public List<Box> Boxes { get => this.boxes; set => this.boxes = value; }
 
         protected override void CalcBoxes(bool forceBoxes = false)
         {

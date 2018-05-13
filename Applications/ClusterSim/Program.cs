@@ -17,6 +17,7 @@ namespace ClusterSim.Standalone
     using ClusterSim.ClusterLib.Analysis;
     using ClusterSim.ClusterLib.Calculation;
     using ClusterSim.ClusterLib.Calculation.Cluster;
+    using ClusterSim.ClusterLib.Calculation.Gpu;
     using ClusterSim.ClusterLib.Utility;
 
     public class Program
@@ -93,9 +94,16 @@ namespace ClusterSim.Standalone
 
             var time = (double)last * SaveInterval;
 
+            //ComputeWorker.CalcAcc(cluster.Stars, cluster.Stars.Select(x=>x as IMassive).ToList());
+
+
             Cluster.GalaxyMass = 0; // 1.4e6;
             cluster.ParentDt = 365;
             cluster.DoStep(Misc.Method.Rk5, true, 0, -1, 3.162e+9);
+
+            var groups = cluster.GetWorkGroups(21);
+
+            ComputeWorker.CalcAcc(cluster.Stars, cluster.MassLayer, groups);
 
             sub.Stars = new List<Star>(cluster.Stars.Select(x => x.Clone()));
             sub.ParentDt = cluster.ParentDt;

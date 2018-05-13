@@ -33,6 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="OpenCL.Net, Version=2.2.9.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OpenCL.Net.2.2.9.0\lib\net40\OpenCL.Net.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -62,6 +65,9 @@
     <Compile Include="Calculation\Cluster\BoxCluster.cs" />
     <Compile Include="Calculation\Cluster\Cluster.cs" />
     <Compile Include="Calculation\Cluster\ICluster.cs" />
+    <Compile Include="Calculation\Gpu\ClusterWorkSchedulerExtension.cs" />
+    <Compile Include="Calculation\Gpu\ComputeWorker.cs" />
+    <Compile Include="Calculation\Gpu\double4StarExtesion.cs" />
     <Compile Include="Calculation\IComputationNode.cs" />
     <Compile Include="Calculation\InitialVelExtension.cs" />
     <Compile Include="Calculation\WaveGenerator.cs" />
@@ -89,17 +95,21 @@
     <None Include="app.config" />
     <EmbeddedResource Include="Analysis\Analysis.resx">
       <DependentUpon>Analysis.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+    <None Include="Calculation\Gpu\Test.cl" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('..\packages\OpenCL.Net.2.2.9.0\build\net40\OpenCL.Net.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\OpenCL.Net.2.2.9.0\build\net40\OpenCL.Net.targets'))" />
   </Target>
+  <Import Project="..\packages\OpenCL.Net.2.2.9.0\build\net40\OpenCL.Net.targets" Condition="Exists('..\packages\OpenCL.Net.2.2.9.0\build\net40\OpenCL.Net.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

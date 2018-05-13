@@ -5,6 +5,8 @@
     using System.Linq;
     using System.Threading.Tasks;
 
+    using ClusterSim.ClusterLib.Calculation.Gpu;
+
     using global::ClusterSim.ClusterLib.Utility;
 
     public class Cluster : ICluster
@@ -127,6 +129,9 @@
             }
 
             this.Stars = this.Stars.OrderBy(star => star.id).ToList();
+
+            //ComputeWorker.CalcAcc(this.Stars, this.MassLayer, this.Instructions);
+
             return this.Stars.Where(x => x.Computed && x.ToCompute).ToArray();
         }
 
