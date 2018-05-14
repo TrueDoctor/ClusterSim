@@ -58,12 +58,90 @@ __local double4* buffer)
 		 barrier(CLK_LOCAL_MEM_FENCE); // Wait for others in work-group
        }
 
-	p += dt*v + 0.5f*dt*dt*a;
-    v += dt*a;
-
+	double4 kap = dt*v;
+    double4 kav = dt*a;
+	
 	acc[gti] = a;
-    PosM_new[gti] = p;
-    Vel[gti] = v;
+	barrier(CLK_LOCAL_MEM_FENCE);
+	////////////////////////////////////////////
+	a = (double4)(0.0,0.0,0.0,0.0);
+
+	for(int jb=0; jb < nb; jb++) {
+         buffer[ti] = PosM_old[jb*nt+ti]; 
+		 barrier(CLK_LOCAL_MEM_FENCE); // Wait for others in the work-group 
+         //a = getAcc(p, &buffer, nt, a);
+		 for(int j=0; j<nt; j++) { // For ALL cached particle positions ... 
+             double4 p2 = buffer[j]; // Read a cached particle position a = 
+			 a = Interaction(kap, p2, a);
+          }
+		 barrier(CLK_LOCAL_MEM_FENCE); // Wait for others in work-group
+       }
+
+	double4 ffp = dt*kav;
+    double4 ffv = dt*a;
+	barrier(CLK_LOCAL_MEM_FENCE);
+	////////////////////////////////////////
+	a = (double4)(0.0,0.0,0.0,0.0);
+
+	double4 tempP = p + 1.0/3.0 * kap + 1.0 / 18.0 * ffp;
+	double4 tempV = v + 1.0/3.0 * kav + 1.0 / 18.0 * ffv;
+
+	for(int jb=0; jb < nb; jb++) {
+         buffer[ti] = PosM_old[jb*nt+ti]; 
+		 barrier(CLK_LOCAL_MEM_FENCE); 
+		 for(int j=0; j<nt; j++) { 
+             double4 p2 = buffer[j]; 
+			 a = Interaction(tempP, p2, a);
+          }
+		 barrier(CLK_LOCAL_MEM_FENCE); 
+       }
+
+	double4 kbp = dt * tempV;
+    double4 kbv = dt * a;
+	barrier(CLK_LOCAL_MEM_FENCE);
+	////////////////////////////////////
+	a = (double4)(0.0,0.0,0.0,0.0);
+
+	tempP = p - 1.216 * kap + 252.0 / 125.0 * kbp - 44.0 / 125.0 * ffp;
+	tempV = v - 1.216 * kav + 252.0 / 125.0 * kbv - 44.0 / 125.0 * ffv;
+
+	for(int jb=0; jb < nb; jb++) {
+         buffer[ti] = PosM_old[jb*nt+ti]; 
+		 barrier(CLK_LOCAL_MEM_FENCE); 
+		 for(int j=0; j<nt; j++) { 
+             double4 p2 = buffer[j]; 
+			 a = Interaction(tempP, p2, a);
+          }
+		 barrier(CLK_LOCAL_MEM_FENCE); 
+       }
+
+	double4 kcp = dt * tempV;
+    double4 kcv = dt * a;
+	barrier(CLK_LOCAL_MEM_FENCE);
+	////////////////////////////////////
+	a = (double4)(0.0,0.0,0.0,0.0);
+
+	tempP = p + 9.5 * kap - 72.0 / 7.0 * kbp + 25.0 / 14.0 * kcp + 44.0 / 125.0 * ffp;
+	tempV = v + 9.5 * kav - 72.0 / 7.0 * kbv + 25.0 / 14.0 * kcv + 44.0 / 125.0 * ffv;
+
+	for(int jb=0; jb < nb; jb++) {
+         buffer[ti] = PosM_old[jb*nt+ti]; 
+		 barrier(CLK_LOCAL_MEM_FENCE); 
+		 for(int j=0; j<nt; j++) { 
+             double4 p2 = buffer[j]; 
+			 a = Interaction(tempP, p2, a);
+          }
+		 barrier(CLK_LOCAL_MEM_FENCE); 
+       }
+
+	double4 kdp = dt * tempV; 
+    double4 kdv = dt*a;
+
+	double4 fp = 5.0 / 48.0 * kap + 27.0 / 56.0 * kbp + 125.0 / 336.0 * kcp + 1.0 / 24.0 * kdp;
+	double4 fv = 5.0 / 48.0 * kav + 27.0 / 56.0 * kbv + 125.0 / 336.0 * kcv + 1.0 / 24.0 * kdv;
+
+    PosM_new[gti] = p + fp;
+	PosM_new[gti].w = PosM_old[gti].w;
+    Vel[gti] = fv + v;
 	
 }
-

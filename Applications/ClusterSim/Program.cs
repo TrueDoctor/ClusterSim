@@ -25,7 +25,7 @@ namespace ClusterSim.Standalone
         private static bool abort = false;
 
         public static int SaveInterval { get; set; } = 365000;
-        
+
         public static void Main(string[] args)
         {
             XDMessagingClient client = new XDMessagingClient(); // https://github.com/TheCodeKing/XDMessaging.Net
@@ -115,9 +115,9 @@ namespace ClusterSim.Standalone
             var X = new List<double>();
 
             var Y = new List<double>();
-            
 
-            for (int i = (last /** SaveInterval * 365*/) + 1;
+
+            for (int i = (last /** SaveInterval * 365*/)+1;
                  !abort; i++)
             {
                 var maxDAcc = cluster.Stars.Max(x => x.DAcc);
@@ -129,7 +129,7 @@ namespace ClusterSim.Standalone
 
                     for (int j = 0; j < 1; j++)
                     {
-                         //cluster.DoStep(Misc.Method.Rk5, true, 0, -1);
+                        //cluster.DoStep(Misc.Method.Rk5, true, 0, -1);
                         //DoStep(ref Sub);
                     }
 
@@ -158,7 +158,7 @@ namespace ClusterSim.Standalone
                     Y.Add(watch.ElapsedMilliseconds / 1.0 / 1000.0);
 
                     //cluster.CalcDt();
-                     //Sub.GetSubsetSeeds().ForEach(s => Console.Write($"{s}, "));
+                    //Sub.GetSubsetSeeds().ForEach(s => Console.Write($"{s}, "));
                 }
 
                 time += sub.ParentDt;
@@ -180,17 +180,18 @@ namespace ClusterSim.Standalone
 
                 // send "i"+step in channel steps
                 // Console.WriteLine("\n");//+ i + "\n ");
-                sub.Stars.MoveCenter(sub.Stars.GetCenter());
+                
 
 
                 if ((int)(time / SaveInterval) > year)
                 {
                     ++year;
-                    Console.WriteLine($@"Exportiere Daten... Jahr: {(int) time / SaveInterval} = {year}");
-                    while (!SQL.addRows(sub.Stars, year, wTable))
+                    sub.Stars.MoveCenter(sub.Stars.GetCenter());
+                    Console.WriteLine($@"Exportiere Daten... Jahr: {(int)time / SaveInterval} = {year}");
+                    /*while (!SQL.addRows(sub.Stars, year, wTable))
                     {
                         Thread.Sleep(5000);
-                    }
+                    }*/
                 }
             }
 
@@ -208,7 +209,7 @@ namespace ClusterSim.Standalone
         private static void DoStep(ref SubCluster cluster, double dt = 30)
         {
             List<Star> newStars;
-            
+
             for (double time = 0; time < cluster.ParentDt;)
             {
                 var subClusters = cluster.DivideIntoSubClusters(true);
@@ -219,18 +220,18 @@ namespace ClusterSim.Standalone
                 Parallel.ForEach(
                     subClusters,
                     c =>
+                    {
+                        var stars = c.DoStep(Misc.Method.Rk5, true);
+                        foreach (var star in stars)
                         {
-                            var stars = c.DoStep(Misc.Method.Rk5, true);
-                            foreach (var star in stars)
-                            {
-                                temp.Add(star);
-                            }
-                        });
-                
+                            temp.Add(star);
+                        }
+                    });
+
 
 
                 newStars = temp.OrderBy(s => s.id).ToList();
-                
+
 
                 if (newStars.Count != cluster.Stars.Count)
                 {
@@ -247,18 +248,18 @@ namespace ClusterSim.Standalone
                 }
 
                 cluster = new SubCluster(newStars, dt: subClusters.First().Dt)
-                              {
-                                  ParentDt = cluster.ParentDt,
-                                  Stars = newStars.Select(
+                {
+                    ParentDt = cluster.ParentDt,
+                    Stars = newStars.Select(
                                       x => x.Clone()).ToList()
-                              };
+                };
                 cluster.Stars.ForEach(x => x.ToCompute = false);
             }
 
 
             //cluster.Stars = newStars;
         }
-        
+
 
         private static void listen()
         {

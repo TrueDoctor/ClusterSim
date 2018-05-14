@@ -59,7 +59,7 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
             Device,
             CommandQueueProperties.None,
             out err);
-        
+
         private static void SetupAcc()
         {
 
@@ -89,7 +89,7 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
                 Console.WriteLine(Cl.GetProgramBuildInfo(program, Device, ProgramBuildInfo.Log, out err));
             }
         }
-        
+
         /*public static void CalcAcc(List<Star> stars, List<IMassive> bodys)
         {
             var instruction = new List<int>[stars.Count];
@@ -115,7 +115,7 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
             count = stars.Count;
             // Create a kernel from our program
             kernel = Cl.CreateKernel(program, "calcAcc", out err);
-            
+
             // Allocate input and output buffers, and fill the input with data
             //Mem memInputStar = (Mem)Cl.CreateBuffer(Context, MemFlags.ReadOnly, sizeof(double), out err);
 
@@ -128,7 +128,7 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
 
             // Copy our host buffer of random values to the input device buffer
             //Cl.EnqueueWriteBuffer(CmdQueue, (IMem)memInputStar, Bool.True, IntPtr.Zero, new IntPtr(sizeof(double)), 42.0/* bodys.Select(x=>x.mass).ToArray()*/, 0, null, out event0);
-           
+
             /*for (var index = 0; index < instructions.Length; index++)
             {
                 var s = instructions[index];
@@ -136,7 +136,7 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
                 countInts[index] = s.Count;
                 n.AddRange(s);
             }*/
-            
+
             // Get the maximum number of work items supported for this kernel on this device
             IntPtr notused;
             InfoBuffer local = new InfoBuffer(new IntPtr(4));
@@ -147,7 +147,7 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
                 new IntPtr(sizeof(int)),
                 local,
                 out notused);
-            
+
 
             // Set the arguments to our kernel, and enqueue it for execution
             var error = Cl.SetKernelArg(kernel, 0, new IntPtr(4), memPosMass);
@@ -161,7 +161,7 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
         public static void DoStep(List<Star> stars, double dt, int burst)
         {
 
-            Cl.EnqueueWriteBuffer(CmdQueue, memPosMass, Bool.True, IntPtr.Zero, new IntPtr(sizeof(double) * 4 * count), stars.Select(x => x.GetDouble4()).ToArray(), 0,  null, out event0);
+            Cl.EnqueueWriteBuffer(CmdQueue, memPosMass, Bool.True, IntPtr.Zero, new IntPtr(sizeof(double) * 4 * count), stars.Select(x => x.GetDouble4()).ToArray(), 0, null, out event0);
 
             Cl.EnqueueWriteBuffer(CmdQueue, memVel, Bool.True, IntPtr.Zero, new IntPtr(sizeof(double) * 4 * count), stars.Select(x => x.GetVel4()).ToArray(), 0, null, out event0);
 
@@ -182,7 +182,7 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
                 Cl.EnqueueNDRangeKernel(CmdQueue, kernel, 1, null, workGroupSizePtr, null, 0, null, out event0);
                 Cl.Finish(CmdQueue);
             }
-            
+
             // Force the command queue to get processed, wait until all commands are complete
             Cl.Finish(CmdQueue);
 
@@ -191,7 +191,7 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
             double4[] acceleration = new double4[count];
             double4[] positions = new double4[count];
             double4[] velocitys = new double4[count];
-            
+
 
             Cl.EnqueueReadBuffer(CmdQueue, (IMem)memAcc, Bool.True, IntPtr.Zero, new IntPtr(count * 4 * sizeof(double)), acceleration, 0, null, out event0);
             Cl.EnqueueReadBuffer(CmdQueue, memPosMassNew, Bool.True, IntPtr.Zero, new IntPtr(count * 4 * sizeof(double)), positions, 0, null, out event0);

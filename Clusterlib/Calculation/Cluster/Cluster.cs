@@ -84,7 +84,7 @@
 
             this.DistanceFormGalaxy = distanceFromGalaxy;
 
-            for (double time = 0; this.ParentDt > time; time += this.Dt)
+            for (double time = 0; this.ParentDt > time; time += this.Dt * 2)
             {
                 /*this.MassLayer.Clear();
 
@@ -111,9 +111,9 @@
                 {
                     this.ReplaceInstructions();
                     this.SkipInstructionRefresh = true;
-                }
-                */
-                ComputeWorker.DoStep(this.Stars, this.Dt, 200);
+                }*/
+                
+                ComputeWorker.DoStep(this.Stars, this.Dt, 2);
 
 
                 this.Dt = this.GetNewDt();
@@ -123,7 +123,7 @@
                 }
             }
 
-            this.Dt = this.GetNewDt();
+            this.Dt = this.GetNewDt() * 2;
 
             this.SkipInstructionRefresh = false;
             /*if (this.Stars.Exists(x => (x.ToCompute && !x.Computed) || (!x.ToCompute && x.Computed)))
