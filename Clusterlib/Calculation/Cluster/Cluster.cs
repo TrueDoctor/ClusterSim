@@ -86,7 +86,7 @@
 
             for (double time = 0; this.ParentDt > time; time += this.Dt)
             {
-                /*this.MassLayer.Clear();
+                this.MassLayer.Clear();
 
                 foreach (var s in this.Stars)
                 {
@@ -112,9 +112,6 @@
                     this.ReplaceInstructions();
                     this.SkipInstructionRefresh = true;
                 }
-                */
-                ComputeWorker.DoStep(this.Stars, this.Dt, 200);
-
 
                 this.Dt = this.GetNewDt();
                 if (time + this.Dt > this.ParentDt)
@@ -126,7 +123,7 @@
             this.Dt = this.GetNewDt();
 
             this.SkipInstructionRefresh = false;
-            /*if (this.Stars.Exists(x => (x.ToCompute && !x.Computed) || (!x.ToCompute && x.Computed)))
+            if (this.Stars.Exists(x => (x.ToCompute && !x.Computed) || (!x.ToCompute && x.Computed)))
             {
                 throw new Exception("nicht alle Sterne berechnet");
             }
@@ -135,8 +132,7 @@
 
             //ComputeWorker.CalcAcc(this.Stars, this.MassLayer, this.Instructions);
 
-            return this.Stars.Where(x => x.Computed && x.ToCompute).ToArray();*/
-            return this.Stars.ToArray();
+            return this.Stars.Where(x => x.Computed && x.ToCompute).ToArray();
         }
 
         public Vector CalcAcc(Vector a, IMassive b, double mass)
@@ -150,9 +146,9 @@
 
             double d = 1 / tempDirection.distance(); // Sterne und Weltraum Grundlagen der Himmelsmechanik S.91
 
-            double acceleration = b.mass * Gravitation * d * d * d;
+            double acceleration = b.mass * Gravitation * Math.Pow(d, 3);
 
-           // acceleration = b.mass / mass * acceleration;
+            acceleration = b.mass / mass * acceleration;
             var accVec = b.pos - a;
 
             accVec.mult(acceleration);
@@ -304,7 +300,6 @@
                     acc.add(this.CalcAcc(pos, this.MassLayer[temp], this.MassLayer[id].mass)); // add all acceleration vectors
                 }
             }
-
             if (this.DistanceFormGalaxy.Equals(-1))
             {
                 return new Vec6(star.ToVector(1), acc);

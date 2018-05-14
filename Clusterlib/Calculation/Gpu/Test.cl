@@ -1,34 +1,34 @@
 
-#define GRAVITATION  0.0002959122083
-#define ESP 0.01 
-
-
-
-inline double4 Interaction(double4 PosA, double4 PosB,  double4 AccA)
-{             double4 d = PosB - PosA;
-			 d.w = 0;
-             double invr = rsqrt(d.x*d.x + d.y*d.y + d.z*d.z + ESP);
-             double f = PosB.w*invr*invr*invr*GRAVITATION;
-             AccA += f*d; // Accumulate acceleration 
-          
-       return AccA;
+double3 Interaction(double4 bi, double4 bj,  double3 ai)
+{
+	double3 r;
+	// r_ij  [3 FLOPS]
+	r.x = bj.x - bi.x;
+	r.y = bj.y - bi.y;
+	r.z = bj.z - bi.z;
+	// distSqr = dot(r_ij, r_ij) + EPS^2  [6 FLOPS]
+	double distSqr = r.x * r.x + r.y * r.y + r.z * r.z + 0.01;
+	// invDistCube =1/distSqr^(3/2)  [4 FLOPS (2 mul, 1 sqrt, 1 inv)]
+	double distSixth = distSqr * distSqr * distSqr;
+	double invDistCube = 1.0 / sqrt(distSixth);
+	// s = m_j * invDistCube [1 FLOP]
+	double s = bj.w * invDistCube;
+	// a_i =  a_i + s * r_ij [6 FLOPS]
+	ai.x += r.x * s;
+	ai.y += r.y * s;
+	ai.z += r.z * s;
+	printf("%v",ai);
+	return ai;
 }
 
-inline double4 getAcc(double4 p, __local double4* *buffer,  int BufferSize, double4 a)
-{            
-          
-		  for(int j=0; j<BufferSize; j++) { // For ALL cached particle positions ... 
-             double4 p2 = *buffer[j]; // Read a cached particle position a = 
-			 a = Interaction(p, p2, a);
-          }
-       return a;
-}
-
-__kernel void calcAcc(__global double4* PosM_old,
-__global double4* PosM_new,
-__global double4* Vel, 
+__kernel void calcAcc(__global double4* input,
+__global double4* objects, 
+__global int* instructions, 
+__global int* from, 
+__global int* workSize, 
+__global int* workGroupSize, 
 __global double4* acc,
-double dt,
+double esp,
 __local double4* buffer)
 
 {
@@ -41,29 +41,45 @@ __local double4* buffer)
     int nt = get_local_size(0);
     int nb = n/nt;
 	
+	//nt = workGroupSize[wid];
+	//size_t i = get_global_id(0);
+	//size_t m = get_global_size(0);
 	int test = 0;
-	double4 p = PosM_old[gti];
-	double4 v = Vel[gti];
+	double3 output;
+	double4 work;// = objects[j];
+	double4 current = input[gti];
 
 	double4 a = (double4)(0.0,0.0,0.0,0.0);
 
-	for(int jb=0; jb < nb; jb++) {
-         buffer[ti] = PosM_old[jb*nt+ti]; 
-		 barrier(CLK_LOCAL_MEM_FENCE); // Wait for others in the work-group 
-         //a = getAcc(p, &buffer, nt, a);
-		 for(int j=0; j<nt; j++) { // For ALL cached particle positions ... 
-             double4 p2 = buffer[j]; // Read a cached particle position a = 
-			 a = Interaction(p, p2, a);
+	for(int jb=0; jb < workSize[wid]/nt; jb++) { 
+
+         buffer[ti] = objects[from[wid]+workSize[wid]*jb+ti]; 
+          barrier(CLK_LOCAL_MEM_FENCE); // Wait for others in the work-group 
+
+          for(int j=0; j<nt; j++) { // For ALL cached particle positions ... 
+             double4 p2 = buffer[j]; // Read a cached particle position 
+             double4 d = p2 - current;
+             double invr = rsqrt(d.x*d.x + d.y*d.y + d.z*d.z + 0.01);
+             double f = p2.w*invr*invr*invr;
+             a += f*d; // Accumulate acceleration 
+			 test++;
           }
-		 barrier(CLK_LOCAL_MEM_FENCE); // Wait for others in work-group
+
+          barrier(CLK_LOCAL_MEM_FENCE); // Wait for others in work-group 
        }
 
-	p += dt*v + 0.5f*dt*dt*a;
-    v += dt*a;
-
+	/*for (j = from[i]; j < from[i] + to[i] ; j = j + 1)
+	{
+		printf("from: %i", j);
+		work = objects[instructions[j]];
+		output = Interaction(current, work, output);
+	}*/
+	a.x = esp;
+	//a.y = test;
+	//a.z = wid;
+	a.w = gti;
 	acc[gti] = a;
-    PosM_new[gti] = p;
-    Vel[gti] = v;
 	
 }
 
+;
