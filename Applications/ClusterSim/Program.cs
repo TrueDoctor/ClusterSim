@@ -99,11 +99,12 @@ namespace ClusterSim.Standalone
 
             Cluster.GalaxyMass = 0; // 1.4e6;
             cluster.ParentDt = 365;
+
+            ComputeWorker.CalcAcc(cluster.Stars, 1);
             cluster.DoStep(Misc.Method.Rk5, true, 0, -1, 3.162e+9);
 
-            var groups = cluster.GetWorkGroups(21);
+            //var groups = cluster.GetWorkGroups(21);
 
-            ComputeWorker.CalcAcc(cluster.Stars, cluster.MassLayer, groups);
 
             sub.Stars = new List<Star>(cluster.Stars.Select(x => x.Clone()));
             sub.ParentDt = cluster.ParentDt;
