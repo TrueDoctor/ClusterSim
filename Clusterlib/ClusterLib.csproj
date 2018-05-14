@@ -102,6 +102,7 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+    <None Include="Calculation\Gpu\RK5.cl" />
     <None Include="Calculation\Gpu\Test.cl" />
     <None Include="packages.config" />
   </ItemGroup>
