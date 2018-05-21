@@ -7,6 +7,7 @@ namespace ClusterSim.ClusterLib.Utility
     using System.Collections.Generic;
     using System.Linq;
 
+    using ClusterSim.ClusterLib.Analysis;
     using ClusterSim.ClusterLib.Calculation;
 
     public static class CenterEnumerableExtension
@@ -18,12 +19,12 @@ namespace ClusterSim.ClusterLib.Utility
 
             if (list == null) throw new ArgumentNullException();
 
-            list = list.ToList();
+            double radius = list.GetRadius();
+
+            list = list/*.Where(x=>x.pos.distance2() < radius * radius)*/.ToList();
 
             if (list.Count() != 0)
             {
-                
-
                 foreach (IMassive x in list)
                 {
                     mass += x.mass;

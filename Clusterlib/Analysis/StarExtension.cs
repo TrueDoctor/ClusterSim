@@ -53,9 +53,9 @@
             }
         }
 
-        public static bool Escaped(this Star star, double acc)
+        public static bool Escaped(this Star star, double mass)
         {
-            var vel = 2 * acc * star.Pos.distance();
+            var vel = 2 * Cluster.Gravitation * mass / star.Pos.distance();
             return vel * vel < star.Vel.distance2();
         }
     }

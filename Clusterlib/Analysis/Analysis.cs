@@ -63,6 +63,7 @@
                 
                 data[1].Add(stars.Sum(x => x.GetMetric(stars, Parameters.Potential)));
                 data[2].Add(data[0][i] + data[1][i]);
+                
             }
 
             GnuPlot.HoldOn();

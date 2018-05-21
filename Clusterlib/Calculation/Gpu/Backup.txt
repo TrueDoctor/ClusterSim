@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -36,7 +36,7 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
         private static Mem memAcc;
 
         private static Kernel kernel;
-
+        
         private static int count;
 
         private static bool inverted;
@@ -68,7 +68,7 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
             catch
             {
                 programSource = File.ReadAllText(@"C:\Test.cl");
-            }
+            } 
 
             program = Cl.CreateProgramWithSource(Context, 1, new[] { programSource }, null, out err);
             Cl.BuildProgram(program, 0, null, "", null, IntPtr.Zero); //" - cl-mad-enable"
@@ -84,13 +84,19 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
             }
 
             // Create a kernel from our program
+            Console.WriteLine("Kernal:");
             kernel = Cl.CreateKernel(program, "calcAcc", out err);
+            Console.WriteLine(err);
 
             memPosMass = (Mem)Cl.CreateBuffer(Context, MemFlags.ReadWrite, sizeof(double) * 4 * count, out err);
+            Console.WriteLine(err);
             memPosMassNew = (Mem)Cl.CreateBuffer(Context, MemFlags.ReadWrite, sizeof(double) * 4 * count, out err);
+            Console.WriteLine(err);
             memVel = (Mem)Cl.CreateBuffer(Context, MemFlags.ReadWrite, sizeof(double) * 4 * count, out err);
+            Console.WriteLine(err);
             memAcc = (Mem)Cl.CreateBuffer(Context, MemFlags.WriteOnly, sizeof(double) * 4 * count, out err);
-            
+            Console.WriteLine(err);
+
             // Get the maximum number of work items supported for this kernel on this device
             IntPtr notused;
             InfoBuffer local = new InfoBuffer(new IntPtr(4));
@@ -101,12 +107,12 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
                 new IntPtr(sizeof(int)*4),
                 local,
                 out notused);
+            Console.WriteLine(  info + local.ToString() );
 
             // Set the arguments to our kernel, and enqueue it for execution
-            //kernel.;
-            Cl.SetKernelArg(kernel, 2, new IntPtr(IntPtr.Size), memVel);
-            Cl.SetKernelArg(kernel, 3, new IntPtr(IntPtr.Size), memAcc);
-            Cl.SetKernelArg(kernel, 7, new IntPtr(sizeof(double) * 4 * 512), null);
+            Console.WriteLine(Cl.SetKernelArg(kernel, 2, new IntPtr(4), memVel));
+            Console.WriteLine(Cl.SetKernelArg(kernel, 3, new IntPtr(4), memAcc));
+            Console.WriteLine(Cl.SetKernelArg(kernel, 7, new IntPtr(sizeof(double) * 4 * 512), null));
             ComputeWorker.count = count;
         }
         
@@ -116,25 +122,37 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
             Cl.EnqueueWriteBuffer(CmdQueue, memPosMass, Bool.True, IntPtr.Zero, new IntPtr(sizeof(double) * 4 * count), stars.Select(x => x.GetDouble4()).ToArray(), 0, null, out event0);
 
             Cl.EnqueueWriteBuffer(CmdQueue, memVel, Bool.True, IntPtr.Zero, new IntPtr(sizeof(double) * 4 * count), stars.Select(x => x.GetVel4()).ToArray(), 0, null, out event0);
-            
-            Cl.SetKernelArg(kernel, 4, new IntPtr(sizeof(double)), dt);
-            Cl.SetKernelArg(kernel, 5, new IntPtr(sizeof(double)), distance);
-            Cl.SetKernelArg(kernel, 6, new IntPtr(sizeof(double)), Cluster.Cluster.GalaxyMass);
+
+
+            if (stars.Any(x => x.Pos.IsNull()))
+            {
+                throw new Exception("Fehler");
+            }
+            Console.WriteLine("DoStep:");
+            Console.WriteLine(Cl.SetKernelArg(kernel, 4, new IntPtr(sizeof(double)), dt));
+            Console.WriteLine(Cl.SetKernelArg(kernel, 5, new IntPtr(sizeof(double)), distance));
+            Console.WriteLine(Cl.SetKernelArg(kernel, 6, new IntPtr(sizeof(double)), Cluster.Cluster.GalaxyMass));
 
             var GlobalWorkSizePtr = new[] { new IntPtr(count) };
 
-            for (int i = 0; i < burst; i += 2)
+            /*for (int i = 0; i < burst; i += 2)
             {
-                Cl.SetKernelArg(kernel, 0, new IntPtr(IntPtr.Size), memPosMass);
-                Cl.SetKernelArg(kernel, 1, new IntPtr(IntPtr.Size), memPosMassNew);
+                Cl.SetKernelArg(kernel, 0, new IntPtr(4), memPosMass);
+                Cl.SetKernelArg(kernel, 1, new IntPtr(4), memPosMassNew);
                 Cl.EnqueueNDRangeKernel(CmdQueue, kernel, 1, null, GlobalWorkSizePtr, null, 0, null, out event0);
+                Cl.Finish(CmdQueue);
 
-                Cl.SetKernelArg(kernel, 0, new IntPtr(IntPtr.Size), memPosMassNew);
-                Cl.SetKernelArg(kernel, 1, new IntPtr(IntPtr.Size), memPosMass);
+                Cl.SetKernelArg(kernel, 0, new IntPtr(4), memPosMassNew);
+                Cl.SetKernelArg(kernel, 1, new IntPtr(4), memPosMass);
                 Cl.EnqueueNDRangeKernel(CmdQueue, kernel, 1, null, GlobalWorkSizePtr, null, 0, null, out event0);
-            }
+                Cl.Finish(CmdQueue);
+            }*/
 
             // Force the command queue to get processed, wait until all commands are complete
+            Console.WriteLine(Cl.SetKernelArg(kernel, 0, new IntPtr(4), memPosMass));
+            Console.WriteLine(Cl.SetKernelArg(kernel, 1, new IntPtr(4), memPosMassNew));
+            Console.WriteLine(Cl.EnqueueNDRangeKernel(CmdQueue, kernel, 1, null, GlobalWorkSizePtr, null, 0, null, out event0));
+            //Cl.Finish(CmdQueue);
             Cl.Finish(CmdQueue);
 
 
@@ -145,14 +163,13 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
 
 
             Cl.EnqueueReadBuffer(CmdQueue, (IMem)memAcc, Bool.True, IntPtr.Zero, new IntPtr(count * 4 * sizeof(double)), acceleration, 0, null, out event0);
-            Cl.EnqueueReadBuffer(CmdQueue, memPosMass, Bool.True, IntPtr.Zero, new IntPtr(count * 4 * sizeof(double)), positions, 0, null, out event0); /// ändern
+            Cl.EnqueueReadBuffer(CmdQueue, memPosMassNew, Bool.True, IntPtr.Zero, new IntPtr(count * 4 * sizeof(double)), positions, 0, null, out event0); /// ändern
             Cl.EnqueueReadBuffer(CmdQueue, (IMem)memVel, Bool.True, IntPtr.Zero, new IntPtr(count * 4 * sizeof(double)), velocitys, 0, null, out event0);
 
             for (int i = 0; i < count; i++)
             {
                 stars[i].Load(positions[i], velocitys[i], acceleration[i], dt);
             }
-            
 
             if (stars.Any(x => x.Pos.IsNull()))
                 {

@@ -21,7 +21,7 @@ namespace ClusterSim.ClusterLib.Calculation
             }
             else
             {
-                throw new ArgumentException("mindestens zwei parameter müssen übergeben werden");
+                throw new ArgumentException("mindestens zwei Parameter müssen übergeben werden");
             }
         }
         
@@ -36,8 +36,8 @@ namespace ClusterSim.ClusterLib.Calculation
                 return -1;
             }
 
-            var angle = ((double)time / this.PeriodTime - ((int)(time / this.PeriodTime))) * 2 * Math.PI;
-            var amp = (Math.Pow(Math.Pow(10, Math.Sin(angle)), 2) / 100 + 1) * this.Orbit;
+            var angle = ((double)time / this.PeriodTime - ((int)(time / this.PeriodTime * 1000))) * 2 * Math.PI;
+            var amp = (Math.Pow(Math.Pow(10, Math.Sin(angle)), 2) / 1000 + 1)  * this.Orbit;
             return amp;
         }
     }

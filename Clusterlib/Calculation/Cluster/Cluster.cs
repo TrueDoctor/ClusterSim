@@ -34,7 +34,11 @@
             {
                 this.Stars = new List<Star>();
             }
+            
+            MinPrecision = ClusterLib.Properties.Settings.Default.MinPrecision;
+            
         }
+        public static double MinPrecision { get; set; }
 
         public static double GalaxyMass { get; set; }
 
@@ -84,9 +88,9 @@
 
             this.DistanceFormGalaxy = distanceFromGalaxy;
 
-            for (double time = 0; this.ParentDt > time; time += this.Dt * 2)
+            for (double time = 0; this.ParentDt > time; time += this.Dt)
             {
-                /*this.MassLayer.Clear();
+                this.MassLayer.Clear();
 
                 foreach (var s in this.Stars)
                 {
@@ -111,10 +115,8 @@
                 {
                     this.ReplaceInstructions();
                     this.SkipInstructionRefresh = true;
-                }*/
+                }
                 
-                ComputeWorker.DoStep(this.Stars, this.Dt, 2);
-
 
                 this.Dt = this.GetNewDt();
                 if (time + this.Dt > this.ParentDt)
@@ -123,10 +125,10 @@
                 }
             }
 
-            this.Dt = this.GetNewDt() * 2;
+            this.Dt = this.GetNewDt();
 
             this.SkipInstructionRefresh = false;
-            /*if (this.Stars.Exists(x => (x.ToCompute && !x.Computed) || (!x.ToCompute && x.Computed)))
+            if (this.Stars.Exists(x => (x.ToCompute && !x.Computed) || (!x.ToCompute && x.Computed)))
             {
                 throw new Exception("nicht alle Sterne berechnet");
             }
@@ -135,7 +137,7 @@
 
             //ComputeWorker.CalcAcc(this.Stars, this.MassLayer, this.Instructions);
 
-            return this.Stars.Where(x => x.Computed && x.ToCompute).ToArray();*/
+            return this.Stars.Where(x => x.Computed && x.ToCompute).ToArray();
             return this.Stars.ToArray();
         }
 
@@ -159,7 +161,7 @@
             return accVec;
         }
 
-        protected double GetNewDt()
+        virtual protected double GetNewDt()
         {
             var maxDAcc = this.Stars.Where(x => x.ToCompute).OrderBy(x => x.Dt / x.DAcc).First();
             double dt = this.Dt;

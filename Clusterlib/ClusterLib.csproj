@@ -23,6 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -31,6 +32,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="OpenCL.Net, Version=2.2.9.0, Culture=neutral, processorArchitecture=MSIL">
@@ -64,6 +66,7 @@
     <Compile Include="Calculation\Box.cs" />
     <Compile Include="Calculation\Cluster\BoxCluster.cs" />
     <Compile Include="Calculation\Cluster\Cluster.cs" />
+    <Compile Include="Calculation\Cluster\GpuCluster.cs" />
     <Compile Include="Calculation\Cluster\ICluster.cs" />
     <Compile Include="Calculation\Gpu\ClusterWorkSchedulerExtension.cs" />
     <Compile Include="Calculation\Gpu\ComputeWorker.cs" />

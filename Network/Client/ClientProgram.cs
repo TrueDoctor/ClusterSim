@@ -9,7 +9,7 @@
 
 namespace Client
 {
-    #region
+    #region Namespaces
 
     using System;
     using System.Collections.Generic;
@@ -23,6 +23,7 @@ namespace Client
 
     using ClusterSim.ClusterLib.Calculation;
     using ClusterSim.ClusterLib.Calculation.Cluster;
+    using ClusterSim.ClusterLib.Calculation.Gpu;
     using ClusterSim.ClusterLib.Utility;
     using ClusterSim.Net.Lib;
 
@@ -34,12 +35,12 @@ namespace Client
     internal class ClientProgram
     {
         /// <summary>
-        /// The ready.
+        /// Ist the Client available for Computtion?.
         /// </summary>
         public static bool ready;
 
         /// <summary>
-        /// The main.
+        /// The main Loop.
         /// </summary>
         /// <param name="args">
         /// The args.
@@ -78,7 +79,7 @@ namespace Client
             Console.WriteLine(
                 "Client Socket Program - Server Connected ... on " + Settings.Default.IP + ":" + Settings.Default.Port);
             Console.Beep();
-            var Cluster = new SubCluster(new List<Star>());
+            var Cluster = new GpuCluster(new List<Star>());
 
             // Cluster.Stars = new List<Star>(1);
             // Cluster.Stars.Add(Misc.randomize(1, 1, 1, 1, 1));
@@ -112,13 +113,15 @@ namespace Client
                     var msg = new Message();
                    
                     ready = false;
-                    Cluster.Stars = msg.DeSerialize(data);
+                    Cluster.Stars = msg.DeSerialize(data).ToArray();
                     Cluster.Dt = msg.dt;
                     Cluster.ParentDt = msg.ParentDt;
                     step = msg.step;
                     ClusterSim.ClusterLib.Calculation.Cluster.Cluster.GalaxyMass = msg.Mass;
+
+                    ComputeWorker.Initialize(Cluster.Stars.Length);
                     
-                    var newStars = Cluster.DoStep(Misc.Method.Rk5, multiThreading: true, forceCluster: !msg.Subcluster, distanceFromGalaxy: msg.distanceFromGalaxy);
+                    var newStars = Cluster.DoStep(Misc.Method.Rk5,/*, multiThreading: true, forceCluster: !msg.Subcluster, distanceFromGalaxy:*/ msg.distanceFromGalaxy);
                     step++;
 
                     // if(NewStars.Count)

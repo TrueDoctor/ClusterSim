@@ -33,6 +33,7 @@ namespace ClusterSim.ClusterLib.Calculation.OpenCl
                 var change = (s.Acc - newAcc).distance();
                 var old = s.Acc.distance();
                 s.DAcc = change / old;
+                s.DAcc = s.DAcc == 0 ? 1e-5 : s.DAcc;
             }
 
             s.Dt = dt;

@@ -30,8 +30,6 @@
                 MinPrecision = ClusterLib.Properties.Settings.Default.MinPrecision;
             }
         }
-
-        public static double MinPrecision { get; set; }
         
         public static double EstimateStepTime(int count, int toCalculate, bool network)
         {
@@ -249,7 +247,7 @@
                     CalculationComplexity = this.CalculationComplexity,
                     ParentDt = this.Dt,
                     ComputeCount = this.Stars.Count,
-                    RecursionLevel = this.RecursionLevel -1
+                    RecursionLevel = this.RecursionLevel - 1
                 });
                 return newClusters;
             }
@@ -361,7 +359,7 @@
                 return temp + (res - temp) / 10;
             }
 
-            return res;
+            return res>1e-20?res:1e-20;
 
             // return this.Dt + (s.Dt * SubCluster.MinPrecision / s.DAcc - s.Dt) / 2;
         }

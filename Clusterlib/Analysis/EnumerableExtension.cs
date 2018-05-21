@@ -27,6 +27,24 @@
             throw new Exception("bestimmen des Radius fehlgeschlagen");
         }
 
+        public static double GetRadius(this IEnumerable<IMassive> cluster)
+        {
+            List<IMassive> enumerable = cluster as List<IMassive> ?? cluster.ToList();
+            var stars = enumerable.OrderBy(s => s.pos.distance2());
+            double totalMass = 0, currentMass = 0;
+            enumerable.ForEach(s => totalMass += s.mass);
+
+            foreach (var star in stars)
+            {
+                currentMass += star.mass;
+                if (currentMass > totalMass / 2)
+                {
+                    return star.pos.distance();
+                }
+            }
+            throw new Exception("bestimmen des Radius fehlgeschlagen");
+        }
+
         public static double GetRelax(this IEnumerable<Star> cluster)
         {
             var stars = cluster.ToList();

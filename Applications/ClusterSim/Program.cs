@@ -24,7 +24,7 @@ namespace ClusterSim.Standalone
     {
         private static bool abort = false;
 
-        public static int SaveInterval { get; set; } = 365000;
+        public static int SaveInterval { get; set; } = 3650;
 
         public static void Main(string[] args)
         {
@@ -90,38 +90,40 @@ namespace ClusterSim.Standalone
             Thread key = new Thread(listen);
             key.Start();
             var cluster = new BoxCluster(SQL.readStars(rTable, last), dt); // instatiate Starcluster
-            var sub = new SubCluster(SQL.readStars(rTable, last), dt);
+            var sub = new GpuCluster(SQL.readStars(rTable, last));
 
             var time = (double)last * SaveInterval;
 
             //ComputeWorker.CalcAcc(cluster.Stars, cluster.Stars.Select(x=>x as IMassive).ToList());
 
 
-            Cluster.GalaxyMass = 0; // 1.4e6;
-            cluster.ParentDt = 365;
+            Cluster.GalaxyMass = 1.4e7;
+            cluster.ParentDt = SaveInterval / 10;
 
-            ComputeWorker.CalcAcc(cluster.Stars, 1);
-            cluster.DoStep(Misc.Method.Rk5, true, 0, -1, 3.162e+9);
+            foreach (var subStar in sub.Stars)
+            {
+                subStar.Dt = dt;
+            }
 
-            //var groups = cluster.GetWorkGroups(21);
-
-
-            sub.Stars = new List<Star>(cluster.Stars.Select(x => x.Clone()));
-            sub.ParentDt = cluster.ParentDt;
             sub.Dt = cluster.Dt;
+            sub.ParentDt = cluster.ParentDt;
 
-            var tide = new WaveGenerator(1.4e6, 3.162e9);
+            var tide = new WaveGenerator(Cluster.GalaxyMass, 3.162e14);
 
-            var X = new List<double>();
+            //sub.Burst = 2;
+            
+            ComputeWorker.Initialize(sub.Stars.Length);
+            //sub.DoStep(Misc.Method.Rk5, tide.GetVirtualDistance(time));
+            //sub.Burst = 200;
 
-            var Y = new List<double>();
-
+            int prev = 0;
 
             for (int i = (last /** SaveInterval * 365*/)+1;
                  !abort; i++)
             {
+                sub.DoStep(Misc.Method.Rk5, tide.GetVirtualDistance(time));
                 var maxDAcc = cluster.Stars.Max(x => x.DAcc);
-                if (maxDAcc > 0)
+                if (maxDAcc > 0 && false)
                 {
                     //cluster.ParentDt = 3000;
                     //sub.ParentDt = 365;
@@ -139,14 +141,13 @@ namespace ClusterSim.Standalone
 
                     //Console.WriteLine("n: " + watch.ElapsedMilliseconds / 1.0 / 1000.0);
 
-                    X.Add(watch.ElapsedMilliseconds / 1.0 / 1000.0);
+                    //X.Add(watch.ElapsedMilliseconds / 1.0 / 1000.0);
 
                     watch.Restart();
 
                     for (int j = 0; j < 1; j++)
                     {
-                        //DoStep(ref Sub);
-                        sub.DoStep(Misc.Method.Rk5, false, 0, -1, tide.GetVirtualDistance(time));
+                        sub.DoStep(Misc.Method.Rk5, tide.GetVirtualDistance(time));
                     }
 
                     watch.Stop();
@@ -155,7 +156,7 @@ namespace ClusterSim.Standalone
 
                     //SQL.addRows(Sub.Stars, i, wTable);
                     Console.WriteLine("sub: " + watch.ElapsedMilliseconds / 1.0 / 1000.0);
-                    Y.Add(watch.ElapsedMilliseconds / 1.0 / 1000.0);
+                    //Y.Add(watch.ElapsedMilliseconds / 1.0 / 1000.0);
 
                     //cluster.CalcDt();
                     //Sub.GetSubsetSeeds().ForEach(s => Console.Write($"{s}, "));
@@ -163,7 +164,7 @@ namespace ClusterSim.Standalone
 
                 time += sub.ParentDt;
 
-                sub.ParentDt = sub.Dt * 50;
+                sub.ParentDt = sub.Dt * 50 * sub.Burst;
 
                 if (sub.ParentDt > SaveInterval / 50)
                 {
@@ -180,7 +181,6 @@ namespace ClusterSim.Standalone
 
                 // send "i"+step in channel steps
                 // Console.WriteLine("\n");//+ i + "\n ");
-                
 
 
                 if ((int)(time / SaveInterval) > year)
@@ -188,10 +188,15 @@ namespace ClusterSim.Standalone
                     ++year;
                     sub.Stars.MoveCenter(sub.Stars.GetCenter());
                     Console.WriteLine($@"Exportiere Daten... Jahr: {(int)time / SaveInterval} = {year}");
-                    /*while (!SQL.addRows(sub.Stars, year, wTable))
+                    while (!SQL.addRows(sub.Stars.ToList(), year, wTable))
                     {
                         Thread.Sleep(5000);
-                    }*/
+                    }
+                }
+                else if ((int)((time / SaveInterval - year) * 10) != prev)
+                {
+                    prev = (int)(((time / SaveInterval) - year) * 10);
+                    Console.WriteLine($" Nächster Schritt zu {prev*10}% fertig");
                 }
             }
 
@@ -205,62 +210,7 @@ namespace ClusterSim.Standalone
             if (view == "y" || view == "Y")
                 System.Diagnostics.Process.Start(@"DataView.exe", wTable);
         }
-
-        private static void DoStep(ref SubCluster cluster, double dt = 30)
-        {
-            List<Star> newStars;
-
-            for (double time = 0; time < cluster.ParentDt;)
-            {
-                var subClusters = cluster.DivideIntoSubClusters(true);
-                var temp = new ConcurrentBag<Star>();
-
-                time += subClusters.First().Dt;
-
-                Parallel.ForEach(
-                    subClusters,
-                    c =>
-                    {
-                        var stars = c.DoStep(Misc.Method.Rk5, true);
-                        foreach (var star in stars)
-                        {
-                            temp.Add(star);
-                        }
-                    });
-
-
-
-                newStars = temp.OrderBy(s => s.id).ToList();
-
-
-                if (newStars.Count != cluster.Stars.Count)
-                {
-                    var duplicates = newStars.Where(x => newStars.Count(c => c.id == x.id) > 1).Select(d => d.id).Distinct()
-                        .ToList();
-                    foreach (var duplicate in duplicates)
-                    {
-                        while (newStars.Remove(newStars.Where(x => x.id == duplicate).OrderBy(c => c.DAcc).First()) && newStars.Count(c => c.id == duplicate) > 1)
-                        {
-                        }
-                    }
-
-                    // throw new Exception("Duplikate!");
-                }
-
-                cluster = new SubCluster(newStars, dt: subClusters.First().Dt)
-                {
-                    ParentDt = cluster.ParentDt,
-                    Stars = newStars.Select(
-                                      x => x.Clone()).ToList()
-                };
-                cluster.Stars.ForEach(x => x.ToCompute = false);
-            }
-
-
-            //cluster.Stars = newStars;
-        }
-
-
+        
         private static void listen()
         {
             XDMessagingClient client = new XDMessagingClient(); //https://github.com/TheCodeKing/XDMessaging.Net
