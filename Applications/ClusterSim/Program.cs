@@ -24,7 +24,7 @@ namespace ClusterSim.Standalone
     {
         private static bool abort = false;
 
-        public static int SaveInterval { get; set; } = 3650;
+        public static int SaveInterval { get; set; } = 365000;
 
         public static void Main(string[] args)
         {
@@ -127,7 +127,7 @@ namespace ClusterSim.Standalone
             for (int i = (last /** SaveInterval * 365*/)+1;
                  !abort; i++)
             {
-                cluster.DoStep(Misc.Method.Rk5, false, false, tide.GetVirtualDistance(time));
+                //cluster.DoStep(Misc.Method.Rk4, false, false, tide.GetVirtualDistance(time));
                 sub.DoStep(Misc.Method.Rk5, tide.GetVirtualDistance(time));
                 var maxDAcc = cluster.Stars.Max(x => x.DAcc);
                 if (maxDAcc > 0 && false)

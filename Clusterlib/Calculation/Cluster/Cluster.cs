@@ -107,7 +107,7 @@
                 {
                     foreach (int id in ids)
                     {
-                        this.Integrate(id, Misc.Method.Rk5);
+                        this.Integrate(id, m);
                     }
                 }
 
@@ -246,15 +246,15 @@
         protected void Rk4(ref Star s)
         {
             var star = new Vec6(s.Pos, s.Vel); // convert star to vec6
-            var ka = this.F(star, s.id); // calculate help values
-            var kb = this.F(star + this.Dt / 2 * ka, s.id);
-            var kc = this.F(star + this.Dt / 2 * kb, s.id);
-            var kd = this.F(star + kc, s.id);
+            var ka = this.Dt * this.F(star, s.id); // calculate help values
+            var kb = this.Dt * this.F(star + this.Dt / 2 * ka, s.id);
+            var kc = this.Dt * this.F(star + this.Dt / 2 * kb, s.id);
+            var kd = this.Dt * this.F(star + kc, s.id);
             var f = this.Dt / 6 * (ka + 2 * kb + 2 * kc + kd); // calculate resulting Vector
             s.Pos = s.Pos + f.ToVector(0);
             s.Vel = s.Vel + f.ToVector(1);
             s.Acc = ka.ToVector(1) / this.Dt;
-            s.Print();
+            //s.Print();
         }
 
         protected void Rk5(ref Star s)
