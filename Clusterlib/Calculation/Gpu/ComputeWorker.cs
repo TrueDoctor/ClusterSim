@@ -106,7 +106,7 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
             //kernel.;
             Cl.SetKernelArg(kernel, 2, new IntPtr(IntPtr.Size), memVel);
             Cl.SetKernelArg(kernel, 3, new IntPtr(IntPtr.Size), memAcc);
-            Cl.SetKernelArg(kernel, 7, new IntPtr(sizeof(double) * 4 * 512), null);
+            Cl.SetKernelArg(kernel, 7, new IntPtr(sizeof(double) * 4 * count), null);
             ComputeWorker.count = count;
         }
         
@@ -123,15 +123,16 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
 
             var GlobalWorkSizePtr = new[] { new IntPtr(count) };
 
+            burst = 2;
             for (int i = 0; i < burst; i += 2)
             {
                 Cl.SetKernelArg(kernel, 0, new IntPtr(IntPtr.Size), memPosMass);
                 Cl.SetKernelArg(kernel, 1, new IntPtr(IntPtr.Size), memPosMassNew);
                 Cl.EnqueueNDRangeKernel(CmdQueue, kernel, 1, null, GlobalWorkSizePtr, null, 0, null, out event0);
 
-                Cl.SetKernelArg(kernel, 0, new IntPtr(IntPtr.Size), memPosMassNew);
+               /* Cl.SetKernelArg(kernel, 0, new IntPtr(IntPtr.Size), memPosMassNew);
                 Cl.SetKernelArg(kernel, 1, new IntPtr(IntPtr.Size), memPosMass);
-                Cl.EnqueueNDRangeKernel(CmdQueue, kernel, 1, null, GlobalWorkSizePtr, null, 0, null, out event0);
+                Cl.EnqueueNDRangeKernel(CmdQueue, kernel, 1, null, GlobalWorkSizePtr, null, 0, null, out event0);*/
             }
 
             // Force the command queue to get processed, wait until all commands are complete
@@ -145,7 +146,7 @@ namespace ClusterSim.ClusterLib.Calculation.Gpu
 
 
             Cl.EnqueueReadBuffer(CmdQueue, (IMem)memAcc, Bool.True, IntPtr.Zero, new IntPtr(count * 4 * sizeof(double)), acceleration, 0, null, out event0);
-            Cl.EnqueueReadBuffer(CmdQueue, memPosMass, Bool.True, IntPtr.Zero, new IntPtr(count * 4 * sizeof(double)), positions, 0, null, out event0); /// ändern
+            Cl.EnqueueReadBuffer(CmdQueue, memPosMassNew, Bool.True, IntPtr.Zero, new IntPtr(count * 4 * sizeof(double)), positions, 0, null, out event0); /// ändern
             Cl.EnqueueReadBuffer(CmdQueue, (IMem)memVel, Bool.True, IntPtr.Zero, new IntPtr(count * 4 * sizeof(double)), velocitys, 0, null, out event0);
 
             for (int i = 0; i < count; i++)

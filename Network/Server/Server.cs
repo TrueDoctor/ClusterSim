@@ -53,7 +53,7 @@
             Console.CursorVisible = false;
 
             Cluster.GalaxyMass = 0; // 1.4e6;
-            cluster.Dt = 1;
+            cluster.Dt = dt;
             cluster.ParentDt = 365;
             cluster.DoStep(Misc.Method.Rk5, true, 0, -1, 3.162e+9);
             

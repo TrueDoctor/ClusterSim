@@ -138,7 +138,6 @@
             //ComputeWorker.CalcAcc(this.Stars, this.MassLayer, this.Instructions);
 
             return this.Stars.Where(x => x.Computed && x.ToCompute).ToArray();
-            return this.Stars.ToArray();
         }
 
         public Vector CalcAcc(Vector a, IMassive b, double mass)
@@ -262,7 +261,7 @@
         {
             var star = new Vec6(s.Pos, s.Vel);
             var ka = this.Dt * this.F(star, s.id);
-            var ff = this.Dt * this.F(ka, s.id);
+            var ff = this.Dt * this.F(star + ka, s.id);
             var kb = this.Dt * this.F(star + 1.0 / 3 * ka + 1.0 / 18 * ff, s.id);
             var kc = this.Dt * this.F(star - 1.216 * ka + 252.0 / 125 * kb - 44.0 / 125 * ff, s.id);
             var kd = this.Dt * this.F(

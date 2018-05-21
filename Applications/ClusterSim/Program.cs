@@ -69,7 +69,7 @@ namespace ClusterSim.Standalone
             if (wTable.Equals(string.Empty))
             {
                 wTable = rTable;
-                last = SQL.lastStep(rTable);//get last step of given table
+                last = SQL.lastStep(rTable); // get last step of given table
             }
 
 
@@ -89,7 +89,7 @@ namespace ClusterSim.Standalone
 
             Thread key = new Thread(listen);
             key.Start();
-            var cluster = new BoxCluster(SQL.readStars(rTable, last), dt); // instatiate Starcluster
+            var cluster = new Cluster(SQL.readStars(rTable, last), dt); // instantiate Starcluster
             var sub = new GpuCluster(SQL.readStars(rTable, last));
 
             var time = (double)last * SaveInterval;
@@ -103,6 +103,12 @@ namespace ClusterSim.Standalone
             foreach (var subStar in sub.Stars)
             {
                 subStar.Dt = dt;
+                subStar.ToCompute = true;
+            }
+
+            foreach (var clusterStar in cluster.Stars)
+            {
+                clusterStar.ToCompute = true;
             }
 
             sub.Dt = cluster.Dt;
@@ -121,6 +127,7 @@ namespace ClusterSim.Standalone
             for (int i = (last /** SaveInterval * 365*/)+1;
                  !abort; i++)
             {
+                cluster.DoStep(Misc.Method.Rk5, false, false, tide.GetVirtualDistance(time));
                 sub.DoStep(Misc.Method.Rk5, tide.GetVirtualDistance(time));
                 var maxDAcc = cluster.Stars.Max(x => x.DAcc);
                 if (maxDAcc > 0 && false)
